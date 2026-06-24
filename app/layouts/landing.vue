@@ -98,6 +98,63 @@
   </header>
 
   <slot />
+
+  <footer class="bg-brand-bg-dark">
+    <div class="max-w-6xl mx-auto px-6 md:px-12 pt-14 pb-8">
+
+      <!-- Main grid -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+
+        <!-- Brand column -->
+        <div class="md:col-span-1">
+          <img :src="logoLight" alt="Mandaditoz" class="h-8 w-auto mb-4" />
+          <p class="text-white/60 text-sm leading-relaxed mb-4">
+            El directorio gratuito de negocios locales de Etzatlán, Jalisco. De vecinos para vecinos.
+          </p>
+          <p class="text-white/30 text-xs">Etzatlán, Jalisco · México</p>
+        </div>
+
+        <!-- Directorio -->
+        <div>
+          <p class="text-white/40 text-xs font-semibold tracking-widest uppercase mb-4">Directorio</p>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Buscar negocio</a></li>
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Categorías</a></li>
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Mapa interactivo</a></li>
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Novedades</a></li>
+          </ul>
+        </div>
+
+        <!-- Negocios -->
+        <div>
+          <p class="text-white/40 text-xs font-semibold tracking-widest uppercase mb-4">Negocios</p>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Registra el tuyo</a></li>
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Actualizar datos</a></li>
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Preguntas frecuentes</a></li>
+          </ul>
+        </div>
+
+        <!-- Proyecto -->
+        <div>
+          <p class="text-white/40 text-xs font-semibold tracking-widest uppercase mb-4">Proyecto</p>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">¿Qué es Mandaditoz?</a></li>
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Contacto</a></li>
+            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Privacidad</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <p class="text-white/30 text-xs">© 2026 Mandaditoz · Hecho con orgullo en Etzatlán, Jalisco.</p>
+        <p class="text-white/30 text-xs">Directorio 100% gratuito · Información aportada por la comunidad</p>
+      </div>
+
+    </div>
+  </footer>
 </template>
 
 <script setup>

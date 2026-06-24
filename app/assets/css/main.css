@@ -24,11 +24,11 @@
 
   .btn-secondary {
     @apply border border-brand-border bg-white text-brand-text font-medium px-5 py-2.5 rounded-lg
-           hover:bg-brand-bg-alt active:scale-95 transition-all duration-150;
+           hover:bg-gray-50 active:scale-95 transition-all duration-150;
   }
 
   .card {
-    @apply bg-white rounded-card shadow-card border border-brand-border;
+    @apply bg-white rounded-2xl shadow-sm border border-brand-border;
   }
 
   .chip {
