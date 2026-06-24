@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: theme('fontFamily.body');
+    color: theme('colors.brand.text');
+    background-color: theme('colors.brand.bg');
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: theme('fontFamily.display');
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-primary text-white font-semibold px-5 py-2.5 rounded-lg
+           hover:bg-brand-primary-dark active:scale-95 transition-all duration-150
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary;
+  }
+
+  .btn-secondary {
+    @apply border border-brand-border bg-white text-brand-text font-medium px-5 py-2.5 rounded-lg
+           hover:bg-brand-bg-alt active:scale-95 transition-all duration-150;
+  }
+
+  .card {
+    @apply bg-white rounded-card shadow-card border border-brand-border;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+}
