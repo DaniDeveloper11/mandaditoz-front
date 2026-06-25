@@ -1,26 +1,53 @@
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+
+function computeIsOpen(hours) {
+  if (!hours?.length) return null
+  const now = new Date()
+  const todayKey = DAY_KEYS[now.getDay()]
+  const today = hours.find(h => h.dayOfWeek === todayKey)
+  if (!today || today.isClosed) return false
+  if (today.is24Hours) return true
+  const cur = now.getHours() * 60 + now.getMinutes()
+  const [oh, om] = today.openTime?.split(':') ?? [0, 0]
+  const [ch, cm] = today.closeTime?.split(':') ?? [0, 0]
+  return cur >= parseInt(oh) * 60 + parseInt(om) &&
+         cur <  parseInt(ch) * 60 + parseInt(cm)
+}
+
+function formatAddress(a) {
+  if (!a) return ''
+  return [a.street, a.exteriorNumber && `#${a.exteriorNumber}`, a.neighborhood, a.city]
+    .filter(Boolean).join(', ')
+}
+
 export function mapNegocio(item) {
   const a = item.attributes ?? item
+  const hours = (a.hours?.data ?? a.hours ?? []).map(mapHorario)
   return {
     id: item.id,
     documentId: item.documentId,
-    nombre: a.nombre,
+    name: a.name,
     slug: a.slug,
-    descripcion: a.descripcion,
-    descripcionCorta: a.descripcionCorta,
-    direccion: a.direccion,
-    telefono: a.telefono,
+    description: a.description,
+    shortDescription: a.shortDescription,
+    address: formatAddress(a.address),
+    addressRaw: a.address,
+    phone: a.phone,
     whatsapp: a.whatsapp,
     email: a.email,
-    sitioWeb: a.sitioWeb,
-    verificado: a.verificado ?? false,
-    abierto: a.abierto ?? false,
-    rating: a.rating ?? 0,
-    totalResenas: a.totalResenas ?? 0,
-    categoria: a.categoria?.data ? mapCategoria(a.categoria.data) : (a.categoria ?? null),
-    horarios: (a.horarios?.data ?? a.horarios ?? []).map(mapHorario),
+    website: a.website,
+    isVerified: a.isVerified ?? false,
+    isFeatured: a.isFeatured ?? false,
+    ratingAverage: a.ratingAverage ?? 0,
+    ratingCount: a.ratingCount ?? 0,
+    isOpen: computeIsOpen(hours),
+    category: a.category?.data ? mapCategoria(a.category.data) : (a.category ?? null),
+    hours,
     tags: a.tags ?? [],
-    fotos: (a.fotos?.data ?? a.fotos ?? []).map(mapMedia),
+    photos: (a.photos?.data ?? a.photos ?? []).map(mapPhoto),
+    reviews: (a.reviews?.data ?? a.reviews ?? []).map(mapReview),
     logo: a.logo?.data ? mapMedia(a.logo.data) : null,
+    coverPhoto: a.coverPhoto?.data ? mapMedia(a.coverPhoto.data) : null,
   }
 }
 
@@ -28,29 +55,54 @@ export function mapCategoria(item) {
   const a = item.attributes ?? item
   return {
     id: item.id,
-    nombre: a.nombre,
+    name: a.name,
     slug: a.slug,
-    icono: a.icono,
-    totalNegocios: a.totalNegocios ?? 0,
+    description: a.description,
+    icon: a.icon,
+    color: a.color,
+    order: a.order ?? 0,
+    isActive: a.isActive ?? true,
   }
 }
 
 export function mapHorario(item) {
   const a = item.attributes ?? item
   return {
-    dia: a.dia,
-    abre: a.abre,
-    cierra: a.cierra,
-    cerrado: a.cerrado ?? false,
+    dayOfWeek: a.dayOfWeek,
+    openTime: a.openTime,
+    closeTime: a.closeTime,
+    isClosed: a.isClosed ?? false,
+    is24Hours: a.is24Hours ?? false,
+  }
+}
+
+export function mapReview(item) {
+  const a = item.attributes ?? item
+  return {
+    id: item.id,
+    rating: a.rating,
+    title: a.title,
+    comment: a.comment,
+    visitDate: a.visitDate,
+    helpfulCount: a.helpfulCount ?? 0,
+  }
+}
+
+export function mapPhoto(item) {
+  const a = item.attributes ?? item
+  const file = a.file?.data ? mapMedia(a.file.data) : null
+  return {
+    id: item.id,
+    url: file?.url ?? null,
+    alternativeText: a.caption ?? file?.alternativeText,
+    order: a.order ?? 0,
   }
 }
 
 export function mapMedia(item) {
   const a = item.attributes ?? item
-  const base = useRuntimeConfig().public.apiBase?.replace('/api', '') ?? ''
-  const url = a.url?.startsWith('http') ? a.url : `${base}${a.url}`
   return {
-    url,
+    url: a.url,
     alternativeText: a.alternativeText,
     width: a.width,
     height: a.height,

@@ -15,11 +15,27 @@ const tabs = [
   { id: 'fotos',       label: 'Fotos' },
 ]
 
-const todayIndex = (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1 })()
+const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' }
+const DAY_ORDER  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+const DAY_KEYS   = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+const todayKey   = DAY_KEYS[new Date().getDay()]
+
+const sortedHours = computed(() =>
+  [...(negocio.value?.hours ?? [])].sort((a, b) =>
+    DAY_ORDER.indexOf(a.dayOfWeek) - DAY_ORDER.indexOf(b.dayOfWeek)
+  )
+)
+
+function formatTime(t) {
+  if (!t) return ''
+  const [h, m] = t.split(':')
+  const hour = parseInt(h)
+  return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'pm' : 'am'}`
+}
 
 useSeoMeta({
-  title: () => negocio.value ? `${negocio.value.nombre} — Etzatlán, Jalisco | Mandaditoz` : 'Cargando...',
-  description: () => negocio.value?.descripcionCorta ?? negocio.value?.descripcion,
+  title: () => negocio.value ? `${negocio.value.name} — Etzatlán, Jalisco | Mandaditoz` : 'Cargando...',
+  description: () => negocio.value?.shortDescription ?? negocio.value?.description,
 })
 </script>
 
@@ -47,9 +63,9 @@ useSeoMeta({
           <nav class="flex items-center gap-2 text-sm">
             <a href="/" class="text-brand-primary hover:underline">Inicio</a>
             <span class="text-gray-400">›</span>
-            <a href="/list" class="text-brand-primary hover:underline">{{ negocio.categoria?.nombre ?? 'Directorio' }}</a>
+            <a href="/list" class="text-brand-primary hover:underline">{{ negocio.category?.name ?? 'Directorio' }}</a>
             <span class="text-gray-400">›</span>
-            <span class="text-brand-text font-medium">{{ negocio.nombre }}</span>
+            <span class="text-brand-text font-medium">{{ negocio.name }}</span>
           </nav>
         </div>
       </div>
@@ -82,79 +98,71 @@ useSeoMeta({
 
         <div class="relative max-w-6xl mx-auto">
 
-          <!-- Back link -->
           <a href="/list" class="inline-flex items-center gap-1 text-white/60 text-sm hover:text-white transition-colors mb-6">
             <ChevronLeft class="w-4 h-4" />
             Volver a resultados
           </a>
 
-          <!-- Main row: info + actions -->
           <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
 
-            <!-- Left: avatar + info block -->
             <div class="flex items-start gap-5">
               <div class="w-20 h-20 rounded-2xl bg-slate-700 flex items-center justify-center text-white font-bold text-3xl shrink-0">
-                {{ negocio.nombre.charAt(0) }}
+                {{ negocio.name.charAt(0) }}
               </div>
               <div>
-                <!-- Name + verified badge -->
                 <div class="flex items-center gap-3 flex-wrap">
-                  <h1 class="font-display font-black text-3xl md:text-4xl text-white leading-tight">{{ negocio.nombre }}</h1>
-                  <span v-if="negocio.verificado" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 bg-white/10 text-white text-xs font-medium">
+                  <h1 class="font-display font-black text-3xl md:text-4xl text-white leading-tight">{{ negocio.name }}</h1>
+                  <span v-if="negocio.isVerified" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 bg-white/10 text-white text-xs font-medium">
                     <Check class="w-3 h-3" />
                     Verificado
                   </span>
                 </div>
 
-                <!-- Category + open status -->
                 <div class="flex items-center gap-2 mt-2.5 flex-wrap">
-                  <span v-if="negocio.categoria" class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-900/70 text-blue-300">
-                    {{ negocio.categoria.nombre }}
+                  <span v-if="negocio.category" class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-900/70 text-blue-300">
+                    {{ negocio.category.name }}
                   </span>
                   <span
+                    v-if="negocio.isOpen !== null"
                     :class="[
                       'inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full',
-                      negocio.abierto
-                        ? 'bg-emerald-900/60 text-emerald-400'
-                        : 'bg-red-900/60 text-red-400',
+                      negocio.isOpen ? 'bg-emerald-900/60 text-emerald-400' : 'bg-red-900/60 text-red-400',
                     ]"
                   >
-                    <span :class="['w-1.5 h-1.5 rounded-full', negocio.abierto ? 'bg-emerald-400' : 'bg-red-400']" />
-                    {{ negocio.abierto ? 'Abierto ahora' : 'Cerrado' }}
+                    <span :class="['w-1.5 h-1.5 rounded-full', negocio.isOpen ? 'bg-emerald-400' : 'bg-red-400']" />
+                    {{ negocio.isOpen ? 'Abierto ahora' : 'Cerrado' }}
                   </span>
                 </div>
 
-                <!-- Rating + address -->
                 <div class="flex items-center gap-3 mt-3 flex-wrap">
                   <div class="flex items-center gap-1.5">
                     <div class="flex gap-0.5">
                       <Star
                         v-for="i in 5"
                         :key="i"
-                        :class="['w-4 h-4', i <= Math.round(negocio.rating) ? 'text-amber-400 fill-amber-400' : 'text-gray-600 fill-gray-600']"
+                        :class="['w-4 h-4', i <= Math.round(negocio.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-600 fill-gray-600']"
                       />
                     </div>
-                    <span class="text-amber-400 font-black text-2xl leading-none ml-1">{{ negocio.rating.toFixed(1) }}</span>
-                    <span class="text-white/50 text-sm">{{ negocio.totalResenas }} reseñas</span>
+                    <span class="text-amber-400 font-black text-2xl leading-none ml-1">{{ negocio.ratingAverage.toFixed(1) }}</span>
+                    <span class="text-white/50 text-sm">{{ negocio.ratingCount }} reseñas</span>
                   </div>
                   <span class="text-white/20 select-none">|</span>
-                  <div class="flex items-center gap-1.5 text-white/60 text-sm">
+                  <div v-if="negocio.address" class="flex items-center gap-1.5 text-white/60 text-sm">
                     <MapPin class="w-4 h-4 shrink-0" />
-                    <span>{{ negocio.direccion }}</span>
+                    <span>{{ negocio.address }}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Right: action buttons -->
             <div class="flex items-center gap-3 shrink-0">
               <button class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition-colors">
                 <Share2 class="w-4 h-4" />
                 Compartir
               </button>
               <a
-                v-if="negocio.telefono"
-                :href="`tel:${negocio.telefono}`"
+                v-if="negocio.phone"
+                :href="`tel:${negocio.phone}`"
                 class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors"
               >
                 <Phone class="w-4 h-4" />
@@ -192,13 +200,12 @@ useSeoMeta({
           <!-- Main column -->
           <div class="flex-1 min-w-0 space-y-5">
 
-            <!-- Información tab -->
             <template v-if="activeTab === 'informacion'">
 
               <!-- Sobre el negocio -->
               <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <h2 class="font-display font-black text-xl text-brand-text mb-3">Sobre el negocio</h2>
-                <p class="text-brand-text text-sm leading-relaxed">{{ negocio.descripcion }}</p>
+                <p class="text-brand-text text-sm leading-relaxed">{{ negocio.description }}</p>
                 <div v-if="negocio.tags.length" class="flex flex-wrap gap-2 mt-4">
                   <span
                     v-for="tag in negocio.tags"
@@ -214,24 +221,27 @@ useSeoMeta({
               <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <div class="flex items-center justify-between mb-4">
                   <h2 class="font-display font-black text-xl text-brand-text">Fotos</h2>
-                  <button class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors">Ver todas →</button>
+                  <button @click="activeTab = 'fotos'" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors">Ver todas →</button>
                 </div>
                 <div class="grid grid-cols-2 gap-2 h-64">
                   <div class="bg-brand-bg-dark rounded-xl overflow-hidden">
-                    <img v-if="negocio.fotos[0]" :src="negocio.fotos[0].url" :alt="negocio.fotos[0].alternativeText" class="w-full h-full object-cover" />
+                    <img v-if="negocio.photos[0]?.url" :src="negocio.photos[0].url" :alt="negocio.photos[0].alternativeText" class="w-full h-full object-cover" />
                     <div v-else class="w-full h-full flex items-center justify-center">
                       <ImageIcon class="w-8 h-8 text-white/20" />
                     </div>
                   </div>
                   <div class="grid grid-cols-2 grid-rows-2 gap-2">
-                    <div v-for="(foto, i) in 3" :key="i" class="bg-brand-bg-dark rounded-xl overflow-hidden">
-                      <img v-if="negocio.fotos[i + 1]" :src="negocio.fotos[i + 1].url" class="w-full h-full object-cover" />
+                    <div v-for="idx in 3" :key="idx" class="bg-brand-bg-dark rounded-xl overflow-hidden">
+                      <img v-if="negocio.photos[idx]?.url" :src="negocio.photos[idx].url" class="w-full h-full object-cover" />
                       <div v-else class="w-full h-full flex items-center justify-center">
                         <ImageIcon class="w-5 h-5 text-white/20" />
                       </div>
                     </div>
-                    <div class="relative bg-gray-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
-                      <span class="font-bold text-brand-text text-lg">+{{ Math.max(0, negocio.fotos.length - 4) }}</span>
+                    <div v-if="negocio.photos.length > 4" class="bg-gray-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors" @click="activeTab = 'fotos'">
+                      <span class="font-bold text-brand-text text-lg">+{{ negocio.photos.length - 4 }}</span>
+                    </div>
+                    <div v-else class="bg-brand-bg-dark rounded-xl flex items-center justify-center">
+                      <ImageIcon class="w-5 h-5 text-white/20" />
                     </div>
                   </div>
                 </div>
@@ -248,7 +258,46 @@ useSeoMeta({
                     Escribir reseña
                   </button>
                 </div>
-                <div class="text-center py-12 text-brand-azulgris text-sm">
+
+                <div v-if="negocio.reviews.length">
+                  <!-- Rating summary -->
+                  <div class="flex items-start gap-8 mb-8">
+                    <div class="text-center shrink-0">
+                      <div class="font-display font-black text-5xl text-brand-text leading-none">{{ negocio.ratingAverage.toFixed(1) }}</div>
+                      <div class="flex gap-0.5 justify-center mt-2">
+                        <Star v-for="i in 5" :key="i" :class="['w-4 h-4', i <= Math.round(negocio.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']" />
+                      </div>
+                      <p class="text-brand-azulgris text-xs mt-1">{{ negocio.ratingCount }} reseñas</p>
+                    </div>
+                  </div>
+
+                  <!-- Individual reviews -->
+                  <div class="divide-y divide-gray-100">
+                    <div v-for="review in negocio.reviews" :key="review.id" class="py-5 first:pt-0 last:pb-0">
+                      <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                          <div class="w-9 h-9 rounded-lg bg-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                            {{ review.title?.charAt(0) ?? '?' }}
+                          </div>
+                          <div>
+                            <p class="font-semibold text-brand-text text-sm leading-tight">{{ review.title ?? 'Reseña' }}</p>
+                            <p class="text-brand-azulgris text-xs mt-0.5">{{ review.visitDate }}</p>
+                          </div>
+                        </div>
+                        <div class="flex gap-0.5 shrink-0">
+                          <Star
+                            v-for="i in 5"
+                            :key="i"
+                            :class="['w-3.5 h-3.5', i <= review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
+                          />
+                        </div>
+                      </div>
+                      <p class="text-brand-text text-sm leading-relaxed mt-3">{{ review.comment }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="text-center py-12 text-brand-azulgris text-sm">
                   Aún no hay reseñas para este negocio.
                 </div>
               </div>
@@ -258,9 +307,9 @@ useSeoMeta({
             <template v-if="activeTab === 'fotos'">
               <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <h2 class="font-display font-black text-xl text-brand-text mb-4">Fotos</h2>
-                <div v-if="negocio.fotos.length" class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <div v-for="foto in negocio.fotos" :key="foto.url" class="aspect-square rounded-xl overflow-hidden bg-brand-bg-dark">
-                    <img :src="foto.url" :alt="foto.alternativeText" class="w-full h-full object-cover" />
+                <div v-if="negocio.photos.length" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <div v-for="foto in negocio.photos" :key="foto.url" class="aspect-square rounded-xl overflow-hidden bg-brand-bg-dark">
+                    <img v-if="foto.url" :src="foto.url" :alt="foto.alternativeText" class="w-full h-full object-cover" />
                   </div>
                 </div>
                 <div v-else class="text-center py-12 text-brand-azulgris text-sm">
@@ -274,36 +323,33 @@ useSeoMeta({
           <!-- Sidebar -->
           <div class="w-full lg:w-80 shrink-0 space-y-4">
 
-            <!-- Contact card (dark) -->
+            <!-- Contact card -->
             <div class="bg-brand-bg-dark rounded-2xl overflow-hidden shadow-sm">
               <div class="p-5">
                 <p class="text-white/40 text-xs font-semibold tracking-widest uppercase mb-1">Información de contacto</p>
-                <h3 class="font-display font-black text-xl text-white mb-5">{{ negocio.nombre }}</h3>
+                <h3 class="font-display font-black text-xl text-white mb-5">{{ negocio.name }}</h3>
 
-                <!-- Phone -->
-                <div v-if="negocio.telefono" class="flex gap-3 mb-4">
+                <div v-if="negocio.phone" class="flex gap-3 mb-4">
                   <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                     <Phone class="w-4 h-4 text-white/60" />
                   </div>
                   <div>
                     <p class="text-white/40 text-xs mb-0.5">Teléfono</p>
-                    <p class="text-white text-sm font-medium">{{ negocio.telefono }}</p>
+                    <p class="text-white text-sm font-medium">{{ negocio.phone }}</p>
                   </div>
                 </div>
 
-                <!-- Address -->
-                <div class="flex gap-3 mb-4">
+                <div v-if="negocio.address" class="flex gap-3 mb-4">
                   <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                     <MapPin class="w-4 h-4 text-white/60" />
                   </div>
                   <div>
                     <p class="text-white/40 text-xs mb-0.5">Dirección</p>
-                    <p class="text-white text-sm font-medium leading-snug">{{ negocio.direccion }}</p>
+                    <p class="text-white text-sm font-medium leading-snug">{{ negocio.address }}</p>
                   </div>
                 </div>
 
-                <!-- Horarios -->
-                <div v-if="negocio.horarios.length" class="flex gap-3">
+                <div v-if="sortedHours.length" class="flex gap-3">
                   <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
                     <Clock class="w-4 h-4 text-white/60" />
                   </div>
@@ -311,13 +357,15 @@ useSeoMeta({
                     <p class="text-white/40 text-xs mb-2">Horario</p>
                     <div class="space-y-1.5">
                       <div
-                        v-for="(row, i) in negocio.horarios"
-                        :key="row.dia"
+                        v-for="row in sortedHours"
+                        :key="row.dayOfWeek"
                         class="flex justify-between text-xs"
                       >
-                        <span :class="i === todayIndex ? 'text-brand-primary font-semibold' : 'text-white/55'">{{ row.dia }}</span>
-                        <span :class="i === todayIndex ? 'text-brand-primary font-semibold' : 'text-white/55'">
-                          {{ row.cerrado ? 'Cerrado' : `${row.abre} – ${row.cierra}` }}
+                        <span :class="row.dayOfWeek === todayKey ? 'text-brand-primary font-semibold' : 'text-white/55'">
+                          {{ DAY_LABELS[row.dayOfWeek] }}
+                        </span>
+                        <span :class="row.dayOfWeek === todayKey ? 'text-brand-primary font-semibold' : 'text-white/55'">
+                          {{ row.isClosed ? 'Cerrado' : row.is24Hours ? '24 horas' : `${formatTime(row.openTime)} – ${formatTime(row.closeTime)}` }}
                         </span>
                       </div>
                     </div>
@@ -325,11 +373,10 @@ useSeoMeta({
                 </div>
               </div>
 
-              <!-- Action buttons -->
               <div class="px-5 pb-5 space-y-2">
                 <a
-                  v-if="negocio.telefono"
-                  :href="`tel:${negocio.telefono}`"
+                  v-if="negocio.phone"
+                  :href="`tel:${negocio.phone}`"
                   class="w-full flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-500 text-white text-sm font-semibold py-3 rounded-xl transition-colors"
                 >
                   <Phone class="w-4 h-4" />

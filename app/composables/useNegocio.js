@@ -3,9 +3,10 @@ import { mapNegocio } from '~/utils/strapi'
 export function useNegocio(slug) {
   const { get } = useApi()
 
-  const { data, pending, error } = get('/negocios', computed(() => ({
+  const { data, pending, error } = get('/businesses', computed(() => ({
     'filters[slug][$eq]': toValue(slug),
-    'populate': 'categoria,logo,fotos,horarios,resenas',
+    'filters[status][$eq]': 'published',
+    populate: 'category,logo,coverPhoto,photos,hours,reviews',
   })))
 
   const negocio = computed(() => data.value?.data?.[0]
