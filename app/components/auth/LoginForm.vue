@@ -83,14 +83,35 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { Mail, Lock, Eye, EyeOff } from '@lucide/vue'
+import Swal from 'sweetalert2'
 
 defineEmits(['change-mode'])
+
+const { login } = useAuth()
 
 const showPassword = ref(false)
 const form = reactive({ email: '', password: '', remember: false })
 
-function handleSubmit() {
-  // TODO: conectar con Strapi auth
-  console.log('Login:', form)
+async function handleSubmit() {
+  Swal.fire({
+    title: 'Iniciando sesión…',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(),
+  })
+
+  try {
+    await login({ identifier: form.email, password: form.password })
+    Swal.close()
+    navigateTo('/')
+  } catch (e) {
+    const msg = e?.data?.error?.message ?? 'Correo o contraseña incorrectos.'
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al iniciar sesión',
+      text: msg,
+      confirmButtonText: 'Intentar de nuevo',
+      confirmButtonColor: '#1D5A8A',
+    })
+  }
 }
 </script>

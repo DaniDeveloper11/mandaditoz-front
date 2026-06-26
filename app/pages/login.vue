@@ -73,7 +73,8 @@ import { ref } from 'vue'
 
 definePageMeta({ layout: false })
 
-const mode = ref('login')
+const route = useRoute()
+const mode = ref(route.query.type === 'r' ? 'register' : 'login')
 
 const titles = {
   login: 'Bienvenido de vuelta',

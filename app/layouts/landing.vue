@@ -54,8 +54,8 @@
         <a href="#" class="text-sm/6 font-semibold text-gray-900">¿Cómo funciona?</a>
       </PopoverGroup>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-x-4">
-        <a href="#" class="text-sm/6 font-semibold text-gray-900">Iniciar sesión</a>
-        <a href="#" class="rounded-lg bg-brand-primary px-4 py-2 text-sm/6 font-semibold text-white shadow-sm hover:opacity-90">Registra tu negocio</a>
+        <a href="/login" class="text-sm/6 font-semibold text-gray-900">Iniciar sesión</a>
+        <a href="/login?type=r" class="rounded-lg bg-brand-primary px-4 py-2 text-sm/6 font-semibold text-white shadow-sm hover:opacity-90">Registra tu negocio</a>
       </div>
     </nav>
     <Dialog class="lg:hidden" @close="mobileMenuOpen = false" :open="mobileMenuOpen">

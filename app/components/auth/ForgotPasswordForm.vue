@@ -61,17 +61,37 @@
 <script setup>
 import { ref } from 'vue'
 import { Mail, MailCheck } from '@lucide/vue'
+import Swal from 'sweetalert2'
 
 defineEmits(['change-mode'])
+
+const { forgotPassword } = useAuth()
 
 const email = ref('')
 const sent = ref(false)
 const sentEmail = ref('')
 
-function handleSubmit() {
-  // TODO: conectar con Strapi auth
-  sentEmail.value = email.value
-  sent.value = true
-  console.log('Forgot password:', email.value)
+async function handleSubmit() {
+  Swal.fire({
+    title: 'Enviando enlace…',
+    allowOutsideClick: false,
+    didOpen: () => Swal.showLoading(),
+  })
+
+  try {
+    await forgotPassword(email.value)
+    Swal.close()
+    sentEmail.value = email.value
+    sent.value = true
+  } catch (e) {
+    const msg = e?.data?.error?.message ?? 'No se pudo enviar el correo. Intenta de nuevo.'
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: msg,
+      confirmButtonText: 'Entendido',
+      confirmButtonColor: '#1D5A8A',
+    })
+  }
 }
 </script>
