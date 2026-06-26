@@ -78,29 +78,47 @@ onMounted(() => {
         :href="`/negocios/${biz.slug}`"
         class="bg-white rounded-2xl overflow-hidden shrink-0 w-56 flex flex-col hover:shadow-lg transition-shadow"
       >
-        <div :class="['h-1.5 w-full', accentColor]" />
+        <!-- Cover photo -->
+        <div class="relative h-16 shrink-0">
+          <img
+            v-if="biz.coverPhoto?.url"
+            :src="biz.coverPhoto.url"
+            :alt="biz.coverPhoto.alternativeText ?? biz.name"
+            class="w-full h-full object-cover"
+          />
+          <div v-else :class="['w-full h-full', accentColor, 'opacity-20']" />
+          <div :class="['absolute bottom-0 left-0 w-full h-1.5', accentColor]" />
+        </div>
+
         <div class="p-4 flex flex-col flex-1">
 
           <!-- Avatar + name + status -->
           <div class="flex items-center gap-3 mb-3">
-            <div class="w-10 h-10 rounded-lg bg-brand-bg-dark flex items-center justify-center text-white font-bold text-base shrink-0">
-              {{ biz.name.charAt(0) }}
+            <div class="w-10 h-10 rounded-lg bg-brand-bg-dark overflow-hidden flex items-center justify-center text-white font-bold text-base shrink-0">
+              <img
+                v-if="biz.logo?.url"
+                :src="biz.logo.url"
+                :alt="biz.logo.alternativeText ?? biz.name"
+                class="w-full h-full object-cover"
+              />
+              <span v-else>{{ (biz.name ?? '?').charAt(0) }}</span>
             </div>
             <div class="min-w-0">
-              <p class="font-semibold text-brand-text text-sm leading-tight truncate">{{ biz.name }}</p>
+              <p class="font-semibold text-brand-text text-sm leading-tight truncate">{{ biz.name ?? 'Sin nombre' }}</p>
               <span
-                v-if="biz.isOpen !== null"
+                v-if="biz.isOpen !== null && biz.isOpen !== undefined"
                 :class="['text-xs font-semibold flex items-center gap-1 mt-0.5', biz.isOpen ? 'text-emerald-600' : 'text-red-500']"
               >
                 <span :class="['w-1.5 h-1.5 rounded-full shrink-0', biz.isOpen ? 'bg-emerald-500' : 'bg-red-500']" />
                 {{ biz.isOpen ? 'Abierto' : 'Cerrado' }}
               </span>
+              <span v-else class="text-xs text-brand-azulgris mt-0.5">Horario no disponible</span>
             </div>
           </div>
 
           <!-- Description -->
-          <p v-if="biz.shortDescription || biz.description" class="text-brand-text text-xs leading-relaxed mb-3 line-clamp-2">
-            {{ biz.shortDescription ?? biz.description }}
+          <p class="text-brand-text text-xs leading-relaxed mb-3 line-clamp-2">
+            {{ biz.shortDescription ?? biz.description ?? 'Sin descripción disponible.' }}
           </p>
 
           <!-- Rating -->
@@ -109,15 +127,15 @@ onMounted(() => {
               <Star
                 v-for="i in 5"
                 :key="i"
-                :class="['w-3 h-3', i <= Math.round(biz.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
+                :class="['w-3 h-3', i <= Math.round(biz.ratingAverage ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
               />
             </div>
-            <span class="text-xs font-semibold text-brand-text ml-0.5">{{ biz.ratingAverage.toFixed(1) }}</span>
-            <span class="text-xs text-brand-azulgris">({{ biz.ratingCount }})</span>
+            <span class="text-xs font-semibold text-brand-text ml-0.5">{{ (biz.ratingAverage ?? 0).toFixed(1) }}</span>
+            <span class="text-xs text-brand-azulgris">({{ biz.ratingCount ?? 0 }})</span>
           </div>
 
           <!-- Address -->
-          <p v-if="biz.address" class="text-xs text-brand-azulgris truncate">{{ biz.address }}</p>
+          <p class="text-xs text-brand-azulgris truncate">{{ biz.address ?? 'Dirección no disponible' }}</p>
 
         </div>
       </a>

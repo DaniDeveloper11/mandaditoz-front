@@ -142,22 +142,38 @@ const { categorias: categoriaCatalog } = useCategorias(10)
             :href="`/negocios/${biz.slug}`"
             class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
           >
-            <div :class="['h-1.5 w-full', getCategoriaConfig(biz.category?.slug).accentColor]" />
+            <!-- Cover photo -->
+            <div class="relative h-28 shrink-0">
+              <img
+                v-if="biz.coverPhoto?.url"
+                :src="biz.coverPhoto.url"
+                :alt="biz.coverPhoto.alternativeText ?? biz.name"
+                class="w-full h-full object-cover"
+              />
+              <div v-else :class="['w-full h-full opacity-20', getCategoriaConfig(biz.category?.slug).accentColor]" />
+              <div :class="['absolute bottom-0 left-0 w-full h-1.5', getCategoriaConfig(biz.category?.slug).accentColor]" />
+            </div>
 
             <div class="p-5 flex flex-col flex-1">
               <!-- Logo + name + badges -->
               <div class="flex items-start gap-4 mb-4">
-                <div class="w-14 h-14 rounded-xl bg-brand-bg-dark flex items-center justify-center text-white font-bold text-xl shrink-0">
-                  {{ biz.name.charAt(0) }}
+                <div class="w-14 h-14 rounded-xl bg-brand-bg-dark overflow-hidden flex items-center justify-center text-white font-bold text-xl shrink-0">
+                  <img
+                    v-if="biz.logo?.url"
+                    :src="biz.logo.url"
+                    :alt="biz.logo.alternativeText ?? biz.name"
+                    class="w-full h-full object-cover"
+                  />
+                  <span v-else>{{ (biz.name ?? '?').charAt(0) }}</span>
                 </div>
                 <div>
-                  <h3 class="font-display font-bold text-lg text-brand-text leading-tight">{{ biz.name }}</h3>
+                  <h3 class="font-display font-bold text-lg text-brand-text leading-tight">{{ biz.name ?? 'Sin nombre' }}</h3>
                   <div class="flex items-center gap-2 mt-1.5 flex-wrap">
                     <span v-if="biz.category" :class="['text-xs font-medium px-2 py-0.5 rounded-full border', getCategoriaConfig(biz.category.slug).badgeStyle]">
                       {{ biz.category.name }}
                     </span>
                     <span
-                      v-if="biz.isOpen !== null"
+                      v-if="biz.isOpen !== null && biz.isOpen !== undefined"
                       :class="['text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1', biz.isOpen ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600']"
                     >
                       <span :class="['w-1.5 h-1.5 rounded-full', biz.isOpen ? 'bg-emerald-500' : 'bg-red-500']" />
@@ -168,7 +184,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
               </div>
 
               <!-- Description -->
-              <p class="text-brand-text text-sm leading-relaxed mb-4">{{ biz.shortDescription ?? biz.description }}</p>
+              <p class="text-brand-text text-sm leading-relaxed mb-4">{{ biz.shortDescription ?? biz.description ?? 'Sin descripción disponible.' }}</p>
 
               <!-- Rating -->
               <div class="flex items-center gap-1.5 mb-3">
@@ -176,22 +192,22 @@ const { categorias: categoriaCatalog } = useCategorias(10)
                   <Star
                     v-for="i in 5"
                     :key="i"
-                    :class="['w-4 h-4', i <= Math.round(biz.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
+                    :class="['w-4 h-4', i <= Math.round(biz.ratingAverage ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
                   />
                 </div>
-                <span class="text-sm font-semibold text-brand-text">{{ biz.ratingAverage.toFixed(1) }}</span>
-                <span class="text-sm text-brand-azulgris">({{ biz.ratingCount }} reseñas)</span>
+                <span class="text-sm font-semibold text-brand-text">{{ (biz.ratingAverage ?? 0).toFixed(1) }}</span>
+                <span class="text-sm text-brand-azulgris">({{ biz.ratingCount ?? 0 }} reseñas)</span>
               </div>
 
               <!-- Details -->
               <div class="space-y-2 mb-5">
-                <div v-if="biz.address" class="flex items-center gap-2 text-sm text-brand-azulgris">
+                <div class="flex items-center gap-2 text-sm text-brand-azulgris">
                   <MapPin class="w-4 h-4 shrink-0" />
-                  <span>{{ biz.address }}</span>
+                  <span>{{ biz.address || 'Dirección no disponible' }}</span>
                 </div>
-                <div v-if="biz.phone" class="flex items-center gap-2 text-sm text-brand-azulgris">
+                <div class="flex items-center gap-2 text-sm text-brand-azulgris">
                   <Phone class="w-4 h-4 shrink-0" />
-                  <span>{{ biz.phone }}</span>
+                  <span>{{ biz.phone || 'Teléfono no disponible' }}</span>
                 </div>
               </div>
 

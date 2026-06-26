@@ -73,6 +73,14 @@ useSeoMeta({
       <!-- Hero -->
       <div class="relative overflow-hidden bg-brand-bg-dark px-6 md:px-12 py-8">
 
+        <!-- Cover photo background -->
+        <img
+          v-if="negocio.coverPhoto?.url"
+          :src="negocio.coverPhoto.url"
+          :alt="negocio.coverPhoto.alternativeText ?? negocio.name"
+          class="absolute inset-0 w-full h-full object-cover opacity-20"
+        />
+
         <!-- Decorative network pattern -->
         <svg
           class="absolute right-0 top-0 h-full w-72 text-white/10 pointer-events-none"
@@ -106,12 +114,18 @@ useSeoMeta({
           <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
 
             <div class="flex items-start gap-5">
-              <div class="w-20 h-20 rounded-2xl bg-slate-700 flex items-center justify-center text-white font-bold text-3xl shrink-0">
-                {{ negocio.name.charAt(0) }}
+              <div class="w-20 h-20 rounded-2xl bg-slate-700 overflow-hidden flex items-center justify-center text-white font-bold text-3xl shrink-0">
+                <img
+                  v-if="negocio.logo?.url"
+                  :src="negocio.logo.url"
+                  :alt="negocio.logo.alternativeText ?? negocio.name"
+                  class="w-full h-full object-cover"
+                />
+                <span v-else>{{ (negocio.name ?? '?').charAt(0) }}</span>
               </div>
               <div>
                 <div class="flex items-center gap-3 flex-wrap">
-                  <h1 class="font-display font-black text-3xl md:text-4xl text-white leading-tight">{{ negocio.name }}</h1>
+                  <h1 class="font-display font-black text-3xl md:text-4xl text-white leading-tight">{{ negocio.name ?? 'Sin nombre' }}</h1>
                   <span v-if="negocio.isVerified" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 bg-white/10 text-white text-xs font-medium">
                     <Check class="w-3 h-3" />
                     Verificado
@@ -123,7 +137,7 @@ useSeoMeta({
                     {{ negocio.category.name }}
                   </span>
                   <span
-                    v-if="negocio.isOpen !== null"
+                    v-if="negocio.isOpen !== null && negocio.isOpen !== undefined"
                     :class="[
                       'inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full',
                       negocio.isOpen ? 'bg-emerald-900/60 text-emerald-400' : 'bg-red-900/60 text-red-400',
@@ -140,16 +154,16 @@ useSeoMeta({
                       <Star
                         v-for="i in 5"
                         :key="i"
-                        :class="['w-4 h-4', i <= Math.round(negocio.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-600 fill-gray-600']"
+                        :class="['w-4 h-4', i <= Math.round(negocio.ratingAverage ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-600 fill-gray-600']"
                       />
                     </div>
-                    <span class="text-amber-400 font-black text-2xl leading-none ml-1">{{ negocio.ratingAverage.toFixed(1) }}</span>
-                    <span class="text-white/50 text-sm">{{ negocio.ratingCount }} reseñas</span>
+                    <span class="text-amber-400 font-black text-2xl leading-none ml-1">{{ (negocio.ratingAverage ?? 0).toFixed(1) }}</span>
+                    <span class="text-white/50 text-sm">{{ negocio.ratingCount ?? 0 }} reseñas</span>
                   </div>
                   <span class="text-white/20 select-none">|</span>
-                  <div v-if="negocio.address" class="flex items-center gap-1.5 text-white/60 text-sm">
+                  <div class="flex items-center gap-1.5 text-white/60 text-sm">
                     <MapPin class="w-4 h-4 shrink-0" />
-                    <span>{{ negocio.address }}</span>
+                    <span>{{ negocio.address || 'Dirección no disponible' }}</span>
                   </div>
                 </div>
               </div>
@@ -205,7 +219,7 @@ useSeoMeta({
               <!-- Sobre el negocio -->
               <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <h2 class="font-display font-black text-xl text-brand-text mb-3">Sobre el negocio</h2>
-                <p class="text-brand-text text-sm leading-relaxed">{{ negocio.description }}</p>
+                <p class="text-brand-text text-sm leading-relaxed">{{ negocio.description ?? 'Sin descripción disponible.' }}</p>
                 <div v-if="negocio.tags.length" class="flex flex-wrap gap-2 mt-4">
                   <span
                     v-for="tag in negocio.tags"
@@ -263,11 +277,11 @@ useSeoMeta({
                   <!-- Rating summary -->
                   <div class="flex items-start gap-8 mb-8">
                     <div class="text-center shrink-0">
-                      <div class="font-display font-black text-5xl text-brand-text leading-none">{{ negocio.ratingAverage.toFixed(1) }}</div>
+                      <div class="font-display font-black text-5xl text-brand-text leading-none">{{ (negocio.ratingAverage ?? 0).toFixed(1) }}</div>
                       <div class="flex gap-0.5 justify-center mt-2">
-                        <Star v-for="i in 5" :key="i" :class="['w-4 h-4', i <= Math.round(negocio.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']" />
+                        <Star v-for="i in 5" :key="i" :class="['w-4 h-4', i <= Math.round(negocio.ratingAverage ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']" />
                       </div>
-                      <p class="text-brand-azulgris text-xs mt-1">{{ negocio.ratingCount }} reseñas</p>
+                      <p class="text-brand-azulgris text-xs mt-1">{{ negocio.ratingCount ?? 0 }} reseñas</p>
                     </div>
                   </div>
 
