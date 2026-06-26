@@ -6,7 +6,12 @@ export function useNegocio(slug) {
   const { data, pending, error } = get('/businesses', computed(() => ({
     'filters[slug][$eq]': toValue(slug),
     'filters[status][$eq]': 'published',
-    populate: 'category,logo,coverPhoto,photos,hours,reviews',
+    'populate[0]': 'category',
+    'populate[1]': 'logo',
+    'populate[2]': 'coverPhoto',
+    'populate[3]': 'photos',
+    'populate[4]': 'hours',
+    'populate[5]': 'reviews',
   })))
 
   const negocio = computed(() => data.value?.data?.[0]

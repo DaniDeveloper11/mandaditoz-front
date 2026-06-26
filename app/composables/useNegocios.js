@@ -18,7 +18,8 @@ export function useNegocios(filtros) {
       ...(f.isFeatured && { 'filters[isFeatured][$eq]': true }),
       'filters[status][$eq]': 'published',
       sort: SORT_MAP[f.orden] ?? SORT_MAP.rating,
-      populate: 'category,logo',
+      'populate[0]': 'category',
+      'populate[1]': 'logo',
       'pagination[page]': f.pagina ?? 1,
       'pagination[pageSize]': f.porPagina ?? 12,
     }
@@ -26,6 +27,6 @@ export function useNegocios(filtros) {
 
   const negocios = computed(() => data.value?.data?.map(mapNegocio) ?? [])
   const paginacion = computed(() => data.value?.meta?.pagination ?? null)
-
+  console.log("negocios",negocios)
   return { negocios, paginacion, pending, error, refresh }
 }

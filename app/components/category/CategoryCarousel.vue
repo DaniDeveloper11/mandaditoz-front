@@ -1,5 +1,6 @@
 <script setup>
 import { ChevronLeft, ChevronRight, Star } from '@lucide/vue'
+import {onMounted} from 'vue'
 
 const props = defineProps({
   slug: { type: String, required: true },
@@ -25,6 +26,10 @@ const carouselEl = ref(null)
 function scroll(dir) {
   carouselEl.value?.scrollBy({ left: dir * 288, behavior: 'smooth' })
 }
+
+onMounted(() => {
+  console.log(`[CategoryCarousel] ${props.slug}:`, negocios.value)
+})
 </script>
 
 <template>
