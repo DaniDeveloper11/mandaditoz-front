@@ -54,8 +54,21 @@
         <a href="#" class="text-sm/6 font-semibold text-gray-900">¿Cómo funciona?</a>
       </PopoverGroup>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-x-4">
-        <a href="/login" class="text-sm/6 font-semibold text-gray-900">Iniciar sesión</a>
-        <a href="/login?type=r" class="rounded-lg bg-brand-primary px-4 py-2 text-sm/6 font-semibold text-white shadow-sm hover:opacity-90">Registra tu negocio</a>
+        <template v-if="isLoggedIn">
+          <span class="text-sm/6 text-gray-600">
+            Hola, <span class="font-semibold text-gray-900">{{ user?.displayName || user?.username }}</span>
+          </span>
+          <button
+            class="text-sm/6 font-semibold text-gray-900 hover:text-brand-primary transition"
+            @click="handleLogout"
+          >
+            Cerrar sesión
+          </button>
+        </template>
+        <template v-else>
+          <a href="/login" class="text-sm/6 font-semibold text-gray-900">Iniciar sesión</a>
+          <a href="/login?type=r" class="rounded-lg bg-brand-primary px-4 py-2 text-sm/6 font-semibold text-white shadow-sm hover:opacity-90">Registra tu negocio</a>
+        </template>
       </div>
     </nav>
     <Dialog class="lg:hidden" @close="mobileMenuOpen = false" :open="mobileMenuOpen">
@@ -86,10 +99,22 @@
               <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Mapa</a>
               <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">¿Cómo funciona?</a>
             </div>
-            <div class="py-6">
-              <a  class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Iniciar sesión</a>
-              <a  class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-brand-primary">Registra tu negocio</a>
-
+            <div class="py-6 space-y-1">
+              <template v-if="isLoggedIn">
+                <p class="-mx-3 px-3 py-2 text-sm text-gray-500">
+                  {{ user?.displayName || user?.username }}
+                </p>
+                <button
+                  class="-mx-3 block w-full text-left rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+                  @click="handleLogout"
+                >
+                  Cerrar sesión
+                </button>
+              </template>
+              <template v-else>
+                <a href="/login" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Iniciar sesión</a>
+                <a href="/login?type=r" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-brand-primary">Registra tu negocio</a>
+              </template>
             </div>
           </div>
         </div>
@@ -159,7 +184,12 @@
 
 <script setup>
 import { ref } from 'vue'
+const { isLoggedIn, user, logout } = useAuthStore()
 
+function handleLogout() {
+  logout()
+  navigateTo('/login')
+}
 const logoDark  = '/logo-cielo-horizontal-dark.svg'
 const logoLight = '/logo-cielo-horizontal.svg'
 import {

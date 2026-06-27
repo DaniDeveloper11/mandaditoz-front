@@ -1,9 +1,7 @@
 export function useAuth() {
   const config = useRuntimeConfig()
-  const base = config.public.apiBase
-
-  const user  = useState('auth:user',  () => null)
-  const token = useState('auth:token', () => null)
+  const base   = config.public.apiBase
+  const store  = useAuthStore()
 
   async function register({ username, email, password, displayName, phone }) {
     const body = { username, email, password }
@@ -14,8 +12,7 @@ export function useAuth() {
       method: 'POST',
       body,
     })
-    token.value = data.jwt
-    user.value  = data.user
+    store.setAuth(data.jwt, data.user)
     return data
   }
 
@@ -24,24 +21,36 @@ export function useAuth() {
       method: 'POST',
       body: { identifier, password },
     })
-    token.value = data.jwt
-    user.value  = data.user
+    store.setAuth(data.jwt, data.user)
     return data
   }
 
   async function forgotPassword(email) {
-    return $fetch(`${base}/auth/forgot-password`, {
+    const data = await $fetch(`${base}/auth/forgot-password`, {
       method: 'POST',
       body: { email },
     })
+    if (!data?.ok) throw new Error('El servidor no confirmó el envío.')
+    return data
   }
 
-  function logout() {
-    user.value  = null
-    token.value = null
+  async function resetPassword({ code, password, passwordConfirmation }) {
+    const data = await $fetch(`${base}/auth/reset-password`, {
+      method: 'POST',
+      body: { code, password, passwordConfirmation },
+    })
+    store.setAuth(data.jwt, data.user)
+    return data
   }
 
-  const isLoggedIn = computed(() => !!token.value)
-
-  return { user, token, isLoggedIn, register, login, forgotPassword, logout }
+  return {
+    user:        store.user,
+    token:       store.token,
+    isLoggedIn:  store.isLoggedIn,
+    register,
+    login,
+    forgotPassword,
+    resetPassword,
+    logout:      store.logout,
+  }
 }
