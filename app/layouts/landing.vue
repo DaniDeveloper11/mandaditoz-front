@@ -20,30 +20,28 @@
           </PopoverButton>
 
           <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 -translate-y-1" enter-to-class="translate-y-0" leave-active-class="transition ease-in duration-150" leave-from-class="translate-y-0" leave-to-class="opacity-0 -translate-y-1">
-            <PopoverPanel class="absolute inset-x-0 top-16 bg-white">
-              <div class="absolute inset-0 top-1/2 bg-white shadow-lg ring-1 ring-gray-900/5" aria-hidden="true"></div>
-              <div class="relative bg-white">
-                <div class="mx-auto grid max-w-7xl grid-cols-4 gap-x-4 px-6 py-10 lg:px-8 xl:gap-x-8">
-                  <div v-for="item in products" :key="item.name" class="group relative rounded-lg p-6 text-sm/6 hover:bg-gray-50">
-                    <div class="flex size-11 items-center justify-center rounded-lg bg-gray-50 group-hover:bg-white">
-                      <component :is="item.icon" class="size-6 text-gray-600 group-hover:text-indigo-600" aria-hidden="true" />
+            <PopoverPanel class="absolute inset-x-0 top-16 bg-white shadow-lg ring-1 ring-gray-900/5">
+              <div class="mx-auto max-w-7xl px-6 py-8 lg:px-8">
+                <div class="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3 lg:grid-cols-4">
+                  <a
+                    v-for="cat in categorias"
+                    :key="cat.slug"
+                    :href="`/list?categoria=${cat.slug}`"
+                    class="group flex items-center gap-3 rounded-lg p-3 hover:bg-gray-50 transition"
+                  >
+                    <div :class="['flex size-9 shrink-0 items-center justify-center rounded-lg', getCategoriaConfig(cat.slug).iconBg]">
+                      <component :is="getCategoriaConfig(cat.slug).icon" :class="['size-5', getCategoriaConfig(cat.slug).iconColor]" />
                     </div>
-                    <a :href="item.href" class="mt-6 block font-semibold text-gray-900">
-                      {{ item.name }}
-                      <span class="absolute inset-0"></span>
-                    </a>
-                    <p class="mt-1 text-gray-600">{{ item.description }}</p>
-                  </div>
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold text-gray-900 group-hover:text-brand-primary transition">{{ cat.name }}</p>
+                      <p v-if="cat.description" class="text-xs text-gray-400 truncate">{{ cat.description }}</p>
+                    </div>
+                  </a>
                 </div>
-                <div class="bg-gray-50">
-                  <div class="mx-auto max-w-7xl px-6 lg:px-8">
-                    <div class="grid grid-cols-3 divide-x divide-gray-900/5 border-x border-gray-900/5">
-                      <a v-for="item in callsToAction" :key="item.name" :href="item.href" class="flex items-center justify-center gap-x-2.5 p-3 text-sm/6 font-semibold text-gray-900 hover:bg-gray-100">
-                        <component :is="item.icon" class="size-5 flex-none text-gray-500" aria-hidden="true" />
-                        {{ item.name }}
-                      </a>
-                    </div>
-                  </div>
+                <div class="mt-6 border-t border-gray-100 pt-4">
+                  <a href="/list" class="text-sm font-semibold text-brand-primary hover:text-brand-primary-dark transition">
+                    Ver todos los negocios →
+                  </a>
                 </div>
               </div>
             </PopoverPanel>
@@ -92,8 +90,17 @@
                   Categorías
                   <ChevronDownIcon :class="[open ? 'rotate-180' : '', 'size-5 flex-none']" aria-hidden="true" />
                 </DisclosureButton>
-                <DisclosurePanel class="mt-2 space-y-2">
-                  <DisclosureButton v-for="item in [...products, ...callsToAction]" :key="item.name" as="a" :href="item.href" class="block rounded-lg py-2 pr-3 pl-6 text-sm/7 font-semibold text-gray-900 hover:bg-gray-50">{{ item.name }}</DisclosureButton>
+                <DisclosurePanel class="mt-2 space-y-1">
+                  <DisclosureButton
+                    v-for="cat in categorias"
+                    :key="cat.slug"
+                    as="a"
+                    :href="`/list?categoria=${cat.slug}`"
+                    class="flex items-center gap-3 rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
+                  >
+                    <component :is="getCategoriaConfig(cat.slug).icon" :class="['size-4 shrink-0', getCategoriaConfig(cat.slug).iconColor]" />
+                    {{ cat.name }}
+                  </DisclosureButton>
                 </DisclosurePanel>
               </Disclosure>
               <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Mapa</a>
@@ -184,61 +191,23 @@
 
 <script setup>
 import { ref } from 'vue'
+import {
+  Dialog, DialogPanel,
+  Disclosure, DisclosureButton, DisclosurePanel,
+  Popover, PopoverButton, PopoverGroup, PopoverPanel,
+} from '@headlessui/vue'
+import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import { getCategoriaConfig } from '~/utils/categorias'
+
 const { isLoggedIn, user, logout } = useAuthStore()
+const { categorias } = useCategorias()
+
+const logoLight = '/logo-cielo-horizontal.svg'
+const mobileMenuOpen = ref(false)
 
 function handleLogout() {
   logout()
   navigateTo('/login')
 }
-const logoDark  = '/logo-cielo-horizontal-dark.svg'
-const logoLight = '/logo-cielo-horizontal.svg'
-import {
-  Dialog,
-  DialogPanel,
-  Disclosure,
-  DisclosureButton,
-  DisclosurePanel,
-  Popover,
-  PopoverButton,
-  PopoverGroup,
-  PopoverPanel,
-} from '@headlessui/vue'
-import {
-  Bars3Icon,
-  ChartPieIcon,
-  CursorArrowRaysIcon,
-  FingerPrintIcon,
-  SquaresPlusIcon,
-  XMarkIcon,
-} from '@heroicons/vue/24/outline'
-import { ChevronDownIcon, PhoneIcon, PlayCircleIcon, RectangleGroupIcon } from '@heroicons/vue/20/solid'
-
-const products = [
-  {
-    name: 'Analytics',
-    description: 'Get a better understanding where your traffic is coming from',
-    href: '#',
-    icon: ChartPieIcon,
-  },
-  {
-    name: 'Engagement',
-    description: 'Speak directly to your customers with our engagement tool',
-    href: '#',
-    icon: CursorArrowRaysIcon,
-  },
-  { name: 'Security', description: 'Your customers’ data will be safe and secure', href: '#', icon: FingerPrintIcon },
-  {
-    name: 'Integrations',
-    description: 'Your customers’ data will be safe and secure',
-    href: '#',
-    icon: SquaresPlusIcon,
-  },
-]
-const callsToAction = [
-  { name: 'Watch demo', href: '#', icon: PlayCircleIcon },
-  { name: 'Contact sales', href: '#', icon: PhoneIcon },
-  { name: 'View all products', href: '#', icon: RectangleGroupIcon },
-]
-
-const mobileMenuOpen = ref(false)
 </script>
