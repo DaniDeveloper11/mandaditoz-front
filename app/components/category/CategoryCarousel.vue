@@ -1,6 +1,5 @@
 <script setup>
-import { ChevronLeft, ChevronRight, Star } from '@lucide/vue'
-import {onMounted} from 'vue'
+import { ChevronLeft, ChevronRight, Star, Store } from '@lucide/vue'
 
 const props = defineProps({
   slug: { type: String, required: true },
@@ -26,10 +25,6 @@ const carouselEl = ref(null)
 function scroll(dir) {
   carouselEl.value?.scrollBy({ left: dir * 288, behavior: 'smooth' })
 }
-
-onMounted(() => {
-  console.log(`[CategoryCarousel] ${props.slug}:`, negocios.value)
-})
 </script>
 
 <template>
@@ -70,6 +65,15 @@ onMounted(() => {
       <template v-if="pending">
         <div v-for="i in 4" :key="i" class="bg-white/10 rounded-2xl shrink-0 w-56 h-40 animate-pulse" />
       </template>
+
+      <!-- Empty state -->
+      <div
+        v-else-if="!negocios.length"
+        class="flex items-center gap-3 text-white/40 text-sm py-6 px-2"
+      >
+        <Store class="w-5 h-5 shrink-0" />
+        <span>Aún no hay negocios en esta categoría.</span>
+      </div>
 
       <!-- Business cards -->
       <a
