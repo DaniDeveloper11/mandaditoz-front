@@ -1,5 +1,6 @@
 <script setup>
 import { LayoutGrid, MapPin, Phone, Clock, Star } from '@lucide/vue'
+import { getLucideIcon } from '~/utils/categorias'
 
 definePageMeta({ layout: 'landing' })
 
@@ -150,8 +151,15 @@ const { categorias: categoriaCatalog } = useCategorias(10)
                 :alt="biz.coverPhoto.alternativeText ?? biz.name"
                 class="w-full h-full object-cover"
               />
-              <div v-else :class="['w-full h-full opacity-20', getCategoriaConfig(biz.category?.slug).accentColor]" />
-              <div :class="['absolute bottom-0 left-0 w-full h-1.5', getCategoriaConfig(biz.category?.slug).accentColor]" />
+              <div
+                v-else
+                :class="['w-full h-full opacity-20', biz.category?.color ? '' : getCategoriaConfig(biz.category?.slug).accentColor]"
+                :style="biz.category?.color ? { backgroundColor: biz.category.color } : {}"
+              />
+              <div
+                :class="['absolute bottom-0 left-0 w-full h-1.5', biz.category?.color ? '' : getCategoriaConfig(biz.category?.slug).accentColor]"
+                :style="biz.category?.color ? { backgroundColor: biz.category.color } : {}"
+              />
             </div>
 
             <div class="p-5 flex flex-col flex-1">
@@ -241,8 +249,11 @@ const { categorias: categoriaCatalog } = useCategorias(10)
             @click.prevent="store.setCategoria(cat.slug); router.push('/list')"
             class="bg-white rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
           >
-            <div :class="['w-12 h-12 rounded-xl flex items-center justify-center shrink-0', getCategoriaConfig(cat.slug).iconBg]">
-              <component :is="getCategoriaConfig(cat.slug).icon" :class="['w-6 h-6', getCategoriaConfig(cat.slug).iconColor]" />
+            <div
+              :class="['w-12 h-12 rounded-xl flex items-center justify-center shrink-0', cat.color ? '' : getCategoriaConfig(cat.slug).iconBg]"
+              :style="cat.color ? { backgroundColor: cat.color + '33' } : {}"
+            >
+              <component :is="getLucideIcon(cat.icon)" :class="['w-6 h-6', getCategoriaConfig(cat.slug).iconColor]" />
             </div>
             <div>
               <p class="font-semibold text-brand-text text-sm leading-tight">{{ cat.name }}</p>
@@ -269,7 +280,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
     </section>
 
     <!-- Explorar el directorio -->
-    <section class="bg-brand-bg-dark py-12 px-6 md:px-12">
+    <section id="what-do-you-want" class="bg-brand-bg-dark py-12 px-6 md:px-12">
       <div class="max-w-6xl mx-auto">
 
         <!-- Section header -->
@@ -299,8 +310,9 @@ const { categorias: categoriaCatalog } = useCategorias(10)
             :key="cat.slug"
             :slug="cat.slug"
             :name="cat.name"
-            :icon="getCategoriaConfig(cat.slug).icon"
+            :icon="getLucideIcon(cat.icon)"
             :accent-color="getCategoriaConfig(cat.slug).accentColor"
+            :color="cat.color"
             :count="cat.totalNegocios"
           />
         </div>

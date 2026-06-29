@@ -156,6 +156,7 @@ import Swal from 'sweetalert2'
 defineEmits(['change-mode'])
 
 const { register } = useAuth()
+const route = useRoute()
 
 const showPassword = ref(false)
 const form = reactive({
@@ -197,7 +198,7 @@ async function handleSubmit() {
       confirmButtonColor: '#1D5A8A',
     })
 
-    navigateTo('/')
+    navigateTo(route.query.redirect ?? '/')
   } catch (e) {
     const msg = e?.data?.error?.message ?? 'Error al crear la cuenta. Intenta de nuevo.'
     Swal.fire({

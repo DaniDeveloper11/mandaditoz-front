@@ -24,7 +24,7 @@ export function useNegocios(filtros) {
       ...(f.soloVerificados && { 'filters[isVerified][$eq]': true }),
       ...(f.query           && { 'filters[name][$containsi]': f.query }),
       ...(f.isFeatured      && { 'filters[isFeatured][$eq]': true }),
-      'filters[status][$eq]': 'published',
+      'filters[businessStatus][$eq]': 'published',
       sort: SORT_MAP[f.orden] ?? SORT_MAP.rating,
       'populate[0]': 'category',
       'populate[1]': 'logo',

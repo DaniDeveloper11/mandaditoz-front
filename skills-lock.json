@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "nuxt3": {
+      "source": "claude-dev-suite/claude-dev-suite",
+      "sourceType": "github",
+      "skillPath": "skills/meta-frameworks/nuxt/SKILL.md",
+      "computedHash": "52f98ab9234a30a8171464b4bd966a446eaf692c4fde3e21c02124a5cbdb5da8"
+    }
+  }
+}

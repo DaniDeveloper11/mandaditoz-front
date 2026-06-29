@@ -6,8 +6,12 @@ const props = defineProps({
   name: { type: String, required: true },
   icon: { type: Object, required: true },
   accentColor: { type: String, default: 'bg-brand-primary' },
+  color: { type: String, default: null },
   count: { type: Number, default: 0 },
 })
+
+const accentClass = computed(() => props.color ? '' : props.accentColor)
+const accentStyle = computed(() => props.color ? { backgroundColor: props.color } : {})
 
 const filtros = computed(() => ({
   categoria: props.slug,
@@ -90,8 +94,8 @@ function scroll(dir) {
             :alt="biz.coverPhoto.alternativeText ?? biz.name"
             class="w-full h-full object-cover"
           />
-          <div v-else :class="['w-full h-full', accentColor, 'opacity-20']" />
-          <div :class="['absolute bottom-0 left-0 w-full h-1.5', accentColor]" />
+          <div v-else :class="['w-full h-full opacity-20', accentClass]" :style="accentStyle" />
+          <div :class="['absolute bottom-0 left-0 w-full h-1.5', accentClass]" :style="accentStyle" />
         </div>
 
         <div class="p-4 flex flex-col flex-1">

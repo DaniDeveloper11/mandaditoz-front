@@ -31,6 +31,11 @@ export const useSearchStore = defineStore('search', () => {
     filtros.value.pagina = 1
   }
 
+  function setPorPagina(n) {
+    filtros.value.porPagina = n
+    filtros.value.pagina = 1
+  }
+
   function setPagina(n) {
     filtros.value.pagina = n
   }
@@ -46,5 +51,5 @@ export const useSearchStore = defineStore('search', () => {
     }
   }
 
-  return { filtros, setQuery, setCategoria, setOrden, toggleVerificados, setPagina, reset }
+  return { filtros, setQuery, setCategoria, setOrden, setPorPagina, toggleVerificados, setPagina, reset }
 })

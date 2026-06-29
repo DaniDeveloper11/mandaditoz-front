@@ -1,9 +1,11 @@
 <script setup>
-import { ChevronLeft, Star, MapPin, Share2, Phone, Check, Clock, Image as ImageIcon, Map } from '@lucide/vue'
+import { ChevronLeft, Star, MapPin, Share2, Phone, Check, Clock, Image as ImageIcon, Map, X } from '@lucide/vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 
 definePageMeta({ layout: 'landing' })
 
 const route = useRoute()
+const router = useRouter()
 const slug = computed(() => route.params.slug)
 const { negocio, pending, error } = useNegocio(slug)
 
@@ -37,6 +39,54 @@ useSeoMeta({
   title: () => negocio.value ? `${negocio.value.name} — Etzatlán, Jalisco | Mandaditoz` : 'Cargando...',
   description: () => negocio.value?.shortDescription ?? negocio.value?.description,
 })
+
+const { isLoggedIn, user } = useAuthStore()
+const { submitClaim} = useClaim()
+
+// Reclamar negocio
+const showClaimModal = ref(false)
+const claimForm = ref({ nombre: '', rol: 'owner', telefono: '', mensaje: '' })
+const claimSending = ref(false)
+const claimSent = ref(false)
+const claimError = ref(null)
+
+const ROLES = [
+  { value: 'owner',    label: 'Dueño' },
+  { value: 'manager',  label: 'Gerente' },
+  { value: 'employee', label: 'Empleado' },
+  { value: 'other',    label: 'Otro' },
+]
+
+function handleClaim() {
+  if (!isLoggedIn) {
+    router.push(`/login?redirect=${route.fullPath}`)
+    return
+  }
+  claimForm.value = { nombre: user.value?.username ?? '', rol: 'owner', telefono: '', mensaje: '' }
+  claimSent.value = false
+  claimError.value = null
+  showClaimModal.value = true
+}
+
+async function submitClaimForm() {
+  claimSending.value = true
+  claimError.value = null
+  try {
+    await submitClaim({
+      businessDocumentId: negocio.value.documentId,
+      claimantName: claimForm.value.nombre,
+      claimantRole: claimForm.value.rol,
+      claimantPhone: claimForm.value.telefono,
+      notes: claimForm.value.mensaje,
+    })
+    claimSent.value = true
+  } catch {
+    claimError.value = 'Ocurrió un error al enviar la solicitud. Intenta de nuevo.'
+  } finally {
+    claimSending.value = false
+  }
+}
+
 </script>
 
 <template>
@@ -133,7 +183,12 @@ useSeoMeta({
                 </div>
 
                 <div class="flex items-center gap-2 mt-2.5 flex-wrap">
-                  <span v-if="negocio.category" class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-900/70 text-blue-300">
+                  <span
+                    v-if="negocio.category"
+                    class="text-xs font-medium px-2.5 py-0.5 rounded-full"
+                    :class="negocio.category.color ? '' : 'bg-blue-900/70 text-blue-300'"
+                    :style="negocio.category.color ? { backgroundColor: negocio.category.color + '40', color: negocio.category.color } : {}"
+                  >
                     {{ negocio.category.name }}
                   </span>
                   <span
@@ -421,7 +476,9 @@ useSeoMeta({
               <p class="text-brand-azulgris text-xs leading-relaxed mb-3">
                 Reclamarlo te permite actualizar los datos, responder reseñas y acceder a estadísticas.
               </p>
-              <a href="#" class="text-brand-primary text-sm font-semibold hover:underline">Reclamar este negocio →</a>
+              <button @click="handleClaim" class="text-brand-primary text-sm font-semibold hover:underline">
+                Reclamar este negocio →
+              </button>
             </div>
 
           </div>
@@ -429,5 +486,109 @@ useSeoMeta({
       </div>
 
     </template>
+
+    <!-- Modal: Reclamar negocio -->
+    <TransitionRoot appear :show="showClaimModal" as="template">
+      <Dialog as="div" class="relative z-50" @close="showClaimModal = false">
+
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-200" enter-from="opacity-0" enter-to="opacity-100"
+          leave="ease-in duration-150" leave-from="opacity-100" leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-200" enter-from="opacity-0 scale-95" enter-to="opacity-100 scale-100"
+            leave="ease-in duration-150" leave-from="opacity-100 scale-100" leave-to="opacity-0 scale-95"
+          >
+            <DialogPanel class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+
+              <!-- Header -->
+              <div class="flex items-start justify-between px-6 pt-6 pb-4">
+                <div>
+                  <DialogTitle class="font-display font-black text-xl text-brand-text">Reclamar negocio</DialogTitle>
+                  <p class="text-brand-azulgris text-xs mt-1">{{ negocio?.name }}</p>
+                </div>
+                <button @click="showClaimModal = false" class="text-brand-azulgris hover:text-brand-text transition-colors mt-0.5">
+                  <X class="w-5 h-5" />
+                </button>
+              </div>
+
+              <!-- Éxito -->
+              <div v-if="claimSent" class="px-6 pb-8 pt-2 text-center">
+                <div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                  <Check class="w-7 h-7 text-emerald-600" />
+                </div>
+                <p class="font-semibold text-brand-text mb-1">¡Solicitud enviada!</p>
+                <p class="text-brand-azulgris text-sm">Revisaremos tu solicitud y nos pondremos en contacto contigo en breve.</p>
+                <button @click="showClaimModal = false" class="mt-6 btn-primary w-full">Cerrar</button>
+              </div>
+
+              <!-- Formulario -->
+              <form v-else @submit.prevent="submitClaimForm" class="px-6 pb-6 space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-brand-text mb-1.5">Nombre completo</label>
+                  <input
+                    v-model="claimForm.nombre"
+                    type="text"
+                    required
+                    placeholder="Tu nombre"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-brand-text mb-1.5">Tu relación con el negocio</label>
+                  <select
+                    v-model="claimForm.rol"
+                    required
+                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition bg-white"
+                  >
+                    <option v-for="r in ROLES" :key="r.value" :value="r.value">{{ r.label }}</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-brand-text mb-1.5">Teléfono de contacto</label>
+                  <input
+                    v-model="claimForm.telefono"
+                    type="tel"
+                    required
+                    placeholder="+52 33 1234 5678"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-brand-text mb-1.5">Notas <span class="text-brand-azulgris font-normal">(opcional)</span></label>
+                  <textarea
+                    v-model="claimForm.mensaje"
+                    rows="3"
+                    placeholder="Cuéntanos cómo podemos verificar que eres el propietario…"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition resize-none"
+                  />
+                </div>
+                <p v-if="claimError" class="text-red-500 text-xs">{{ claimError }}</p>
+                <button
+                  type="submit"
+                  :disabled="claimSending"
+                  class="btn-primary w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <span v-if="claimSending" class="inline-flex items-center gap-2">
+                    <span class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    Enviando…
+                  </span>
+                  <span v-else>Enviar solicitud</span>
+                </button>
+              </form>
+
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+
+      </Dialog>
+    </TransitionRoot>
+
   </div>
 </template>

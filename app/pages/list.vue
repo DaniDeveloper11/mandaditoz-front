@@ -1,17 +1,35 @@
 <script setup>
-import { MapPin, Star, BadgeCheck, ChevronLeft, ChevronRight, ChevronDown } from '@lucide/vue'
+import { MapPin, Star, BadgeCheck, ChevronLeft, ChevronRight, ChevronDown, Check } from '@lucide/vue'
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 
 definePageMeta({ layout: 'landing' })
 
 const router = useRouter()
 const store = useSearchStore()
 const { negocios, paginacion, pending } = useNegocios(computed(() => store.filtros))
+const { categorias } = useCategorias(50)
 
 const totalResultados = computed(() => paginacion.value?.total ?? 0)
 const paginaActual = computed(() => store.filtros.pagina)
 const totalPaginas = computed(() => paginacion.value?.pageCount ?? 1)
 
-// Build visible page numbers around the current page
+const ORDEN_OPTIONS = [
+  { value: 'rating',    label: 'Mejor valorados' },
+  { value: 'nombre',    label: 'Nombre A-Z' },
+  { value: 'recientes', label: 'Más recientes' },
+]
+
+const POR_PAGINA_OPTIONS = [6, 12, 24]
+
+const ordenLabel = computed(() =>
+  ORDEN_OPTIONS.find(o => o.value === store.filtros.orden)?.label ?? 'Ordenar'
+)
+
+const categoriaLabel = computed(() => {
+  if (!store.filtros.categoria) return 'Categoría'
+  return categorias.value.find(c => c.slug === store.filtros.categoria)?.name ?? store.filtros.categoria
+})
+
 const paginasVisibles = computed(() => {
   const total = totalPaginas.value
   const current = paginaActual.value
@@ -39,7 +57,7 @@ const paginasVisibles = computed(() => {
               Resultados para <span class="italic">"{{ store.filtros.query }}"</span>
             </template>
             <template v-else-if="store.filtros.categoria">
-              {{ store.filtros.categoria }}
+              {{ categoriaLabel }}
             </template>
             <template v-else>Directorio de negocios</template>
           </h1>
@@ -53,15 +71,70 @@ const paginasVisibles = computed(() => {
       <!-- Filters -->
       <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div class="flex flex-wrap gap-2">
-          <button class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm text-brand-text font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            {{ store.filtros.porPagina }} por página <ChevronDown class="w-3.5 h-3.5 text-gray-400" />
-          </button>
-          <button class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm text-brand-text font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            Categoría <ChevronDown class="w-3.5 h-3.5 text-gray-400" />
-          </button>
-          <button class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm text-brand-text font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            Ordenar <ChevronDown class="w-3.5 h-3.5 text-gray-400" />
-          </button>
+
+          <!-- Por página -->
+          <Menu as="div" class="relative">
+            <MenuButton class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm text-brand-text font-medium hover:bg-gray-50 transition-colors shadow-sm">
+              {{ store.filtros.porPagina }} por página <ChevronDown class="w-3.5 h-3.5 text-gray-400" />
+            </MenuButton>
+            <MenuItems class="absolute left-0 mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 focus:outline-none">
+              <MenuItem v-for="n in POR_PAGINA_OPTIONS" :key="n" v-slot="{ active }">
+                <button
+                  @click="store.setPorPagina(n)"
+                  :class="['w-full flex items-center justify-between px-4 py-2 text-sm transition-colors', active ? 'bg-gray-50' : '', store.filtros.porPagina === n ? 'font-semibold text-brand-primary' : 'text-brand-text']"
+                >
+                  {{ n }} por página
+                  <Check v-if="store.filtros.porPagina === n" class="w-3.5 h-3.5 text-brand-primary" />
+                </button>
+              </MenuItem>
+            </MenuItems>
+          </Menu>
+
+          <!-- Categoría -->
+          <Menu as="div" class="relative">
+            <MenuButton :class="['flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm bg-white', store.filtros.categoria ? 'border border-brand-primary text-brand-primary' : 'border border-gray-200 text-brand-text']">
+              {{ categoriaLabel }} <ChevronDown class="w-3.5 h-3.5 opacity-60" />
+            </MenuButton>
+            <MenuItems class="absolute left-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 focus:outline-none max-h-64 overflow-y-auto">
+              <MenuItem v-slot="{ active }">
+                <button
+                  @click="store.setCategoria(null)"
+                  :class="['w-full flex items-center justify-between px-4 py-2 text-sm transition-colors', active ? 'bg-gray-50' : '', !store.filtros.categoria ? 'font-semibold text-brand-primary' : 'text-brand-text']"
+                >
+                  Todas las categorías
+                  <Check v-if="!store.filtros.categoria" class="w-3.5 h-3.5 text-brand-primary" />
+                </button>
+              </MenuItem>
+              <MenuItem v-for="cat in categorias" :key="cat.slug" v-slot="{ active }">
+                <button
+                  @click="store.setCategoria(cat.slug)"
+                  :class="['w-full flex items-center justify-between px-4 py-2 text-sm transition-colors', active ? 'bg-gray-50' : '', store.filtros.categoria === cat.slug ? 'font-semibold text-brand-primary' : 'text-brand-text']"
+                >
+                  {{ cat.name }}
+                  <Check v-if="store.filtros.categoria === cat.slug" class="w-3.5 h-3.5 text-brand-primary" />
+                </button>
+              </MenuItem>
+            </MenuItems>
+          </Menu>
+
+          <!-- Ordenar -->
+          <Menu as="div" class="relative">
+            <MenuButton class="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm text-brand-text font-medium hover:bg-gray-50 transition-colors shadow-sm">
+              {{ ordenLabel }} <ChevronDown class="w-3.5 h-3.5 text-gray-400" />
+            </MenuButton>
+            <MenuItems class="absolute left-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 focus:outline-none">
+              <MenuItem v-for="op in ORDEN_OPTIONS" :key="op.value" v-slot="{ active }">
+                <button
+                  @click="store.setOrden(op.value)"
+                  :class="['w-full flex items-center justify-between px-4 py-2 text-sm transition-colors', active ? 'bg-gray-50' : '', store.filtros.orden === op.value ? 'font-semibold text-brand-primary' : 'text-brand-text']"
+                >
+                  {{ op.label }}
+                  <Check v-if="store.filtros.orden === op.value" class="w-3.5 h-3.5 text-brand-primary" />
+                </button>
+              </MenuItem>
+            </MenuItems>
+          </Menu>
+
         </div>
 
         <!-- Verified toggle -->
@@ -97,7 +170,11 @@ const paginasVisibles = computed(() => {
         >
           <!-- Avatar + name + address -->
           <div class="flex items-start gap-4">
-            <div class="w-14 h-14 rounded-xl bg-brand-bg-dark flex items-center justify-center text-white font-bold text-xl shrink-0">
+            <div
+              class="w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold text-xl shrink-0"
+              :class="biz.category?.color ? '' : 'bg-brand-bg-dark'"
+              :style="biz.category?.color ? { backgroundColor: biz.category.color + '33' } : {}"
+            >
               {{ biz.name.charAt(0) }}
             </div>
             <div class="min-w-0 flex-1">
@@ -110,7 +187,12 @@ const paginasVisibles = computed(() => {
                   <MapPin class="w-3 h-3 shrink-0" />
                   <span>{{ biz.address }}</span>
                 </div>
-                <span v-if="biz.category" :class="['text-xs font-medium px-2 py-0.5 rounded-full', getCategoriaConfig(biz.category.slug).badgeStyle]">
+                <span
+                  v-if="biz.category"
+                  class="text-xs font-medium px-2 py-0.5 rounded-full"
+                  :class="biz.category.color ? '' : getCategoriaConfig(biz.category.slug).badgeStyle"
+                  :style="biz.category.color ? { backgroundColor: biz.category.color + '26', color: biz.category.color } : {}"
+                >
                   {{ biz.category.name }}
                 </span>
               </div>

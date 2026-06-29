@@ -89,3 +89,21 @@ Pages declare their layout via `definePageMeta({ layout: 'landing' })`.
 - `@lucide/vue` — all icons across the entire app
 
 **Image handling:** `@nuxt/image` module. Static assets (logos, SVGs) are in `public/` and referenced with root-relative paths like `/logo-cielo-horizontal.svg`.
+
+
+## Reglas de Código Específicas del Proyecto
+
+### Reactividad en Nuxt 3 / Vue 3 (JavaScript)
+Siempre que generes, edites o revises código de Vue/Nuxt, aplica estrictamente estas reglas de desempaquetado:
+
+1. **Uso de `.value` (Solo en `<script setup>`)**:
+   - Obligatorio para leer/escribir variables creadas con `ref()` o `computed()`.
+   - Ejemplo: `const count = ref(0); count.value++;`
+
+2. **Prohibido usar `.value`**:
+   - En el `<template>` (Vue lo desempaqueta automáticamente). Ejemplo: `<p>{{ count }}</p>`.
+   - Con objetos creados mediante `reactive()`. Ejemplo: `state.user = 'Ana';`.
+   - Con propiedades de `defineProps()`. Ejemplo: `console.log(props.title);`.
+
+3. **Composables de Nuxt**:
+   - Al desestructurar `useFetch`, la propiedad `data` es un ref. Usa `data.value`.

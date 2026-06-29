@@ -1,4 +1,14 @@
+import * as LucideIcons from '@lucide/vue'
 import { Utensils, Plus, Sun, Car, Wrench, Briefcase, PawPrint } from '@lucide/vue'
+
+function kebabToPascal(str) {
+  return str.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('')
+}
+
+export function getLucideIcon(iconSlug) {
+  if (!iconSlug) return Briefcase
+  return LucideIcons[kebabToPascal(iconSlug)] ?? Briefcase
+}
 
 export const CATEGORIA_CONFIG = {
   'comida': {

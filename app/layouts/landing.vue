@@ -2,7 +2,7 @@
   <header class="relative isolate z-10 bg-white ">
     <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
       <div class="flex lg:flex-1">
-        <a href="#" class="-m-1.5 p-1.5">
+        <a href="/" class="-m-1.5 p-1.5">
           <span class="sr-only">Mandaditoz</span>
           <img class="h-14 w-auto " :src="logoLight" alt="Mandaditoz" />
         </a>
@@ -139,7 +139,7 @@
 
         <!-- Brand column -->
         <div class="md:col-span-1">
-          <img :src="logoLight" alt="Mandaditoz" class="h-8 w-auto mb-4" />
+          <img :src="logoDark" alt="Mandaditoz" class="h-8 w-auto mb-4" />
           <p class="text-white/60 text-sm leading-relaxed mb-4">
             El directorio gratuito de negocios locales de Etzatlán, Jalisco. De vecinos para vecinos.
           </p>
@@ -204,6 +204,7 @@ const { isLoggedIn, user, logout } = useAuthStore()
 const { categorias } = useCategorias()
 
 const logoLight = '/logo-cielo-horizontal.svg'
+const logoDark = 'logo-cielo-horizontal-dark.svg'
 const mobileMenuOpen = ref(false)
 
 function handleLogout() {

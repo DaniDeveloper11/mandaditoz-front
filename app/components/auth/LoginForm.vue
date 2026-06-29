@@ -88,6 +88,7 @@ import Swal from 'sweetalert2'
 defineEmits(['change-mode'])
 
 const { login } = useAuth()
+const route = useRoute()
 
 const showPassword = ref(false)
 const form = reactive({ email: '', password: '', remember: false })
@@ -102,7 +103,7 @@ async function handleSubmit() {
   try {
     await login({ identifier: form.email, password: form.password })
     Swal.close()
-    navigateTo('/')
+    navigateTo(route.query.redirect ?? '/')
   } catch (e) {
     const msg = e?.data?.error?.message ?? 'Correo o contraseña incorrectos.'
     Swal.fire({
