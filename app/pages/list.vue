@@ -1,5 +1,5 @@
 <script setup>
-import { MapPin, Star, BadgeCheck, ChevronLeft, ChevronRight, ChevronDown, Check } from '@lucide/vue'
+import { MapPin, Phone, Star, BadgeCheck, ChevronLeft, ChevronRight, ChevronDown, Check } from '@lucide/vue'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 
 definePageMeta({ layout: 'landing' })
@@ -195,6 +195,11 @@ const paginasVisibles = computed(() => {
                 >
                   {{ biz.category.name }}
                 </span>
+              </div>
+              <div v-if="biz.phones.length" class="flex items-center gap-1 text-brand-azulgris text-xs mt-0.5">
+                <Phone class="w-3 h-3 shrink-0" />
+                <span>{{ biz.phones[0].number }}</span>
+                <span v-if="biz.phones.length > 1" class="opacity-60">+{{ biz.phones.length - 1 }} más</span>
               </div>
             </div>
           </div>

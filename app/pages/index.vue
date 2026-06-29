@@ -215,7 +215,8 @@ const { categorias: categoriaCatalog } = useCategorias(10)
                 </div>
                 <div class="flex items-center gap-2 text-sm text-brand-azulgris">
                   <Phone class="w-4 h-4 shrink-0" />
-                  <span>{{ biz.phone || 'Teléfono no disponible' }}</span>
+                  <span>{{ biz.phones[0]?.number ?? 'Teléfono no disponible' }}</span>
+                  <span v-if="biz.phones.length > 1" class="text-xs opacity-60">+{{ biz.phones.length - 1 }} más</span>
                 </div>
               </div>
 
