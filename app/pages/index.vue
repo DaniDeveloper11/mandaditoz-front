@@ -239,7 +239,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
 
         <div class="flex items-center justify-between mb-8">
           <h2 class="font-display font-black text-3xl md:text-4xl text-brand-text">¿Qué estás buscando?</h2>
-          <a href="/list" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors whitespace-nowrap">Ver todas →</a>
+          <a href="/categorias" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors whitespace-nowrap">Ver todas →</a>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -264,7 +264,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
 
           <!-- Ver todas -->
           <a
-            href="/list"
+            href="/categorias"
             class="bg-brand-bg-dark rounded-2xl p-5 flex items-center gap-4 hover:opacity-90 transition-opacity"
           >
             <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0">

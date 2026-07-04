@@ -1,118 +1,255 @@
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 
-function computeIsOpen(hours) {
-  if (!hours?.length) return null
-  const now = new Date()
-  const todayKey = DAY_KEYS[now.getDay()]
-  const today = hours.find(h => h.dayOfWeek === todayKey)
-  if (!today || today.isClosed) return false
-  if (today.is24Hours) return true
+function timeToMinutes(t) {
+  if (!t) return null
+  const [h, m] = String(t).split(':').map(Number)
+  return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0)
+}
+
+function todayDate() {
+  return new Date()
+}
+
+function findTodayException(hourExceptions, date) {
+  if (!hourExceptions?.length) return null
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  const iso = `${y}-${m}-${d}`
+  return hourExceptions.find(e => e.date === iso) || null
+}
+
+function isCurrentTimeInRange(hour, now) {
+  if (hour.is24Hours) return true
+  if (hour.isClosed) return false
   const cur = now.getHours() * 60 + now.getMinutes()
-  const [oh, om] = today.openTime?.split(':') ?? [0, 0]
-  const [ch, cm] = today.closeTime?.split(':') ?? [0, 0]
-  return cur >= parseInt(oh) * 60 + parseInt(om) &&
-         cur <  parseInt(ch) * 60 + parseInt(cm)
+  const open = timeToMinutes(hour.openTime)
+  const close = timeToMinutes(hour.closeTime)
+  if (open == null || close == null) return false
+  if (hour.crossesMidnight) return cur >= open || cur < close
+  return cur >= open && cur < close
+}
+
+/**
+ * Devuelve true/false/null (desconocido).
+ * Reglas:
+ *  - Si hoy hay una excepción (festivo, cierre especial), ésta prevalece.
+ *  - Si no hay filas para hoy, retorna null.
+ *  - Si todas las filas del día son isClosed, retorna false.
+ *  - Si alguna franja (soportando is24Hours y crossesMidnight) contiene la hora actual, retorna true.
+ */
+export function computeIsOpen(hours, hourExceptions = []) {
+  if (!hours?.length && !hourExceptions?.length) return null
+  const now = todayDate()
+
+  const exception = findTodayException(hourExceptions, now)
+  if (exception) return isCurrentTimeInRange(exception, now)
+
+  if (!hours?.length) return null
+  const todayKey = DAY_KEYS[now.getDay()]
+  const today = hours.filter(h => h.dayOfWeek === todayKey)
+  if (!today.length) return null
+  if (today.every(h => h.isClosed)) return false
+  return today.some(h => isCurrentTimeInRange(h, now))
 }
 
 function formatAddress(a) {
   if (!a) return ''
-  return [a.street, a.exteriorNumber && `#${a.exteriorNumber}`, a.neighborhood, a.city]
-    .filter(Boolean).join(', ')
+  if (a.street) {
+    const line1 = a.exteriorNumber ? `${a.street} ${a.exteriorNumber}` : a.street
+    return line1
+  }
+  return a.rawText || ''
 }
 
-export function mapNegocio(item) {
-  const a = item.attributes ?? item
-  const hours = (a.hours?.data ?? a.hours ?? []).map(mapHorario)
+// -----------------------------------------------------------------------------
+// Mappers (Strapi 5 — todas las respuestas son planas, sin .attributes ni .data)
+// -----------------------------------------------------------------------------
+
+export function mapMedia(item) {
+  if (!item) return null
+  return {
+    url: item.url,
+    alternativeText: item.alternativeText,
+    width: item.width,
+    height: item.height,
+    formats: item.formats,
+  }
+}
+
+export function mapTag(item) {
+  if (!item) return null
   return {
     id: item.id,
     documentId: item.documentId,
-    name: a.name,
-    slug: a.slug,
-    description: a.description,
-    shortDescription: a.shortDescription,
-    address: formatAddress(a.address),
-    addressRaw: a.address,
-    phones: (a.phones ?? []).map(p => ({
-      number: p.number,
-      label: p.label,
-      hasWhatsapp: p.hasWhatsapp ?? false,
-    })),
-    email: a.email,
-    website: a.website,
-    socialLinks: a.socialLinks ?? [],
-    isVerified: a.isVerified ?? false,
-    isFeatured: a.isFeatured ?? false,
-    ownershipStatus: a.ownershipStatus ?? 'unclaimed',
-    viewCount: a.viewCount ?? 0,
-    ratingAverage: a.ratingAverage ?? 0,
-    ratingCount: a.ratingCount ?? 0,
-    isOpen: computeIsOpen(hours),
-    category: a.category?.data ? mapCategoria(a.category.data) : (a.category ?? null),
-    secondaryCategories: (a.secondaryCategories?.data ?? a.secondaryCategories ?? []).map(c => mapCategoria(c)),
-    hours,
-    tags: a.tags ?? [],
-    photos: (a.photos?.data ?? a.photos ?? []).map(mapPhoto),
-    reviews: (a.reviews?.data ?? a.reviews ?? []).map(mapReview),
-    logo: a.logo?.data ? mapMedia(a.logo.data) : null,
-    coverPhoto: a.coverPhoto?.data ? mapMedia(a.coverPhoto.data) : null,
+    name: item.name,
+    slug: item.slug,
+    icon: item.icon,
+    description: item.description,
+    businessCount: item.businessCount ?? 0,
+  }
+}
+
+export function mapCity(item) {
+  if (!item) return null
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    name: item.name,
+    slug: item.slug,
+    center: item.center ?? null,
+    businessCount: item.businessCount ?? 0,
+  }
+}
+
+export function mapNeighborhood(item) {
+  if (!item) return null
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    name: item.name,
+    slug: item.slug,
+    postalCode: item.postalCode,
   }
 }
 
 export function mapCategoria(item) {
-  const a = item.attributes ?? item
+  if (!item) return null
   return {
     id: item.id,
-    name: a.name,
-    slug: a.slug,
-    description: a.description,
-    icon: a.icon,
-    color: a.color,
-    order: a.order ?? 0,
-    isActive: a.isActive ?? true,
+    documentId: item.documentId,
+    name: item.name,
+    slug: item.slug,
+    description: item.description,
+    icon: item.icon,
+    color: item.color,
+    order: item.order ?? 0,
+    depth: item.depth ?? 0,
+    path: item.path,
+    isActive: item.isActive ?? true,
+    isFeatured: !!item.isFeatured,
+    businessCount: item.businessCount ?? 0,
+    parent: item.parent ? mapCategoria(item.parent) : null,
+    children: (item.children ?? []).map(mapCategoria),
   }
 }
 
 export function mapHorario(item) {
-  const a = item.attributes ?? item
+  if (!item) return null
   return {
-    dayOfWeek: a.dayOfWeek,
-    openTime: a.openTime,
-    closeTime: a.closeTime,
-    isClosed: a.isClosed ?? false,
-    is24Hours: a.is24Hours ?? false,
+    id: item.id,
+    documentId: item.documentId,
+    dayOfWeek: item.dayOfWeek,
+    openTime: item.openTime,
+    closeTime: item.closeTime,
+    isClosed: !!item.isClosed,
+    is24Hours: !!item.is24Hours,
+    crossesMidnight: !!item.crossesMidnight,
+    sortOrder: item.sortOrder ?? 0,
+    note: item.note,
+  }
+}
+
+export function mapHourException(item) {
+  if (!item) return null
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    date: item.date,
+    isClosed: !!item.isClosed,
+    openTime: item.openTime,
+    closeTime: item.closeTime,
+    crossesMidnight: !!item.crossesMidnight,
+    reason: item.reason,
   }
 }
 
 export function mapReview(item) {
-  const a = item.attributes ?? item
+  if (!item) return null
   return {
     id: item.id,
-    rating: a.rating,
-    title: a.title,
-    comment: a.comment,
-    visitDate: a.visitDate,
-    helpfulCount: a.helpfulCount ?? 0,
+    documentId: item.documentId,
+    rating: item.rating,
+    title: item.title,
+    comment: item.comment,
+    visitDate: item.visitDate,
+    helpfulCount: item.helpfulCount ?? 0,
+    editedAt: item.editedAt,
   }
 }
 
 export function mapPhoto(item) {
-  const a = item.attributes ?? item
-  const file = a.file?.data ? mapMedia(a.file.data) : null
+  if (!item) return null
+  const file = item.file ? mapMedia(item.file) : null
   return {
     id: item.id,
+    documentId: item.documentId,
     url: file?.url ?? null,
-    alternativeText: a.caption ?? file?.alternativeText,
-    order: a.order ?? 0,
+    alternativeText: item.caption ?? file?.alternativeText,
+    order: item.order ?? 0,
   }
 }
 
-export function mapMedia(item) {
-  const a = item.attributes ?? item
+export function mapNegocio(item) {
+  if (!item) return null
+  const hours = (item.hours ?? []).map(mapHorario).filter(Boolean)
+  const hourExceptions = (item.hourExceptions ?? []).map(mapHourException).filter(Boolean)
+
+  const logo = item.logo ? mapMedia(item.logo) : (item.logoUrl ? { url: item.logoUrl } : null)
+  const coverPhoto = item.coverPhoto ? mapMedia(item.coverPhoto) : (item.coverPhotoUrl ? { url: item.coverPhotoUrl } : null)
+
   return {
-    url: a.url,
-    alternativeText: a.alternativeText,
-    width: a.width,
-    height: a.height,
-    formats: a.formats,
+    id: item.id,
+    documentId: item.documentId,
+    name: item.name,
+    slug: item.slug,
+    description: item.description,
+    shortDescription: item.shortDescription,
+    address: formatAddress(item.address),
+    addressRaw: item.address,
+    geo: item.geo ?? null,
+    mapEmbedUrl: item.mapEmbedUrl,
+    hoursText: item.hoursText,
+    phones: (item.phones ?? []).map(p => ({
+      id: p.id,
+      number: p.number,
+      label: p.label,
+      hasWhatsapp: !!p.hasWhatsapp,
+      isPrimary: !!p.isPrimary,
+    })),
+    email: item.email,
+    website: item.website,
+    menuUrl: item.menuUrl,
+    videoUrl: item.videoUrl,
+    priceLevel: item.priceLevel,
+    paymentMethods: item.paymentMethods ?? [],
+    amenities: item.amenities ?? [],
+    socialLinks: (item.socialLinks ?? []).map(s => ({
+      id: s.id,
+      platform: s.platform,
+      url: s.url,
+    })),
+    isVerified: !!item.isVerified,
+    isFeatured: !!item.isFeatured,
+    businessStatus: item.businessStatus,
+    ownershipStatus: item.ownershipStatus ?? 'unclaimed',
+    viewCount: item.viewCount ?? 0,
+    ratingAverage: Number(item.ratingAverage ?? 0),
+    ratingCount: item.ratingCount ?? 0,
+    reviewCount: item.reviewCount ?? 0,
+    isOpen: computeIsOpen(hours, hourExceptions),
+    category: item.category ? mapCategoria(item.category) : null,
+    secondaryCategories: (item.secondaryCategories ?? []).map(mapCategoria).filter(Boolean),
+    tags: (item.tags ?? []).map(mapTag).filter(Boolean),
+    city: item.city ? mapCity(item.city) : null,
+    neighborhood: item.neighborhood ? mapNeighborhood(item.neighborhood) : null,
+    hours,
+    hourExceptions,
+    photos: (item.photos ?? []).map(mapPhoto).filter(Boolean),
+    reviews: (item.reviews ?? []).map(mapReview).filter(Boolean),
+    logo,
+    coverPhoto,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
   }
 }

@@ -7,7 +7,20 @@ definePageMeta({ layout: 'landing' })
 const router = useRouter()
 const store = useSearchStore()
 const { negocios, paginacion, pending } = useNegocios(computed(() => store.filtros))
-const { categorias } = useCategorias(50)
+const { categorias } = useCategorias({ limit: 100, allDepths: true })
+
+const PRICE_OPTIONS = [
+  { value: null, label: 'Cualquier precio' },
+  { value: 'free', label: 'Gratis' },
+  { value: 'budget', label: '$ Económico' },
+  { value: 'moderate', label: '$$ Moderado' },
+  { value: 'upscale', label: '$$$ Alto' },
+  { value: 'luxury', label: '$$$$ Premium' },
+]
+
+const priceLabel = computed(() =>
+  PRICE_OPTIONS.find(o => o.value === store.filtros.priceLevel)?.label ?? 'Precio'
+)
 
 const totalResultados = computed(() => paginacion.value?.total ?? 0)
 const paginaActual = computed(() => store.filtros.pagina)
@@ -134,6 +147,24 @@ const paginasVisibles = computed(() => {
               </MenuItem>
             </MenuItems>
           </Menu>
+
+          <!-- Precio -->
+          <!-- <Menu as="div" class="relative"> -->
+          <!--   <MenuButton :class="['flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm bg-white', store.filtros.priceLevel ? 'border border-brand-primary text-brand-primary' : 'border border-gray-200 text-brand-text']"> -->
+          <!--     {{ priceLabel }} <ChevronDown class="w-3.5 h-3.5 opacity-60" /> -->
+          <!--   </MenuButton> -->
+          <!--   <MenuItems class="absolute left-0 mt-1 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 focus:outline-none"> -->
+          <!--     <MenuItem v-for="op in PRICE_OPTIONS" :key="op.value ?? 'any'" v-slot="{ active }"> -->
+          <!--       <button -->
+          <!--         @click="store.setPriceLevel(op.value)" -->
+          <!--         :class="['w-full flex items-center justify-between px-4 py-2 text-sm transition-colors', active ? 'bg-gray-50' : '', store.filtros.priceLevel === op.value ? 'font-semibold text-brand-primary' : 'text-brand-text']" -->
+          <!--       > -->
+          <!--         {{ op.label }} -->
+          <!--         <Check v-if="store.filtros.priceLevel === op.value" class="w-3.5 h-3.5 text-brand-primary" /> -->
+          <!--       </button> -->
+          <!--     </MenuItem> -->
+          <!--   </MenuItems> -->
+          <!-- </Menu> -->
 
         </div>
 

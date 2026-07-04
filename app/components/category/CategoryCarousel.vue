@@ -23,7 +23,9 @@ const filtros = computed(() => ({
   query: '',
 }))
 
-const { negocios, pending } = useNegocios(filtros)
+const { negocios, paginacion, pending } = useNegocios(filtros)
+
+const totalNegocios = computed(() => paginacion.value?.total ?? props.count ?? 0)
 
 const carouselEl = ref(null)
 function scroll(dir) {
@@ -40,7 +42,10 @@ function scroll(dir) {
           <component :is="icon" class="w-5 h-5 text-white" />
         </div>
         <h3 class="font-display font-black text-2xl text-white">{{ name }}</h3>
-        <span class="text-brand-azulgris text-sm">{{ count }} negocios</span>
+        <span class="inline-flex items-center gap-1 text-brand-azulgris text-sm bg-white/10 rounded-full px-2.5 py-0.5">
+          <Store class="w-3.5 h-3.5" />
+          {{ totalNegocios }} {{ totalNegocios === 1 ? 'negocio' : 'negocios' }}
+        </span>
       </div>
       <div class="flex items-center gap-3">
         <a :href="`/list`" class="text-brand-azulgris text-sm hover:text-white transition-colors whitespace-nowrap">Ver todos →</a>

@@ -23,10 +23,39 @@ const DAY_KEYS   = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const todayKey   = DAY_KEYS[new Date().getDay()]
 
 const sortedHours = computed(() =>
-  [...(negocio.value?.hours ?? [])].sort((a, b) =>
-    DAY_ORDER.indexOf(a.dayOfWeek) - DAY_ORDER.indexOf(b.dayOfWeek)
-  )
+  [...(negocio.value?.hours ?? [])].sort((a, b) => {
+    const dayDiff = DAY_ORDER.indexOf(a.dayOfWeek) - DAY_ORDER.indexOf(b.dayOfWeek)
+    if (dayDiff !== 0) return dayDiff
+    return (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+  })
 )
+
+/**
+ * Agrupa horarios por día para renderizar shifts partidos como una sola fila con múltiples franjas.
+ */
+const hoursByDay = computed(() => {
+  const grouped = DAY_ORDER.map(day => ({
+    dayOfWeek: day,
+    label: DAY_LABELS[day],
+    shifts: [],
+    isClosed: false,
+  }))
+  const map = Object.fromEntries(grouped.map(g => [g.dayOfWeek, g]))
+  for (const row of sortedHours.value) {
+    const g = map[row.dayOfWeek]
+    if (!g) continue
+    if (row.isClosed) g.isClosed = true
+    else g.shifts.push(row)
+  }
+  return grouped
+})
+
+function formatShift(row) {
+  if (row.is24Hours) return '24 horas'
+  const start = formatTime(row.openTime)
+  const end = formatTime(row.closeTime)
+  return row.crossesMidnight ? `${start} – ${end} (día sig.)` : `${start} – ${end}`
+}
 
 function formatTime(t) {
   if (!t) return ''
@@ -278,10 +307,10 @@ async function submitClaimForm() {
                 <div v-if="negocio.tags.length" class="flex flex-wrap gap-2 mt-4">
                   <span
                     v-for="tag in negocio.tags"
-                    :key="tag"
+                    :key="tag.id ?? tag.slug"
                     class="text-xs font-medium px-3 py-1 rounded-full border border-gray-200 text-brand-text bg-gray-50"
                   >
-                    {{ tag }}
+                    {{ tag.name }}
                   </span>
                 </div>
               </div>
@@ -424,7 +453,7 @@ async function submitClaimForm() {
                   </div>
                 </div>
 
-                <div v-if="sortedHours.length" class="flex gap-3 px-5 py-4">
+                <div v-if="hoursByDay.some(d => d.shifts.length || d.isClosed)" class="flex gap-3 px-5 py-4">
                   <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
                     <Clock class="w-4 h-4 text-slate-500" />
                   </div>
@@ -432,18 +461,25 @@ async function submitClaimForm() {
                     <p class="text-gray-400 text-xs mb-2">Horario</p>
                     <div class="space-y-1">
                       <div
-                        v-for="row in sortedHours"
-                        :key="row.dayOfWeek"
-                        class="flex justify-between items-center text-xs gap-2"
+                        v-for="day in hoursByDay"
+                        :key="day.dayOfWeek"
+                        class="flex justify-between items-start text-xs gap-2"
                       >
-                        <span :class="row.dayOfWeek === todayKey ? 'text-brand-primary font-bold' : 'text-brand-text'">
-                          {{ DAY_LABELS[row.dayOfWeek] }}
+                        <span :class="day.dayOfWeek === todayKey ? 'text-brand-primary font-bold' : 'text-brand-text'">
+                          {{ day.label }}
                         </span>
-                        <span :class="row.dayOfWeek === todayKey ? 'text-brand-primary font-bold' : 'text-gray-500'">
-                          {{ row.isClosed ? 'Cerrado' : row.is24Hours ? '24 horas' : `${formatTime(row.openTime)} – ${formatTime(row.closeTime)}` }}
+                        <span :class="['text-right', day.dayOfWeek === todayKey ? 'text-brand-primary font-bold' : 'text-gray-500']">
+                          <template v-if="day.isClosed && !day.shifts.length">Cerrado</template>
+                          <template v-else-if="!day.shifts.length">—</template>
+                          <template v-else>
+                            <span v-for="(shift, idx) in day.shifts" :key="idx" class="block">
+                              {{ formatShift(shift) }}
+                            </span>
+                          </template>
                         </span>
                       </div>
                     </div>
+                    <p v-if="negocio.hoursText" class="text-[11px] text-gray-400 mt-2 leading-snug">{{ negocio.hoursText }}</p>
                   </div>
                 </div>
 

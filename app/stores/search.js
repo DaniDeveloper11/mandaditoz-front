@@ -1,15 +1,20 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+const DEFAULT_FILTROS = {
+  query: '',
+  categoria: null,
+  ciudad: null,
+  colonia: null,
+  priceLevel: null,
+  soloVerificados: false,
+  orden: 'rating',
+  pagina: 1,
+  porPagina: 12,
+}
+
 export const useSearchStore = defineStore('search', () => {
-  const filtros = ref({
-    query: '',
-    categoria: null,
-    soloVerificados: false,
-    orden: 'rating',
-    pagina: 1,
-    porPagina: 12,
-  })
+  const filtros = ref({ ...DEFAULT_FILTROS })
 
   function setQuery(q) {
     filtros.value.query = q
@@ -18,6 +23,22 @@ export const useSearchStore = defineStore('search', () => {
 
   function setCategoria(slug) {
     filtros.value.categoria = slug
+    filtros.value.pagina = 1
+  }
+
+  function setCiudad(slug) {
+    filtros.value.ciudad = slug
+    filtros.value.colonia = null
+    filtros.value.pagina = 1
+  }
+
+  function setColonia(slug) {
+    filtros.value.colonia = slug
+    filtros.value.pagina = 1
+  }
+
+  function setPriceLevel(level) {
+    filtros.value.priceLevel = level
     filtros.value.pagina = 1
   }
 
@@ -41,15 +62,20 @@ export const useSearchStore = defineStore('search', () => {
   }
 
   function reset() {
-    filtros.value = {
-      query: '',
-      categoria: null,
-      soloVerificados: false,
-      orden: 'rating',
-      pagina: 1,
-      porPagina: 12,
-    }
+    filtros.value = { ...DEFAULT_FILTROS }
   }
 
-  return { filtros, setQuery, setCategoria, setOrden, setPorPagina, toggleVerificados, setPagina, reset }
+  return {
+    filtros,
+    setQuery,
+    setCategoria,
+    setCiudad,
+    setColonia,
+    setPriceLevel,
+    setOrden,
+    setPorPagina,
+    toggleVerificados,
+    setPagina,
+    reset,
+  }
 })

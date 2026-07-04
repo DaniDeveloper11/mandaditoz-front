@@ -4,13 +4,13 @@ import { computed } from 'vue'
 export const useAuthStore = defineStore('auth', () => {
   const token = useCookie('auth:token', {
     maxAge: 60 * 60 * 24 * 7, // 7 días
-    secure: true,
+    secure: import.meta.env.PROD,
     sameSite: 'lax',
   })
 
   const user = useCookie('auth:user', {
     maxAge: 60 * 60 * 24 * 7,
-    secure: true,
+    secure: import.meta.env.PROD,
     sameSite: 'lax',
     default: () => null,
   })
