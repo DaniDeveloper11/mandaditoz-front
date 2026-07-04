@@ -1,8 +1,11 @@
 <script setup>
 import {
   LayoutList, Phone, Clock, Image as ImageIcon,
-  Share2, Star, X, Pencil, ChevronDown, MapPin, Info, Plus, PlusCircle,
+  Share2, Star, X, Pencil, ChevronDown, MapPin, Info, Plus, PlusCircle, Check,
 } from '@lucide/vue'
+import {
+  Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption,
+} from '@headlessui/vue'
 
 definePageMeta({ layout: 'editor' })
 
@@ -147,25 +150,18 @@ watch(negocio, (val) => {
 }, { immediate: true })
 
 // ── Información básica helpers ──
-const { tags: availableTags } = useTags(newTag)
+const { tags: availableTags } = useTags()
 
-const tagSuggestions = computed(() => {
-  const q = newTag.value.trim().toLowerCase()
-  if (!q) return []
+const availableTagOptions = computed(() => {
   const usedIds = new Set(form.tags.map(t => t.documentId))
+  const q = newTag.value.trim().toLowerCase()
   return availableTags.value
     .filter(t => !usedIds.has(t.documentId))
-    .slice(0, 6)
+    .filter(t => !q || t.name.toLowerCase().includes(q))
 })
 
-function addTag(tagOrText) {
-  const tag = typeof tagOrText === 'string'
-    ? availableTags.value.find(t => t.name.toLowerCase() === tagOrText.trim().toLowerCase())
-    : tagOrText
-  if (!tag) {
-    newTag.value = ''
-    return
-  }
+function addTag(tag) {
+  if (!tag) return
   if (!form.tags.some(t => t.documentId === tag.documentId)) {
     form.tags.push({ documentId: tag.documentId, name: tag.name, slug: tag.slug })
   }
@@ -174,14 +170,6 @@ function addTag(tagOrText) {
 
 function removeTag(tag) {
   form.tags = form.tags.filter(t => t.documentId !== tag.documentId)
-}
-
-function handleTagKeydown(e) {
-  if (e.key === 'Enter') {
-    e.preventDefault()
-    if (tagSuggestions.value[0]) addTag(tagSuggestions.value[0])
-    else addTag(newTag.value)
-  }
 }
 
 // ── Contacto helpers ──
@@ -453,7 +441,7 @@ const stats = [
             <!-- Tags -->
             <div>
               <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Especialidades o servicios</label>
-              <div class="flex flex-wrap gap-2 mb-3">
+              <div v-if="form.tags.length" class="flex flex-wrap gap-2 mb-3">
                 <span v-for="tag in form.tags" :key="tag.documentId" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 text-brand-text text-sm font-medium">
                   {{ tag.name }}
                   <button type="button" @click="removeTag(tag)" class="text-gray-400 hover:text-brand-text transition-colors">
@@ -461,16 +449,54 @@ const stats = [
                   </button>
                 </span>
               </div>
-              <div class="relative w-72">
-                <input v-model="newTag" type="text" placeholder="Buscar etiqueta…" @keydown="handleTagKeydown" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
-                <ul v-if="tagSuggestions.length" class="absolute z-10 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                  <li v-for="tag in tagSuggestions" :key="tag.documentId" class="cursor-pointer px-4 py-2 hover:bg-gray-50 text-sm text-brand-text flex items-center justify-between" @click="addTag(tag)">
-                    <span>{{ tag.name }}</span>
-                    <span class="text-xs text-gray-400">{{ tag.businessCount }}</span>
-                  </li>
-                </ul>
-              </div>
-              <p class="text-gray-400 text-xs mt-2">Escribe para buscar entre las etiquetas existentes. Presiona Enter para agregar la primera sugerencia.</p>
+
+              <Combobox
+                :model-value="null"
+                @update:model-value="addTag"
+                nullable
+                as="div"
+                class="relative w-full max-w-md"
+              >
+                <div class="relative border border-gray-200 rounded-xl bg-white focus-within:ring-2 focus-within:ring-brand-primary/30 focus-within:border-brand-primary transition">
+                  <ComboboxInput
+                    :display-value="() => newTag"
+                    @change="newTag = $event.target.value"
+                    placeholder="Selecciona o busca una etiqueta…"
+                    class="w-full bg-transparent px-4 py-2.5 pr-10 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none"
+                  />
+                  <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <ChevronDown class="w-4 h-4 text-gray-400" />
+                  </ComboboxButton>
+                </div>
+
+                <ComboboxOptions class="absolute z-10 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden max-h-72 overflow-y-auto focus:outline-none">
+                  <div v-if="!availableTagOptions.length" class="px-4 py-3 text-sm text-gray-400 text-center">
+                    {{ newTag ? 'Sin coincidencias' : 'No hay más etiquetas disponibles' }}
+                  </div>
+                  <ComboboxOption
+                    v-for="tag in availableTagOptions"
+                    :key="tag.documentId"
+                    :value="tag"
+                    v-slot="{ active }"
+                    as="template"
+                  >
+                    <li
+                      :class="[
+                        'cursor-pointer px-4 py-2 text-sm flex items-center justify-between gap-3',
+                        active ? 'bg-gray-50 text-brand-text' : 'text-brand-text',
+                      ]"
+                    >
+                      <span class="flex items-center gap-2 min-w-0">
+                        <Check :class="['w-3.5 h-3.5 shrink-0', active ? 'text-brand-primary' : 'text-transparent']" />
+                        <span class="truncate">{{ tag.name }}</span>
+                      </span>
+                      <span class="text-xs text-gray-400 shrink-0">{{ tag.businessCount }}</span>
+                    </li>
+                  </ComboboxOption>
+                </ComboboxOptions>
+              </Combobox>
+
+              <p class="text-gray-400 text-xs mt-2">Haz clic para desplegar todas las etiquetas disponibles o escribe para filtrar.</p>
             </div>
 
           </template>
