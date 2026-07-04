@@ -11,7 +11,7 @@ definePageMeta({ layout: 'editor' })
 
 const route = useRoute()
 const slug = computed(() => route.params.slug)
-const { negocio, pending, error } = useNegocio(slug, { includeDrafts: true })
+const { negocio, pending, error, refresh: refreshNegocio } = useNegocio(slug, { includeDrafts: true })
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
 const { updateBusiness, loading, error: saveError, clearError } = useNegocioEdit()
 
@@ -93,6 +93,8 @@ const form = reactive({
 })
 
 const newTag = ref('')
+const deletedPhotoIds = ref([])
+const photoError = ref('')
 
 watch(negocio, (val) => {
   if (!val) return
@@ -137,12 +139,14 @@ watch(negocio, (val) => {
 
   form.photos = (val.photos ?? []).map((p, i) => ({
     id: p.id ?? null,
+    documentId: p.documentId ?? null,
     url: p.url,
     alternativeText: p.alternativeText ?? '',
     order: i,
     file: null,
     isNew: false,
   }))
+  deletedPhotoIds.value = []
 
   editorMeta.value.name        = val.name ?? ''
   editorMeta.value.slug        = slug.value
@@ -190,6 +194,8 @@ function extractSocialHandle(raw, domainPrefix) {
 
 // ── Fotos helpers ──
 const MAX_PHOTOS = 10
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
 const fileInputRef = ref(null)
 
 function triggerFileInput() {
@@ -199,9 +205,19 @@ function triggerFileInput() {
 function onFilesSelected(e) {
   const files = Array.from(e.target.files ?? [])
   const remaining = MAX_PHOTOS - form.photos.length
+  photoError.value = ''
   files.slice(0, remaining).forEach((file) => {
+    if (!ALLOWED_MIME.includes(file.type)) {
+      photoError.value = `Formato no soportado: ${file.name}`
+      return
+    }
+    if (file.size > MAX_PHOTO_SIZE) {
+      photoError.value = `${file.name} supera los 5 MB`
+      return
+    }
     form.photos.push({
       id: null,
+      documentId: null,
       url: URL.createObjectURL(file),
       alternativeText: '',
       order: form.photos.length,
@@ -215,6 +231,7 @@ function onFilesSelected(e) {
 function removePhoto(index) {
   const photo = form.photos[index]
   if (photo.isNew && photo.url.startsWith('blob:')) URL.revokeObjectURL(photo.url)
+  if (!photo.isNew && photo.documentId) deletedPhotoIds.value.push(photo.documentId)
   form.photos.splice(index, 1)
 }
 
@@ -288,17 +305,29 @@ function buildPayload() {
     socialLinks,
     isFeatured:     form.visibility.isFeatured,
     businessStatus: form.visibility.isPublished ? 'published' : 'draft',
+    photos: {
+      current: form.photos.map((p, i) => ({
+        isNew: p.isNew,
+        file: p.file,
+        documentId: p.documentId,
+        order: i,
+        alternativeText: p.alternativeText,
+      })),
+      toDelete: deletedPhotoIds.value,
+    },
   }
 }
 
 async function handleSave() {
   if (!negocio.value?.documentId) return
   clearError()
+  photoError.value = ''
   try {
     await updateBusiness(negocio.value.documentId, buildPayload())
     editorMeta.value.lastUpdated  = new Date().toISOString()
     editorMeta.value.isPublished  = form.visibility.isPublished
     editorMeta.value.name         = form.name
+    await refreshNegocio()
   } catch {
     // saveError y editorMeta.saving son gestionados por useNegocioEdit
   }
@@ -758,6 +787,7 @@ const stats = [
                 <PlusCircle class="w-4 h-4" />
                 Subir fotos nuevas
               </button>
+              <p v-if="photoError" class="text-red-600 text-xs">{{ photoError }}</p>
               <p class="text-gray-400 text-xs">
                 Sube hasta {{ MAX_PHOTOS }} fotos. Formatos: JPG, PNG, WebP. Máximo 5 MB por foto.
               </p>

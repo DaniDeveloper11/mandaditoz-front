@@ -66,14 +66,39 @@ function formatAddress(a) {
 // Mappers (Strapi 5 — todas las respuestas son planas, sin .attributes ni .data)
 // -----------------------------------------------------------------------------
 
+function getMediaBase() {
+  try {
+    const config = useRuntimeConfig()
+    return String(config.public?.apiBase ?? '').replace(/\/api\/?$/, '')
+  } catch {
+    return ''
+  }
+}
+
+function absolutizeUrl(url, base) {
+  if (!url || typeof url !== 'string') return url
+  if (url.startsWith('/')) return `${base}${url}`
+  return url
+}
+
+function absolutizeFormats(formats, base) {
+  if (!formats || typeof formats !== 'object') return formats
+  const out = {}
+  for (const [k, v] of Object.entries(formats)) {
+    out[k] = v && typeof v === 'object' ? { ...v, url: absolutizeUrl(v.url, base) } : v
+  }
+  return out
+}
+
 export function mapMedia(item) {
   if (!item) return null
+  const base = getMediaBase()
   return {
-    url: item.url,
+    url: absolutizeUrl(item.url, base),
     alternativeText: item.alternativeText,
     width: item.width,
     height: item.height,
-    formats: item.formats,
+    formats: absolutizeFormats(item.formats, base),
   }
 }
 
@@ -195,8 +220,9 @@ export function mapNegocio(item) {
   const hours = (item.hours ?? []).map(mapHorario).filter(Boolean)
   const hourExceptions = (item.hourExceptions ?? []).map(mapHourException).filter(Boolean)
 
-  const logo = item.logo ? mapMedia(item.logo) : (item.logoUrl ? { url: item.logoUrl } : null)
-  const coverPhoto = item.coverPhoto ? mapMedia(item.coverPhoto) : (item.coverPhotoUrl ? { url: item.coverPhotoUrl } : null)
+  const base = getMediaBase()
+  const logo = item.logo ? mapMedia(item.logo) : (item.logoUrl ? { url: absolutizeUrl(item.logoUrl, base) } : null)
+  const coverPhoto = item.coverPhoto ? mapMedia(item.coverPhoto) : (item.coverPhotoUrl ? { url: absolutizeUrl(item.coverPhotoUrl, base) } : null)
 
   return {
     id: item.id,

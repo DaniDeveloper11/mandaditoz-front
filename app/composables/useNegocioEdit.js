@@ -48,14 +48,61 @@ export function useNegocioEdit() {
     )
   }
 
+  async function uploadFile(file) {
+    const fd = new FormData()
+    fd.append('files', file)
+    const result = await $fetch(`${config.public.apiBase}/upload`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: fd,
+    })
+    return Array.isArray(result) ? result[0] : result
+  }
+
+  async function syncPhotos(businessDocumentId, photos = { current: [], toDelete: [] }) {
+    const headers = authHeaders()
+    const { current = [], toDelete = [] } = photos
+
+    await Promise.all(
+      toDelete.map(docId =>
+        $fetch(`${config.public.apiBase}/photos/${docId}`, { method: 'DELETE', headers })
+      )
+    )
+
+    await Promise.all(current.map(async (photo, index) => {
+      if (photo.isNew && photo.file) {
+        const uploaded = await uploadFile(photo.file)
+        await $fetch(`${config.public.apiBase}/photos`, {
+          method: 'POST',
+          headers,
+          body: {
+            data: {
+              business: businessDocumentId,
+              file: uploaded.id,
+              order: index,
+              caption: photo.alternativeText || null,
+            },
+          },
+        })
+      } else if (photo.documentId && photo.order !== index) {
+        await $fetch(`${config.public.apiBase}/photos/${photo.documentId}`, {
+          method: 'PUT',
+          headers,
+          body: { data: { order: index } },
+        })
+      }
+    }))
+  }
+
   async function updateBusiness(documentId, data) {
     loading.value = true
     error.value = null
     try {
-      const { hours, ...businessData } = data
+      const { hours, photos, ...businessData } = data
       await Promise.all([
         update(documentId, businessData),
         updateHours(documentId, hours ?? []),
+        syncPhotos(documentId, photos),
       ])
     } catch (err) {
       const status = err?.response?.status

@@ -4,7 +4,7 @@ export function useNegocio(slug, options = {}) {
   const { get } = useApi()
   const includeDrafts = options.includeDrafts ?? false
 
-  const { data, pending, error } = get('/businesses', computed(() => ({
+  const { data, pending, error, refresh } = get('/businesses', computed(() => ({
     'filters[slug][$eq]': toValue(slug),
     ...(!includeDrafts && { 'filters[businessStatus][$eq]': 'published' }),
     'populate[category]': true,
@@ -29,5 +29,5 @@ export function useNegocio(slug, options = {}) {
     : null
   )
 
-  return { negocio, pending, error }
+  return { negocio, pending, error, refresh }
 }
