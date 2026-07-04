@@ -1,5 +1,5 @@
 <script setup>
-import { ChevronLeft, Star, MapPin, Share2, Phone, Check, Clock, Image as ImageIcon, Map, X } from '@lucide/vue'
+import { ChevronLeft, Star, MapPin, Share2, Phone, Check, Clock, Image as ImageIcon, Map, X, FileText, Download } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 
 definePageMeta({ layout: 'landing' })
@@ -11,11 +11,31 @@ const { negocio, pending, error } = useNegocio(slug)
 
 const activeTab = ref('informacion')
 
-const tabs = [
-  { id: 'informacion', label: 'Información' },
-  { id: 'resenas',     label: 'Reseñas' },
-  { id: 'fotos',       label: 'Fotos' },
-]
+const hasMenu = computed(() => !!negocio.value?.menuPdf?.url || (negocio.value?.menuImages ?? []).length > 0)
+
+const tabs = computed(() => {
+  const base = [
+    { id: 'informacion', label: 'Información' },
+    { id: 'resenas',     label: 'Reseñas' },
+    { id: 'fotos',       label: 'Fotos' },
+  ]
+  if (hasMenu.value) base.splice(1, 0, { id: 'menu', label: 'Menú' })
+  return base
+})
+
+const menuLightbox = ref({ open: false, index: 0 })
+function openMenuLightbox(i) { menuLightbox.value = { open: true, index: i } }
+function closeMenuLightbox()  { menuLightbox.value.open = false }
+function menuPrev() {
+  const total = negocio.value?.menuImages?.length ?? 0
+  if (!total) return
+  menuLightbox.value.index = (menuLightbox.value.index - 1 + total) % total
+}
+function menuNext() {
+  const total = negocio.value?.menuImages?.length ?? 0
+  if (!total) return
+  menuLightbox.value.index = (menuLightbox.value.index + 1) % total
+}
 
 const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' }
 const DAY_ORDER  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
@@ -315,6 +335,40 @@ async function submitClaimForm() {
                 </div>
               </div>
 
+              <!-- Menú (preview) -->
+              <div v-if="hasMenu" class="bg-white rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4 gap-4">
+                  <h2 class="font-display font-black text-xl text-brand-text">Menú</h2>
+                  <button @click="activeTab = 'menu'" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors">Ver menú →</button>
+                </div>
+                <div v-if="negocio.menuPdf?.url" class="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50">
+                  <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                    <FileText class="w-6 h-6 text-red-500" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-brand-text text-sm truncate">{{ negocio.menuPdf.name || 'Menú' }}</p>
+                    <p class="text-brand-azulgris text-xs">Documento PDF</p>
+                  </div>
+                  <a
+                    :href="negocio.menuPdf.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-brand-primary text-sm font-semibold hover:underline shrink-0"
+                  >Abrir</a>
+                </div>
+                <div v-else class="grid grid-cols-3 gap-2 h-40">
+                  <button
+                    v-for="(img, idx) in negocio.menuImages.slice(0, 3)"
+                    :key="img.url"
+                    type="button"
+                    @click="activeTab = 'menu'"
+                    class="rounded-xl overflow-hidden bg-brand-bg-dark focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+                  >
+                    <img :src="img.url" class="w-full h-full object-cover" :alt="`Menú ${idx + 1}`" />
+                  </button>
+                </div>
+              </div>
+
               <!-- Fotos -->
               <div class="bg-white rounded-2xl p-6 shadow-sm">
                 <div class="flex items-center justify-between mb-4">
@@ -345,6 +399,72 @@ async function submitClaimForm() {
                 </div>
               </div>
 
+            </template>
+
+            <!-- Menú tab -->
+            <template v-if="activeTab === 'menu'">
+              <div class="bg-white rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-4 gap-4 flex-wrap">
+                  <h2 class="font-display font-black text-xl text-brand-text">Menú</h2>
+                  <a
+                    v-if="negocio.menuPdf?.url"
+                    :href="negocio.menuPdf.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-bg-dark text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                  >
+                    <Download class="w-4 h-4" />
+                    Descargar PDF
+                  </a>
+                </div>
+
+                <!-- PDF embebido -->
+                <div v-if="negocio.menuPdf?.url" class="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
+                  <object
+                    :data="negocio.menuPdf.url"
+                    type="application/pdf"
+                    class="w-full h-[720px] block"
+                  >
+                    <div class="flex flex-col items-center gap-3 py-16 text-center px-6">
+                      <FileText class="w-10 h-10 text-brand-azulgris" />
+                      <p class="text-brand-text text-sm">Tu navegador no puede mostrar el PDF.</p>
+                      <a
+                        :href="negocio.menuPdf.url"
+                        target="_blank"
+                        rel="noopener"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-primary text-white text-sm font-semibold"
+                      >
+                        <Download class="w-4 h-4" />
+                        Abrir menú en PDF
+                      </a>
+                    </div>
+                  </object>
+                </div>
+
+                <!-- Galería de imágenes -->
+                <div
+                  v-else-if="negocio.menuImages.length"
+                  class="grid grid-cols-2 sm:grid-cols-3 gap-3"
+                >
+                  <button
+                    v-for="(img, idx) in negocio.menuImages"
+                    :key="img.url"
+                    type="button"
+                    @click="openMenuLightbox(idx)"
+                    class="aspect-[3/4] rounded-2xl overflow-hidden bg-brand-bg-dark focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+                  >
+                    <img
+                      :src="img.url"
+                      :alt="img.alternativeText ?? `Menú ${idx + 1}`"
+                      class="w-full h-full object-cover hover:scale-[1.02] transition-transform"
+                    />
+                  </button>
+                </div>
+
+                <div v-else class="text-center py-12 text-brand-azulgris text-sm">
+                  Este negocio aún no ha subido su menú.
+                </div>
+              </div>
             </template>
 
             <!-- Reseñas tab -->
@@ -531,6 +651,60 @@ async function submitClaimForm() {
       </div>
 
     </template>
+
+    <!-- Lightbox: Menú imágenes -->
+    <TransitionRoot appear :show="menuLightbox.open" as="template">
+      <Dialog as="div" class="relative z-50" @close="closeMenuLightbox">
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-200" enter-from="opacity-0" enter-to="opacity-100"
+          leave="ease-in duration-150" leave-from="opacity-100" leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" aria-hidden="true" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 flex items-center justify-center p-4 sm:p-8">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-200" enter-from="opacity-0 scale-95" enter-to="opacity-100 scale-100"
+            leave="ease-in duration-150" leave-from="opacity-100 scale-100" leave-to="opacity-0 scale-95"
+          >
+            <DialogPanel class="relative w-full max-w-4xl">
+              <button
+                type="button"
+                @click="closeMenuLightbox"
+                class="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-white text-brand-text flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors z-10"
+              >
+                <X class="w-5 h-5" />
+              </button>
+              <img
+                v-if="negocio?.menuImages?.[menuLightbox.index]?.url"
+                :src="negocio.menuImages[menuLightbox.index].url"
+                :alt="`Menú ${menuLightbox.index + 1}`"
+                class="w-full max-h-[85vh] object-contain rounded-2xl bg-white"
+              />
+              <div v-if="(negocio?.menuImages?.length ?? 0) > 1" class="mt-4 flex items-center justify-center gap-3 text-white">
+                <button
+                  type="button"
+                  @click="menuPrev"
+                  class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-semibold transition-colors"
+                >
+                  ← Anterior
+                </button>
+                <span class="text-white/70 text-sm">{{ menuLightbox.index + 1 }} / {{ negocio.menuImages.length }}</span>
+                <button
+                  type="button"
+                  @click="menuNext"
+                  class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-semibold transition-colors"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+      </Dialog>
+    </TransitionRoot>
 
     <!-- Modal: Reclamar negocio -->
     <TransitionRoot appear :show="showClaimModal" as="template">

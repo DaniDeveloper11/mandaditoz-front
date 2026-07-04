@@ -2,6 +2,7 @@
 import {
   LayoutList, Phone, Clock, Image as ImageIcon,
   Share2, Star, X, Pencil, ChevronDown, MapPin, Info, Plus, PlusCircle, Check,
+  FileText, UploadCloud, Menu as MenuIcon,
 } from '@lucide/vue'
 import {
   Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption,
@@ -31,6 +32,7 @@ const sections = [
   { id: 'contacto',    label: 'Contacto',            icon: Phone },
   { id: 'horario',     label: 'Horario',             icon: Clock },
   { id: 'fotos',       label: 'Fotos',               icon: ImageIcon },
+  { id: 'menu',        label: 'Menú',                icon: MenuIcon },
   { id: 'redes',       label: 'Redes sociales',      icon: Share2 },
   { id: 'estado',      label: 'Estado y visibilidad', icon: Star },
 ]
@@ -79,6 +81,14 @@ const form = reactive({
   })),
   // Fotos
   photos: [],
+  // Menú
+  menu: {
+    mode: 'pdf',
+    pdf: null,
+    pdfFile: null,
+    pdfRemoved: false,
+    images: [],
+  },
   // Redes sociales
   social: {
     facebook: '',
@@ -95,6 +105,7 @@ const form = reactive({
 const newTag = ref('')
 const deletedPhotoIds = ref([])
 const photoError = ref('')
+const menuError = ref('')
 
 watch(negocio, (val) => {
   if (!val) return
@@ -147,6 +158,24 @@ watch(negocio, (val) => {
     isNew: false,
   }))
   deletedPhotoIds.value = []
+
+  // Menú
+  const hasPdf = !!val.menuPdf?.url
+  const hasImages = (val.menuImages ?? []).length > 0
+  form.menu.mode = hasImages && !hasPdf ? 'images' : 'pdf'
+  form.menu.pdf = hasPdf
+    ? { url: val.menuPdf.url, name: val.menuPdf.name ?? 'Menú.pdf' }
+    : null
+  form.menu.pdfFile = null
+  form.menu.pdfRemoved = false
+  form.menu.images = (val.menuImages ?? []).map((m) => ({
+    id: m.id,
+    url: m.url,
+    name: m.name ?? '',
+    file: null,
+    isNew: false,
+  }))
+  menuError.value = ''
 
   editorMeta.value.name        = val.name ?? ''
   editorMeta.value.slug        = slug.value
@@ -235,6 +264,78 @@ function removePhoto(index) {
   form.photos.splice(index, 1)
 }
 
+// ── Menú helpers ──
+const MAX_MENU_IMAGES = 12
+const MAX_MENU_PDF_SIZE  = 15 * 1024 * 1024
+const MAX_MENU_IMAGE_SIZE = 5 * 1024 * 1024
+const menuPdfInputRef = ref(null)
+const menuImagesInputRef = ref(null)
+
+function triggerMenuPdfInput()    { menuPdfInputRef.value?.click() }
+function triggerMenuImagesInput() { menuImagesInputRef.value?.click() }
+
+function onMenuPdfSelected(e) {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  menuError.value = ''
+  if (!file) return
+  if (file.type !== 'application/pdf') {
+    menuError.value = 'El archivo debe ser un PDF'
+    return
+  }
+  if (file.size > MAX_MENU_PDF_SIZE) {
+    menuError.value = 'El PDF supera los 15 MB'
+    return
+  }
+  if (form.menu.pdf?.url?.startsWith('blob:')) URL.revokeObjectURL(form.menu.pdf.url)
+  form.menu.pdf = { url: URL.createObjectURL(file), name: file.name }
+  form.menu.pdfFile = file
+  form.menu.pdfRemoved = false
+}
+
+function removeMenuPdf() {
+  if (form.menu.pdf?.url?.startsWith('blob:')) URL.revokeObjectURL(form.menu.pdf.url)
+  form.menu.pdf = null
+  form.menu.pdfFile = null
+  form.menu.pdfRemoved = true
+  menuError.value = ''
+}
+
+function onMenuImagesSelected(e) {
+  const files = Array.from(e.target.files ?? [])
+  e.target.value = ''
+  menuError.value = ''
+  const remaining = MAX_MENU_IMAGES - form.menu.images.length
+  files.slice(0, remaining).forEach((file) => {
+    if (!ALLOWED_MIME.includes(file.type)) {
+      menuError.value = `Formato no soportado: ${file.name}`
+      return
+    }
+    if (file.size > MAX_MENU_IMAGE_SIZE) {
+      menuError.value = `${file.name} supera los 5 MB`
+      return
+    }
+    form.menu.images.push({
+      id: null,
+      url: URL.createObjectURL(file),
+      name: file.name,
+      file,
+      isNew: true,
+    })
+  })
+}
+
+function removeMenuImage(index) {
+  const img = form.menu.images[index]
+  if (img.isNew && img.url?.startsWith('blob:')) URL.revokeObjectURL(img.url)
+  form.menu.images.splice(index, 1)
+}
+
+function setMenuMode(mode) {
+  form.menu.mode = mode
+  menuError.value = ''
+}
+
 // ── Guardar ──
 watch(loading, (val) => {
   editorMeta.value.saving = val
@@ -314,6 +415,21 @@ function buildPayload() {
         alternativeText: p.alternativeText,
       })),
       toDelete: deletedPhotoIds.value,
+    },
+    menu: {
+      pdf: form.menu.mode === 'pdf'
+        ? {
+            file: form.menu.pdfFile,
+            remove: form.menu.pdfRemoved && !form.menu.pdfFile,
+          }
+        : { remove: true },
+      images: form.menu.mode === 'images'
+        ? form.menu.images.map(img => ({
+            id: img.id,
+            isNew: img.isNew,
+            file: img.file,
+          }))
+        : [],
     },
   }
 }
@@ -792,6 +908,155 @@ const stats = [
                 Sube hasta {{ MAX_PHOTOS }} fotos. Formatos: JPG, PNG, WebP. Máximo 5 MB por foto.
               </p>
             </div>
+
+          </template>
+
+          <!-- ══ Menú ══ -->
+          <template v-else-if="activeSection === 'menu'">
+
+            <!-- Selector de formato -->
+            <div class="mb-6">
+              <p class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Formato del menú</p>
+              <div class="inline-flex rounded-xl border border-gray-200 p-1 bg-gray-50">
+                <button
+                  type="button"
+                  @click="setMenuMode('pdf')"
+                  :class="[
+                    'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors',
+                    form.menu.mode === 'pdf' ? 'bg-white text-brand-text shadow-sm' : 'text-gray-500 hover:text-brand-text',
+                  ]"
+                >
+                  <FileText class="w-4 h-4" />
+                  PDF
+                </button>
+                <button
+                  type="button"
+                  @click="setMenuMode('images')"
+                  :class="[
+                    'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors',
+                    form.menu.mode === 'images' ? 'bg-white text-brand-text shadow-sm' : 'text-gray-500 hover:text-brand-text',
+                  ]"
+                >
+                  <ImageIcon class="w-4 h-4" />
+                  Imágenes
+                </button>
+              </div>
+              <p class="text-gray-400 text-xs mt-2">Elige uno de los dos formatos. Al guardar, solo se conservará el formato seleccionado.</p>
+            </div>
+
+            <!-- Modo PDF -->
+            <template v-if="form.menu.mode === 'pdf'">
+              <div v-if="form.menu.pdf" class="flex items-center gap-4 p-5 rounded-2xl border border-gray-200 bg-white">
+                <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                  <FileText class="w-6 h-6 text-red-500" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-brand-text text-sm truncate">{{ form.menu.pdf.name || 'Menú.pdf' }}</p>
+                  <a
+                    v-if="!form.menu.pdf.url?.startsWith('blob:')"
+                    :href="form.menu.pdf.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-brand-primary text-xs font-semibold hover:underline"
+                  >Ver PDF actual →</a>
+                  <p v-else class="text-gray-400 text-xs">Se subirá al guardar</p>
+                </div>
+                <button
+                  type="button"
+                  @click="triggerMenuPdfInput"
+                  class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-brand-text hover:bg-gray-50 transition-colors"
+                >
+                  <Pencil class="w-3.5 h-3.5" />
+                  Reemplazar
+                </button>
+                <button
+                  type="button"
+                  @click="removeMenuPdf"
+                  class="w-9 h-9 rounded-lg bg-gray-50 hover:bg-red-50 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                  title="Quitar PDF"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+
+              <button
+                v-else
+                type="button"
+                @click="triggerMenuPdfInput"
+                class="w-full rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-500 transition-colors py-14"
+              >
+                <UploadCloud class="w-7 h-7" />
+                <span class="text-sm font-semibold">Subir menú en PDF</span>
+                <span class="text-xs">Máx. 15 MB</span>
+              </button>
+
+              <input
+                ref="menuPdfInputRef"
+                type="file"
+                accept="application/pdf"
+                class="hidden"
+                @change="onMenuPdfSelected"
+              />
+            </template>
+
+            <!-- Modo Imágenes -->
+            <template v-else>
+              <div v-if="form.menu.images.length" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                <div
+                  v-for="(img, idx) in form.menu.images"
+                  :key="img.url"
+                  class="relative aspect-[3/4] rounded-2xl overflow-hidden bg-brand-bg-dark group"
+                >
+                  <img :src="img.url" class="w-full h-full object-cover" :alt="`Menú ${idx + 1}`" />
+                  <button
+                    type="button"
+                    @click="removeMenuImage(idx)"
+                    class="absolute top-2 right-2 w-7 h-7 rounded-lg bg-brand-bg-dark/90 hover:bg-brand-bg-dark flex items-center justify-center text-white shadow transition-colors"
+                  >
+                    <X class="w-3.5 h-3.5" />
+                  </button>
+                  <span class="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/50 text-white text-[10px] font-semibold">
+                    {{ idx + 1 }} / {{ form.menu.images.length }}
+                  </span>
+                </div>
+
+                <button
+                  v-if="form.menu.images.length < MAX_MENU_IMAGES"
+                  type="button"
+                  @click="triggerMenuImagesInput"
+                  class="aspect-[3/4] rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-500 transition-colors"
+                >
+                  <Plus class="w-6 h-6" />
+                  <span class="text-sm">Agregar</span>
+                </button>
+              </div>
+
+              <button
+                v-else
+                type="button"
+                @click="triggerMenuImagesInput"
+                class="w-full rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-500 transition-colors py-14"
+              >
+                <UploadCloud class="w-7 h-7" />
+                <span class="text-sm font-semibold">Subir imágenes del menú</span>
+                <span class="text-xs">JPG, PNG o WebP · Máx. 5 MB por imagen</span>
+              </button>
+
+              <input
+                ref="menuImagesInputRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                class="hidden"
+                @change="onMenuImagesSelected"
+              />
+
+              <p class="text-gray-400 text-xs mt-3">
+                {{ form.menu.images.length }} / {{ MAX_MENU_IMAGES }} imágenes
+              </p>
+            </template>
+
+            <p v-if="menuError" class="text-red-600 text-xs mt-3">{{ menuError }}</p>
 
           </template>
 

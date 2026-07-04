@@ -94,13 +94,44 @@ export function useNegocioEdit() {
     }))
   }
 
+  async function syncMenu(menu) {
+    if (!menu) return {}
+
+    const payload = {}
+
+    // PDF
+    if (menu.pdf?.remove) {
+      payload.menuPdf = null
+    } else if (menu.pdf?.file) {
+      const uploaded = await uploadFile(menu.pdf.file)
+      payload.menuPdf = uploaded.id
+    }
+
+    // Imágenes
+    if (Array.isArray(menu.images)) {
+      const ids = []
+      for (const img of menu.images) {
+        if (img.isNew && img.file) {
+          const uploaded = await uploadFile(img.file)
+          ids.push(uploaded.id)
+        } else if (img.id) {
+          ids.push(img.id)
+        }
+      }
+      payload.menuImages = ids
+    }
+
+    return payload
+  }
+
   async function updateBusiness(documentId, data) {
     loading.value = true
     error.value = null
     try {
-      const { hours, photos, ...businessData } = data
+      const { hours, photos, menu, ...businessData } = data
+      const menuPayload = await syncMenu(menu)
       await Promise.all([
-        update(documentId, businessData),
+        update(documentId, { ...businessData, ...menuPayload }),
         updateHours(documentId, hours ?? []),
         syncPhotos(documentId, photos),
       ])

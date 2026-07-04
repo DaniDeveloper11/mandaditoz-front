@@ -94,10 +94,16 @@ export function mapMedia(item) {
   if (!item) return null
   const base = getMediaBase()
   return {
+    id: item.id,
+    documentId: item.documentId,
     url: absolutizeUrl(item.url, base),
+    name: item.name,
     alternativeText: item.alternativeText,
     width: item.width,
     height: item.height,
+    mime: item.mime,
+    ext: item.ext,
+    size: item.size,
     formats: absolutizeFormats(item.formats, base),
   }
 }
@@ -223,6 +229,8 @@ export function mapNegocio(item) {
   const base = getMediaBase()
   const logo = item.logo ? mapMedia(item.logo) : (item.logoUrl ? { url: absolutizeUrl(item.logoUrl, base) } : null)
   const coverPhoto = item.coverPhoto ? mapMedia(item.coverPhoto) : (item.coverPhotoUrl ? { url: absolutizeUrl(item.coverPhotoUrl, base) } : null)
+  const menuPdf = item.menuPdf ? mapMedia(item.menuPdf) : null
+  const menuImages = (item.menuImages ?? []).map(mapMedia).filter(Boolean)
 
   return {
     id: item.id,
@@ -275,6 +283,8 @@ export function mapNegocio(item) {
     reviews: (item.reviews ?? []).map(mapReview).filter(Boolean),
     logo,
     coverPhoto,
+    menuPdf,
+    menuImages,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }
