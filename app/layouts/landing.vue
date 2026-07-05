@@ -53,6 +53,9 @@
       </PopoverGroup>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-x-4">
         <template v-if="isLoggedIn">
+          <a href="/mis-negocios" class="text-sm/6 font-semibold text-gray-900 hover:text-brand-primary transition">
+            Mis negocios
+          </a>
           <span class="text-sm/6 text-gray-600">
             Hola, <span class="font-semibold text-gray-900">{{ user?.displayName || user?.username }}</span>
           </span>
@@ -111,6 +114,9 @@
                 <p class="-mx-3 px-3 py-2 text-sm text-gray-500">
                   {{ user?.displayName || user?.username }}
                 </p>
+                <a href="/mis-negocios" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                  Mis negocios
+                </a>
                 <button
                   class="-mx-3 block w-full text-left rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
                   @click="handleLogout"

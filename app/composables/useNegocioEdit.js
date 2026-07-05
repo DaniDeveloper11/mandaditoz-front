@@ -137,6 +137,7 @@ export function useNegocioEdit() {
       ])
     } catch (err) {
       const status = err?.response?.status
+      const backendMessage = err?.response?._data?.error?.message
       if (status === 401) {
         await navigateTo('/login')
         return
@@ -145,6 +146,8 @@ export function useNegocioEdit() {
         error.value = 'No tienes permiso para editar este negocio'
       } else if (status === 404) {
         error.value = 'Negocio no encontrado'
+      } else if (backendMessage) {
+        error.value = backendMessage
       } else {
         error.value = 'Ocurrió un error al guardar los cambios'
       }
