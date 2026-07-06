@@ -316,7 +316,7 @@ async function submitClaimForm() {
         <div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 items-start">
 
           <!-- Main column -->
-          <div class="flex-1 min-w-0 space-y-5">
+          <div class="flex-1 min-w-0 space-y-5 w-full">
 
             <template v-if="activeTab === 'informacion'">
 
@@ -370,12 +370,12 @@ async function submitClaimForm() {
               </div>
 
               <!-- Fotos -->
-              <div class="bg-white rounded-2xl p-6 shadow-sm">
+              <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                 <div class="flex items-center justify-between mb-4">
-                  <h2 class="font-display font-black text-xl text-brand-text">Fotos</h2>
+                  <h2 class="font-display font-black text-lg sm:text-xl text-brand-text">Fotos</h2>
                   <button @click="activeTab = 'fotos'" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors">Ver todas →</button>
                 </div>
-                <div class="grid grid-cols-2 gap-2 h-64">
+                <div class="grid grid-cols-2 gap-2 h-48 sm:h-64 md:h-72">
                   <div class="bg-brand-bg-dark rounded-xl overflow-hidden">
                     <img v-if="negocio.photos[0]?.url" :src="negocio.photos[0].url" :alt="negocio.photos[0].alternativeText" class="w-full h-full object-cover" />
                     <div v-else class="w-full h-full flex items-center justify-center">
@@ -390,7 +390,7 @@ async function submitClaimForm() {
                       </div>
                     </div>
                     <div v-if="negocio.photos.length > 4" class="bg-gray-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors" @click="activeTab = 'fotos'">
-                      <span class="font-bold text-brand-text text-lg">+{{ negocio.photos.length - 4 }}</span>
+                      <span class="font-bold text-brand-text text-base sm:text-lg">+{{ negocio.photos.length - 4 }}</span>
                     </div>
                     <div v-else class="bg-brand-bg-dark rounded-xl flex items-center justify-center">
                       <ImageIcon class="w-5 h-5 text-white/20" />
@@ -523,9 +523,9 @@ async function submitClaimForm() {
 
             <!-- Fotos tab -->
             <template v-if="activeTab === 'fotos'">
-              <div class="bg-white rounded-2xl p-6 shadow-sm">
-                <h2 class="font-display font-black text-xl text-brand-text mb-4">Fotos</h2>
-                <div v-if="negocio.photos.length" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+                <h2 class="font-display font-black text-lg sm:text-xl text-brand-text mb-4">Fotos</h2>
+                <div v-if="negocio.photos.length" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                   <div v-for="foto in negocio.photos" :key="foto.url" class="aspect-square rounded-xl overflow-hidden bg-brand-bg-dark">
                     <img v-if="foto.url" :src="foto.url" :alt="foto.alternativeText" class="w-full h-full object-cover" />
                   </div>
