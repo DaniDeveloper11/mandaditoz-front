@@ -180,30 +180,123 @@ async function submitClaimForm() {
           class="absolute inset-0 w-full h-full object-cover opacity-20"
         />
 
-        <!-- Decorative network pattern -->
-        <svg
-          class="absolute right-0 top-0 h-full w-72 text-white/10 pointer-events-none"
-          viewBox="0 0 280 240" fill="none" xmlns="http://www.w3.org/2000/svg"
-          aria-hidden="true" preserveAspectRatio="xMidYMid slice"
-        >
-          <circle cx="240" cy="40"  r="14" stroke="currentColor" stroke-width="2" />
-          <circle cx="160" cy="100" r="14" stroke="currentColor" stroke-width="2" />
-          <circle cx="240" cy="160" r="14" stroke="currentColor" stroke-width="2" />
-          <circle cx="80"  cy="160" r="14" stroke="currentColor" stroke-width="2" />
-          <circle cx="200" cy="220" r="14" stroke="currentColor" stroke-width="2" />
-          <circle cx="240" cy="40"  r="5"  fill="currentColor" />
-          <circle cx="160" cy="100" r="5"  fill="currentColor" />
-          <circle cx="240" cy="160" r="5"  fill="currentColor" />
-          <circle cx="80"  cy="160" r="5"  fill="currentColor" />
-          <circle cx="200" cy="220" r="5"  fill="currentColor" />
-          <line x1="240" y1="54"  x2="160" y2="86"  stroke="currentColor" stroke-width="1.5" />
-          <line x1="160" y1="114" x2="240" y2="146" stroke="currentColor" stroke-width="1.5" />
-          <line x1="160" y1="114" x2="80"  y2="146" stroke="currentColor" stroke-width="1.5" />
-          <line x1="240" y1="174" x2="200" y2="206" stroke="currentColor" stroke-width="1.5" />
-          <line x1="80"  y1="174" x2="200" y2="206" stroke="currentColor" stroke-width="1.5" />
-        </svg>
+            <!-- Background cityscape -->
+        <div class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 opacity-20 z-0">
+          <svg viewBox="0 0 640 170" width="640" height="170" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Ground -->
+            <rect x="0" y="157" width="640" height="13" fill="#C8D5E0"/>
 
-        <div class="relative max-w-6xl mx-auto">
+            <!-- Building 1: Farmacia (green) -->
+            <rect x="6" y="70" width="74" height="87" fill="#2A7A5F"/>
+            <path d="M2,70 L82,70 L78,84 L6,84 Z" fill="#1F5A45"/>
+            <path d="M2,84 Q9,78 16,84 Q23,78 30,84 Q37,78 44,84 Q51,78 58,84 Q65,78 72,84 Q79,78 82,84" fill="none" stroke="#1F5A45" stroke-width="2.5"/>
+            <rect x="13" y="80" width="22" height="18" rx="2" fill="#B8D8C8"/>
+            <rect x="45" y="80" width="22" height="18" rx="2" fill="#B8D8C8"/>
+            <rect x="8" y="100" width="74" height="14" rx="2" fill="#E4F0EA"/>
+            <rect x="35" y="103" width="14" height="3" fill="#2A7A5F"/>
+            <rect x="41" y="101" width="3" height="7" fill="#2A7A5F"/>
+            <rect x="28" y="122" width="24" height="35" fill="#1F5A45"/>
+            <path d="M28,127 A12,12 0 0,1 52,127" fill="#1F5A45"/>
+
+            <!-- Street lamp 1 -->
+            <rect x="85" y="102" width="3" height="55" fill="#8094A8"/>
+            <path d="M88,102 Q100,102 100,113 L100,122" fill="none" stroke="#8094A8" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="100" cy="124" rx="7" ry="3.5" fill="#D48B1A"/>
+            <ellipse cx="100" cy="123" rx="4" ry="2" fill="#F5D070"/>
+
+            <!-- Building 2: Tall oficina (blue) -->
+            <rect x="97" y="38" width="64" height="119" fill="#1D5A8A"/>
+            <rect x="105" y="50" width="18" height="14" rx="1" fill="#A8CCEA"/>
+            <rect x="134" y="50" width="18" height="14" rx="1" fill="#A8CCEA"/>
+            <rect x="105" y="72" width="18" height="14" rx="1" fill="#D48B1A" opacity="0.85"/>
+            <rect x="134" y="72" width="18" height="14" rx="1" fill="#A8CCEA"/>
+            <rect x="105" y="94" width="18" height="14" rx="1" fill="#A8CCEA"/>
+            <rect x="134" y="94" width="18" height="14" rx="1" fill="#D48B1A" opacity="0.85"/>
+            <rect x="113" y="129" width="30" height="28" rx="1" fill="#174D7A"/>
+
+            <!-- Building 3: Iglesia (cream/colonial) -->
+            <rect x="170" y="24" width="50" height="133" fill="#E8DFD0"/>
+            <path d="M176,26 L214,26 L214,54 A19,19 0 0,1 176,54 Z" fill="#C8B89A"/>
+            <rect x="191" y="8" width="4" height="20" fill="#8094A8"/>
+            <rect x="185" y="14" width="16" height="4" fill="#8094A8"/>
+            <rect x="177" y="62" width="14" height="20" rx="7" fill="#A8CCEA"/>
+            <rect x="199" y="62" width="14" height="20" rx="7" fill="#A8CCEA"/>
+            <rect x="178" y="120" width="26" height="37" fill="#C8B89A"/>
+            <path d="M178,126 A13,13 0 0,1 204,126" fill="#C8B89A"/>
+            <rect x="166" y="154" width="58" height="4" rx="1" fill="#B8A890"/>
+
+            <!-- Tree between church and taco -->
+            <rect x="228" y="132" width="6" height="25" fill="#6B7A8A"/>
+            <ellipse cx="231" cy="122" rx="16" ry="17" fill="#2A7A5F"/>
+            <ellipse cx="225" cy="126" rx="10" ry="12" fill="#3AAA80"/>
+
+            <!-- Building 4: Tacos (terracotta) -->
+            <rect x="246" y="74" width="90" height="83" fill="#B85030"/>
+            <path d="M242,74 L340,74 L336,90 L246,90 Z" fill="#D4693A"/>
+            <path d="M244,90 Q250,84 256,90 Q262,84 268,90 Q274,84 280,90 Q286,84 292,90 Q298,84 304,90 Q310,84 316,90 Q322,84 328,90 Q334,84 336,90" fill="none" stroke="#D4693A" stroke-width="2.5"/>
+            <rect x="254" y="93" width="74" height="16" rx="3" fill="#F5E6D8"/>
+            <rect x="261" y="97" width="8" height="3" rx="1" fill="#B85030"/>
+            <rect x="273" y="97" width="12" height="3" rx="1" fill="#B85030"/>
+            <rect x="289" y="97" width="10" height="3" rx="1" fill="#B85030"/>
+            <rect x="303" y="97" width="8" height="3" rx="1" fill="#B85030"/>
+            <rect x="252" y="114" width="30" height="22" rx="2" fill="#F0D5C0"/>
+            <rect x="290" y="114" width="30" height="22" rx="2" fill="#F0D5C0"/>
+            <rect x="262" y="124" width="26" height="33" rx="2" fill="#8B3518"/>
+
+            <!-- Street lamp 2 -->
+            <rect x="342" y="112" width="3" height="45" fill="#8094A8"/>
+            <path d="M345,112 Q357,112 357,123 L357,131" fill="none" stroke="#8094A8" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="357" cy="133" rx="7" ry="3.5" fill="#D48B1A"/>
+            <ellipse cx="357" cy="132" rx="4" ry="2" fill="#F5D070"/>
+
+            <!-- Building 5: Abarrotes (gold) -->
+            <rect x="352" y="54" width="78" height="103" fill="#D48B1A"/>
+            <rect x="360" y="66" width="24" height="20" rx="2" fill="#FBF0D4"/>
+            <rect x="396" y="66" width="24" height="20" rx="2" fill="#FBF0D4"/>
+            <rect x="352" y="90" width="78" height="15" fill="#B87510"/>
+            <rect x="362" y="93" width="10" height="3" rx="1" fill="#D48B1A"/>
+            <rect x="376" y="93" width="14" height="3" rx="1" fill="#D48B1A"/>
+            <rect x="394" y="93" width="10" height="3" rx="1" fill="#D48B1A"/>
+            <rect x="370" y="118" width="28" height="39" rx="2" fill="#96630C"/>
+
+            <!-- Small plant outside abarrotes -->
+            <rect x="354" y="143" width="5" height="14" fill="#5A3A08"/>
+            <ellipse cx="357" cy="137" rx="10" ry="11" fill="#2A7A5F"/>
+
+            <!-- Tree -->
+            <rect x="440" y="135" width="6" height="22" fill="#6B7A8A"/>
+            <ellipse cx="443" cy="124" rx="15" ry="16" fill="#3AAA80"/>
+
+            <!-- Building 6: Casa colonialita (sky blue) -->
+            <rect x="456" y="80" width="68" height="77" fill="#5B9FD4"/>
+            <polygon points="451,80 528,80 480,50" fill="#3D7AA8"/>
+            <rect x="463" y="94" width="20" height="16" rx="2" fill="#C8E4F8"/>
+            <rect x="493" y="94" width="20" height="16" rx="2" fill="#C8E4F8"/>
+            <rect x="469" y="123" width="22" height="34" rx="2" fill="#3D7AA8"/>
+            <circle cx="489" cy="141" r="2.5" fill="#D48B1A"/>
+
+            <!-- Building 7: Tall dark right edge -->
+            <rect x="532" y="34" width="112" height="123" fill="#1A2535"/>
+            <rect x="540" y="48" width="16" height="13" rx="1" fill="#D48B1A" opacity="0.8"/>
+            <rect x="562" y="48" width="16" height="13" rx="1" fill="#A8CCEA"/>
+            <rect x="584" y="48" width="16" height="13" rx="1" fill="#A8CCEA"/>
+            <rect x="608" y="48" width="16" height="13" rx="1" fill="#D48B1A" opacity="0.8"/>
+            <rect x="540" y="68" width="16" height="13" rx="1" fill="#A8CCEA"/>
+            <rect x="562" y="68" width="16" height="13" rx="1" fill="#D48B1A" opacity="0.8"/>
+            <rect x="584" y="68" width="16" height="13" rx="1" fill="#D48B1A" opacity="0.8"/>
+            <rect x="608" y="68" width="16" height="13" rx="1" fill="#A8CCEA"/>
+            <rect x="540" y="88" width="16" height="13" rx="1" fill="#D48B1A" opacity="0.8"/>
+            <rect x="562" y="88" width="16" height="13" rx="1" fill="#A8CCEA"/>
+            <rect x="584" y="88" width="16" height="13" rx="1" fill="#A8CCEA"/>
+            <rect x="608" y="88" width="16" height="13" rx="1" fill="#D48B1A" opacity="0.8"/>
+            <rect x="540" y="108" width="16" height="13" rx="1" fill="#A8CCEA"/>
+            <rect x="562" y="108" width="16" height="13" rx="1" fill="#D48B1A" opacity="0.8"/>
+            <rect x="608" y="108" width="16" height="13" rx="1" fill="#A8CCEA"/>
+            <rect x="560" y="130" width="28" height="27" rx="1" fill="#0D1925"/>
+          </svg>
+        </div>
+
+        <div class="relative z-10 max-w-6xl mx-auto">
 
           <a href="/list" class="inline-flex items-center gap-1 text-white/60 text-sm hover:text-white transition-colors mb-6">
             <ChevronLeft class="w-4 h-4" />
