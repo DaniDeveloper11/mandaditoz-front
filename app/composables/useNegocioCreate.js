@@ -56,6 +56,12 @@ export function useNegocioCreate() {
         const base = slugify(businessData.name)
         businessData.slug = `${base}-${Date.now().toString(36)}`
       }
+      // Limpieza: null/undefined/arrays vacíos no se envían a Strapi
+      for (const k of Object.keys(businessData)) {
+        const v = businessData[k]
+        if (v == null) delete businessData[k]
+        else if (Array.isArray(v) && v.length === 0) delete businessData[k]
+      }
       const res = await $fetch(`${config.public.apiBase}/businesses`, {
         method: 'POST',
         headers: authHeaders(),

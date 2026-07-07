@@ -1,7 +1,7 @@
 <script setup>
 import {
-  LayoutList, Phone, Clock, Star, ChevronDown, ChevronLeft, ChevronRight,
-  Check, Info, Sparkles, AlertCircle, Package, Utensils, LayoutGrid,
+  LayoutList, Phone, Clock, User, ChevronDown, ChevronLeft, ChevronRight,
+  Check, Info, Sparkles, AlertCircle, Send, Package, Utensils, LayoutGrid,
   MapPin, MapPinOff, Wallet, Banknote, ArrowLeftRight, CreditCard,
   Image as ImageIcon, BookOpen, Upload, FileText, X, Loader2,
 } from '@lucide/vue'
@@ -10,20 +10,61 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 definePageMeta({ layout: 'publicar' })
 
 const router = useRouter()
-const { isLoggedIn } = useAuthStore()
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
-const { createBusiness, loading, error, clearError } = useNegocioCreate()
-const { publishedCount, publishedLimit, canPublishMore } = useMisNegocios()
+const { submit, loading, error, clearError } = useNegocioSubmit()
 const cityStore = useCityStore()
 
 onMounted(() => {
-  if (!isLoggedIn) router.replace('/login?redirect=/negocios/nuevo')
   cityStore.fetchCities()
 })
 
-watch(canPublishMore, (v) => {
-  if (!v) form.isPublished = false
-})
+const showCategoryModal = ref(true)
+const showCityModal = ref(false)
+
+const QUICK_CATEGORIES = [
+  {
+    id: 'mandaditos',
+    slug: 'moto-servicio',
+    label: 'Mandaditos',
+    description: 'Entregas, mandados y recados a domicilio.',
+    icon: Package,
+    iconBg: 'bg-amber-50',
+    iconColor: 'text-amber-600',
+  },
+  {
+    id: 'restaurantes',
+    slug: 'restaurantes',
+    label: 'Restaurantes',
+    description: 'Comida, bebidas, tacos, mariscos y más.',
+    icon: Utensils,
+    iconBg: 'bg-blue-50',
+    iconColor: 'text-blue-700',
+  },
+  {
+    id: 'otros',
+    slug: null,
+    label: 'Otros',
+    description: 'Elegir categoría en el siguiente paso.',
+    icon: LayoutGrid,
+    iconBg: 'bg-slate-100',
+    iconColor: 'text-slate-500',
+  },
+]
+
+function pickQuickCategory(quick) {
+  if (quick.slug) {
+    const match = categorias.value?.find(c => c.slug === quick.slug)
+    if (match) form.categoryId = match.documentId
+  }
+  showCategoryModal.value = false
+  showCityModal.value = true
+}
+
+function pickCity(city) {
+  form.cityDocumentId = city.documentId
+  if (city.stateName) form.estado = city.stateName
+  showCityModal.value = false
+}
 
 const DAY_ORDER  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' }
@@ -36,13 +77,13 @@ const ESTADOS_MX = [
 ]
 
 const steps = [
-  { id: 'info',     label: 'Sobre el negocio',      icon: LayoutList },
-  { id: 'logo',     label: 'Logo',                  icon: ImageIcon },
-  { id: 'menu',     label: 'Menú',                  icon: BookOpen },
-  { id: 'contacto', label: 'Contacto y ubicación',  icon: Phone },
-  { id: 'horario',  label: 'Horario',               icon: Clock },
-  { id: 'pagos',    label: 'Métodos de pago',       icon: Wallet },
-  { id: 'publicar', label: 'Publicar',              icon: Star },
+  { id: 'info',      label: 'Sobre el negocio',      icon: LayoutList },
+  { id: 'logo',      label: 'Logo',                  icon: ImageIcon },
+  { id: 'menu',      label: 'Menú',                  icon: BookOpen },
+  { id: 'contacto',  label: 'Contacto y ubicación',  icon: Phone },
+  { id: 'horario',   label: 'Horario',               icon: Clock },
+  { id: 'pagos',     label: 'Métodos de pago',       icon: Wallet },
+  { id: 'submitter', label: 'Sobre ti',              icon: User },
 ]
 
 const PAYMENT_METHODS = [
@@ -81,12 +122,14 @@ const form = reactive({
 
   paymentMethods: [],
 
-  logo: null,
-  menuMode: 'pdf',
-  menuPdf: null,
-  menuImages: [],
+  logo: null,          // { id, url, name }
+  menuMode: 'pdf',     // 'pdf' | 'images'
+  menuPdf: null,       // { id, url, name }
+  menuImages: [],      // Array<{ id, url, name }>
 
-  isPublished: false,
+  submitterName: '',
+  submitterEmail: '',
+  submitterPhone: '',
 })
 
 function togglePaymentMethod(value) {
@@ -158,56 +201,14 @@ function removeMenuImage(idx) {
   form.menuImages.splice(idx, 1)
 }
 
-// ── Modales iniciales ──
-const showCategoryModal = ref(true)
-const showCityModal = ref(false)
+watch(() => cityStore.activeCity?.documentId, (id) => {
+  if (id && !form.cityDocumentId) form.cityDocumentId = id
+})
 
-const QUICK_CATEGORIES = [
-  {
-    id: 'mandaditos',
-    slug: 'moto-servicio',
-    label: 'Mandaditos',
-    description: 'Entregas, mandados y recados a domicilio.',
-    icon: Package,
-    iconBg: 'bg-amber-50',
-    iconColor: 'text-amber-600',
-  },
-  {
-    id: 'restaurantes',
-    slug: 'restaurantes',
-    label: 'Restaurantes',
-    description: 'Comida, bebidas, tacos, mariscos y más.',
-    icon: Utensils,
-    iconBg: 'bg-blue-50',
-    iconColor: 'text-blue-700',
-  },
-  {
-    id: 'otros',
-    slug: null,
-    label: 'Otros',
-    description: 'Elegir categoría en el siguiente paso.',
-    icon: LayoutGrid,
-    iconBg: 'bg-slate-100',
-    iconColor: 'text-slate-500',
-  },
-]
+const isFirstStep = computed(() => currentStep.value === 0)
+const isLastStep  = computed(() => currentStep.value === steps.length - 1)
+const currentStepMeta = computed(() => steps[currentStep.value])
 
-function pickQuickCategory(quick) {
-  if (quick.slug) {
-    const match = categorias.value?.find(c => c.slug === quick.slug)
-    if (match) form.categoryId = match.documentId
-  }
-  showCategoryModal.value = false
-  showCityModal.value = true
-}
-
-function pickCity(city) {
-  form.cityDocumentId = city.documentId
-  if (city.stateName) form.estado = city.stateName
-  showCityModal.value = false
-}
-
-// ── Validación por paso ──
 function validateStep(idx) {
   const errors = {}
   if (idx === 0) {
@@ -226,6 +227,12 @@ function validateStep(idx) {
   if (idx === 5) {
     if (!form.paymentMethods.length) errors.paymentMethods = 'Selecciona al menos un método de pago'
   }
+  if (idx === 6) {
+    if (!form.submitterName.trim()) errors.submitterName = 'Tu nombre es obligatorio'
+    if (!form.submitterEmail.trim()) errors.submitterEmail = 'Tu email es obligatorio'
+    else if (!/^[^@]+@[^@]+\.[^@]+$/.test(form.submitterEmail)) errors.submitterEmail = 'Email inválido'
+    if (!form.submitterPhone.replace(/\D/g, '')) errors.submitterPhone = 'Tu teléfono es obligatorio'
+  }
   return errors
 }
 
@@ -240,10 +247,6 @@ const selectedCityName = computed(() =>
 const selectedCategoryName = computed(() =>
   categorias.value?.find(c => c.documentId === form.categoryId)?.name ?? ''
 )
-
-const isFirstStep = computed(() => currentStep.value === 0)
-const isLastStep  = computed(() => currentStep.value === steps.length - 1)
-const currentStepMeta = computed(() => steps[currentStep.value])
 
 function goNext() {
   const errors = validateStep(currentStep.value)
@@ -314,6 +317,8 @@ function buildPayload() {
       }
     : null
 
+  const cleanSubmitterPhone = form.submitterPhone.replace(/\D/g, '')
+
   return {
     name: form.name.trim(),
     shortDescription: form.shortDescription.trim() || null,
@@ -321,7 +326,7 @@ function buildPayload() {
     email: form.email.trim() || null,
     website: form.website.trim() || null,
     category: form.categoryId,
-    ...(form.cityDocumentId && { city: form.cityDocumentId }),
+    city: form.cityDocumentId,
     phones,
     isMobile: form.isMobile,
     address,
@@ -331,7 +336,9 @@ function buildPayload() {
     menuImages: form.menuMode === 'images' && form.menuImages.length
       ? form.menuImages.map(f => f.id)
       : null,
-    businessStatus: form.isPublished ? 'published' : 'draft',
+    submitterName: form.submitterName.trim(),
+    submitterEmail: form.submitterEmail.trim().toLowerCase(),
+    submitterPhone: cleanSubmitterPhone ? `+52${cleanSubmitterPhone}` : null,
     hours: form.hours.map(h => ({
       dayOfWeek: h.dayOfWeek,
       openTime:  h.openTime,
@@ -343,18 +350,19 @@ function buildPayload() {
 }
 
 async function handleSubmit() {
-  const errors = { ...validateStep(0), ...validateStep(3), ...validateStep(5) }
+  const errors = { ...validateStep(0), ...validateStep(3), ...validateStep(5), ...validateStep(6) }
   if (Object.keys(errors).length) {
     stepErrors.value = errors
     if (errors.name || errors.categoryId) currentStep.value = 0
     else if (errors.phone || errors.cityDocumentId || errors.email || errors.website) currentStep.value = 3
     else if (errors.paymentMethods) currentStep.value = 5
+    else currentStep.value = 6
     return
   }
   clearError()
   try {
-    const { slug } = await createBusiness(buildPayload())
-    if (slug) router.push(`/negocios/${slug}/edit`)
+    await submit(buildPayload())
+    router.push('/negocios/publicar/gracias')
   } catch { /* error se muestra desde composable */ }
 }
 </script>
@@ -367,15 +375,15 @@ async function handleSubmit() {
       <div class="mb-8 text-center">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-bold tracking-widest uppercase mb-3">
           <Sparkles class="w-3.5 h-3.5" />
-          Nuevo negocio
+          Solicitar publicación
         </div>
-        <h1 class="font-display font-black text-3xl md:text-4xl text-brand-text">Registra tu negocio</h1>
+        <h1 class="font-display font-black text-3xl md:text-4xl text-brand-text">Publica tu negocio</h1>
         <p class="text-brand-azulgris text-sm mt-2 max-w-md mx-auto">
-          En unos pasos tu negocio aparecerá en el directorio de {{ cityStore.activeCityName }}.
+          Llena estos pasos y un administrador revisará tu solicitud para publicarla en el directorio de {{ cityStore.activeCityName }}.
         </p>
       </div>
 
-      <!-- Stepper minimalista -->
+      <!-- Stepper: dots minimalistas sin numeración -->
       <div class="flex items-center justify-center gap-2 mb-8">
         <button
           v-for="(step, idx) in steps"
@@ -491,9 +499,18 @@ async function handleSubmit() {
               <span class="text-gray-400">Formato: imagen (JPG, PNG, WebP). Máximo {{ MAX_LOGO_MB }} MB.</span>
             </p>
 
+            <!-- Zona de subida / preview -->
             <div v-if="!form.logo" class="relative">
-              <label class="flex flex-col items-center justify-center gap-3 py-10 px-6 rounded-2xl border-2 border-dashed border-gray-300 bg-slate-50 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors cursor-pointer">
-                <input type="file" accept="image/*" class="sr-only" :disabled="uploadingFile" @change="onLogoChange" />
+              <label
+                class="flex flex-col items-center justify-center gap-3 py-10 px-6 rounded-2xl border-2 border-dashed border-gray-300 bg-slate-50 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors cursor-pointer"
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="sr-only"
+                  :disabled="uploadingFile"
+                  @change="onLogoChange"
+                />
                 <div class="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm">
                   <Loader2 v-if="uploadingFile" class="w-6 h-6 text-brand-primary animate-spin" />
                   <Upload v-else class="w-6 h-6 text-brand-primary" />
@@ -515,7 +532,12 @@ async function handleSubmit() {
                 <p class="font-semibold text-sm text-brand-text truncate">{{ form.logo.name }}</p>
                 <p class="text-brand-azulgris text-xs mt-0.5">Logo cargado correctamente</p>
               </div>
-              <button type="button" @click="removeLogo" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors shrink-0" aria-label="Quitar logo">
+              <button
+                type="button"
+                @click="removeLogo"
+                class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors shrink-0"
+                aria-label="Quitar logo"
+              >
                 <X class="w-4 h-4" />
               </button>
             </div>
@@ -528,7 +550,7 @@ async function handleSubmit() {
             <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
               <Info class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <p class="text-blue-700 text-xs leading-relaxed">
-                Este paso es opcional. Puedes agregar el logo más tarde desde la edición del negocio.
+                Este paso es opcional. Si no tienes un logo ahora, el administrador lo puede agregar más adelante.
               </p>
             </div>
           </div>
@@ -541,6 +563,7 @@ async function handleSubmit() {
               Comparte el menú de tu negocio. Puedes subir un PDF o varias imágenes.
             </p>
 
+            <!-- Selector PDF / Imágenes -->
             <div class="inline-flex bg-slate-100 rounded-xl p-1">
               <button
                 type="button"
@@ -560,10 +583,19 @@ async function handleSubmit() {
               >Imágenes</button>
             </div>
 
+            <!-- Modo PDF -->
             <template v-if="form.menuMode === 'pdf'">
               <div v-if="!form.menuPdf" class="relative">
-                <label class="flex flex-col items-center justify-center gap-3 py-10 px-6 rounded-2xl border-2 border-dashed border-gray-300 bg-slate-50 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors cursor-pointer">
-                  <input type="file" accept="application/pdf" class="sr-only" :disabled="uploadingFile" @change="onMenuPdfChange" />
+                <label
+                  class="flex flex-col items-center justify-center gap-3 py-10 px-6 rounded-2xl border-2 border-dashed border-gray-300 bg-slate-50 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors cursor-pointer"
+                >
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    class="sr-only"
+                    :disabled="uploadingFile"
+                    @change="onMenuPdfChange"
+                  />
                   <div class="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm">
                     <Loader2 v-if="uploadingFile" class="w-6 h-6 text-brand-primary animate-spin" />
                     <FileText v-else class="w-6 h-6 text-brand-primary" />
@@ -585,12 +617,18 @@ async function handleSubmit() {
                   <p class="font-semibold text-sm text-brand-text truncate">{{ form.menuPdf.name }}</p>
                   <p class="text-brand-azulgris text-xs mt-0.5">PDF cargado correctamente</p>
                 </div>
-                <button type="button" @click="removeMenuPdf" class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors shrink-0" aria-label="Quitar PDF">
+                <button
+                  type="button"
+                  @click="removeMenuPdf"
+                  class="w-9 h-9 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors shrink-0"
+                  aria-label="Quitar PDF"
+                >
                   <X class="w-4 h-4" />
                 </button>
               </div>
             </template>
 
+            <!-- Modo Imágenes -->
             <template v-else>
               <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div
@@ -599,13 +637,27 @@ async function handleSubmit() {
                   class="relative aspect-square rounded-xl overflow-hidden border-2 border-gray-200 bg-slate-50"
                 >
                   <img :src="img.url" :alt="img.name" class="w-full h-full object-cover" />
-                  <button type="button" @click="removeMenuImage(idx)" class="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-white/95 flex items-center justify-center text-gray-600 hover:text-red-500 shadow-sm" aria-label="Quitar imagen">
+                  <button
+                    type="button"
+                    @click="removeMenuImage(idx)"
+                    class="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-white/95 flex items-center justify-center text-gray-600 hover:text-red-500 shadow-sm"
+                    aria-label="Quitar imagen"
+                  >
                     <X class="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <label class="aspect-square rounded-xl border-2 border-dashed border-gray-300 bg-slate-50 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2">
-                  <input type="file" accept="image/*" multiple class="sr-only" :disabled="uploadingFile" @change="onMenuImagesChange" />
+                <label
+                  class="aspect-square rounded-xl border-2 border-dashed border-gray-300 bg-slate-50 hover:border-brand-primary hover:bg-brand-primary/5 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2"
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    class="sr-only"
+                    :disabled="uploadingFile"
+                    @change="onMenuImagesChange"
+                  />
                   <Loader2 v-if="uploadingFile" class="w-6 h-6 text-brand-primary animate-spin" />
                   <Upload v-else class="w-6 h-6 text-brand-primary" />
                   <span class="text-xs font-semibold text-brand-text">Agregar</span>
@@ -692,6 +744,7 @@ async function handleSubmit() {
               </div>
             </button>
 
+            <!-- Campos de dirección (solo si no es ambulante) -->
             <template v-if="!form.isMobile">
               <div class="grid grid-cols-[1fr_140px] gap-5">
                 <div>
@@ -768,7 +821,8 @@ async function handleSubmit() {
 
         <!-- ══ Horario ══ -->
         <template v-else-if="currentStep === 4">
-          <!-- Móvil: card por día -->
+
+          <!-- ── Móvil: card por día ── -->
           <div class="md:hidden space-y-3">
             <div
               v-for="row in form.hours"
@@ -802,15 +856,24 @@ async function handleSubmit() {
                   />
                 </button>
               </div>
+
               <div v-if="!row.isClosed" class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <input v-model="row.openTime" type="time" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                <input
+                  v-model="row.openTime"
+                  type="time"
+                  class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                />
                 <span class="text-gray-400 text-sm select-none">–</span>
-                <input v-model="row.closeTime" type="time" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                <input
+                  v-model="row.closeTime"
+                  type="time"
+                  class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                />
               </div>
             </div>
           </div>
 
-          <!-- Desktop: fila por día -->
+          <!-- ── Desktop: fila por día ── -->
           <div class="hidden md:block">
             <div class="grid grid-cols-[110px_1fr_20px_1fr_64px] gap-3 items-center pb-3 mb-1 border-b border-gray-100">
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Día</span>
@@ -826,9 +889,19 @@ async function handleSubmit() {
               class="grid grid-cols-[110px_1fr_20px_1fr_64px] gap-3 items-center py-3 border-b border-gray-50 last:border-0"
             >
               <span class="font-semibold text-sm text-brand-text">{{ DAY_LABELS[row.dayOfWeek] }}</span>
-              <input v-model="row.openTime" type="time" :disabled="row.isClosed" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50" />
+              <input
+                v-model="row.openTime"
+                type="time"
+                :disabled="row.isClosed"
+                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50"
+              />
               <span class="text-gray-400 text-center text-sm select-none">–</span>
-              <input v-model="row.closeTime" type="time" :disabled="row.isClosed" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50" />
+              <input
+                v-model="row.closeTime"
+                type="time"
+                :disabled="row.isClosed"
+                class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50"
+              />
               <div class="flex justify-end">
                 <button
                   type="button"
@@ -852,7 +925,7 @@ async function handleSubmit() {
           <div class="mt-5 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
             <Info class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
             <p class="text-blue-700 text-xs leading-relaxed">
-              Podrás ajustar el horario cuando quieras. "Abierto ahora" aparecerá automáticamente en tu perfil.
+              Si no conoces todos los días con exactitud, deja los valores por defecto: el administrador los ajustará al revisar la solicitud.
             </p>
           </div>
         </template>
@@ -902,12 +975,61 @@ async function handleSubmit() {
           </div>
         </template>
 
-        <!-- ══ Publicar (resumen + toggle) ══ -->
+        <!-- ══ Sobre ti (submitter) ══ -->
         <template v-else-if="currentStep === 6">
-          <div class="space-y-5">
+          <div class="space-y-6">
+            <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
+              <Info class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <p class="text-blue-700 text-xs leading-relaxed">
+                Un administrador revisará tu solicitud y publicará el negocio. Usaremos estos datos únicamente para contactarte si necesitamos aclarar algo.
+              </p>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">
+                Tu nombre *
+              </label>
+              <input
+                v-model="form.submitterName"
+                type="text"
+                maxlength="120"
+                placeholder="Nombre completo"
+                class="w-full border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                :class="stepErrors.submitterName ? 'border-red-300' : 'border-gray-200'"
+              />
+              <p v-if="stepErrors.submitterName" class="text-red-600 text-xs mt-1.5">{{ stepErrors.submitterName }}</p>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">
+                Tu email *
+              </label>
+              <input
+                v-model="form.submitterEmail"
+                type="email"
+                placeholder="tu@correo.com"
+                class="w-full border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                :class="stepErrors.submitterEmail ? 'border-red-300' : 'border-gray-200'"
+              />
+              <p v-if="stepErrors.submitterEmail" class="text-red-600 text-xs mt-1.5">{{ stepErrors.submitterEmail }}</p>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Tu teléfono *</label>
+              <div
+                class="flex items-center border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-brand-primary/30 focus-within:border-brand-primary transition"
+                :class="stepErrors.submitterPhone ? 'border-red-300' : 'border-gray-200'"
+              >
+                <span class="px-3 py-2.5 text-sm font-semibold text-brand-primary bg-gray-50 border-r border-gray-200 shrink-0">+52</span>
+                <input v-model="form.submitterPhone" type="tel" placeholder="374 742 1234" class="flex-1 px-3 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none bg-transparent" />
+              </div>
+              <p v-if="stepErrors.submitterPhone" class="text-red-600 text-xs mt-1.5">{{ stepErrors.submitterPhone }}</p>
+            </div>
+
+            <!-- Resumen breve -->
             <div class="rounded-2xl border border-gray-200 divide-y divide-gray-100 overflow-hidden">
               <div class="grid grid-cols-[140px_1fr] gap-4 px-5 py-3.5 text-sm">
-                <span class="text-brand-azulgris">Nombre</span>
+                <span class="text-brand-azulgris">Negocio</span>
                 <span class="font-semibold text-brand-text">{{ form.name || '—' }}</span>
               </div>
               <div class="grid grid-cols-[140px_1fr] gap-4 px-5 py-3.5 text-sm">
@@ -915,17 +1037,8 @@ async function handleSubmit() {
                 <span class="font-semibold text-brand-text">{{ selectedCategoryName || '—' }}</span>
               </div>
               <div class="grid grid-cols-[140px_1fr] gap-4 px-5 py-3.5 text-sm">
-                <span class="text-brand-azulgris">Teléfono</span>
-                <span class="font-semibold text-brand-text">{{ form.phone ? `+52 ${form.phone}` : '—' }}</span>
-              </div>
-              <div class="grid grid-cols-[140px_1fr] gap-4 px-5 py-3.5 text-sm">
-                <span class="text-brand-azulgris">Ubicación</span>
-                <span class="font-semibold text-brand-text">
-                  <template v-if="form.isMobile">Negocio ambulante</template>
-                  <template v-else>
-                    {{ [form.calle, form.numero].filter(Boolean).join(' ') || selectedCityName }}<span v-if="form.colonia">, {{ form.colonia }}</span>
-                  </template>
-                </span>
+                <span class="text-brand-azulgris">Municipio</span>
+                <span class="font-semibold text-brand-text">{{ selectedCityName || '—' }}</span>
               </div>
               <div class="grid grid-cols-[140px_1fr] gap-4 px-5 py-3.5 text-sm">
                 <span class="text-brand-azulgris">Pagos</span>
@@ -935,48 +1048,6 @@ async function handleSubmit() {
                     : '—' }}
                 </span>
               </div>
-            </div>
-
-            <div
-              class="flex items-start justify-between gap-6 p-5 rounded-2xl border"
-              :class="canPublishMore ? 'border-gray-200' : 'border-amber-200 bg-amber-50/40'"
-            >
-              <div class="min-w-0">
-                <p class="font-semibold text-brand-text text-sm mb-1">Publicar inmediatamente</p>
-                <p class="text-brand-azulgris text-xs leading-relaxed">
-                  Si lo dejas como <strong>borrador</strong>, podrás terminar de configurarlo (fotos, redes, más detalles) antes de publicarlo.
-                </p>
-                <p v-if="!canPublishMore" class="text-amber-700 text-xs mt-2 font-semibold">
-                  Ya tienes {{ publishedCount }}/{{ publishedLimit }} negocios publicados. Este solo puede crearse como borrador.
-                </p>
-                <p v-else class="text-brand-azulgris text-xs mt-2">
-                  Publicados actuales: {{ publishedCount }}/{{ publishedLimit }}
-                </p>
-              </div>
-              <button
-                type="button"
-                :disabled="!canPublishMore"
-                @click="canPublishMore && (form.isPublished = !form.isPublished)"
-                :class="[
-                  'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none mt-0.5',
-                  form.isPublished ? 'bg-brand-bg-dark' : 'bg-gray-200',
-                  !canPublishMore && 'opacity-40 cursor-not-allowed',
-                ]"
-              >
-                <span
-                  :class="[
-                    'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                    form.isPublished ? 'translate-x-6' : 'translate-x-1',
-                  ]"
-                />
-              </button>
-            </div>
-
-            <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
-              <Info class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-              <p class="text-blue-700 text-xs leading-relaxed">
-                Al crear el negocio te llevaremos a la pantalla de edición para completar fotos, redes y más detalles.
-              </p>
             </div>
           </div>
         </template>
@@ -1014,9 +1085,12 @@ async function handleSubmit() {
           :disabled="loading"
           class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-bold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <span v-if="loading" class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-          <Check v-else class="w-4 h-4" />
-          {{ loading ? 'Creando…' : 'Crear negocio' }}
+          <span
+            v-if="loading"
+            class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"
+          />
+          <Send v-else class="w-4 h-4" />
+          {{ loading ? 'Enviando…' : 'Enviar solicitud' }}
         </button>
       </div>
 
@@ -1025,12 +1099,30 @@ async function handleSubmit() {
     <!-- Modal: selección rápida de categoría -->
     <TransitionRoot as="template" :show="showCategoryModal">
       <Dialog as="div" class="relative z-50" @close="() => {}">
-        <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-150" leave-from="opacity-100" leave-to="opacity-0">
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-200"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="ease-in duration-150"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
           <div class="fixed inset-0 bg-brand-bg-dark/70 backdrop-blur-sm" />
         </TransitionChild>
+
         <div class="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
-          <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0 translate-y-4 scale-95" enter-to="opacity-100 translate-y-0 scale-100" leave="ease-in duration-150" leave-from="opacity-100 translate-y-0 scale-100" leave-to="opacity-0 translate-y-2 scale-95">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-200"
+            enter-from="opacity-0 translate-y-4 scale-95"
+            enter-to="opacity-100 translate-y-0 scale-100"
+            leave="ease-in duration-150"
+            leave-from="opacity-100 translate-y-0 scale-100"
+            leave-to="opacity-0 translate-y-2 scale-95"
+          >
             <DialogPanel class="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-6 md:p-10">
+
               <div class="text-center mb-8">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-bold tracking-widest uppercase mb-3">
                   <Sparkles class="w-3.5 h-3.5" />
@@ -1043,6 +1135,7 @@ async function handleSubmit() {
                   Elige la opción que mejor describa tu negocio.
                 </p>
               </div>
+
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <button
                   v-for="quick in QUICK_CATEGORIES"
@@ -1060,6 +1153,7 @@ async function handleSubmit() {
                   </div>
                 </button>
               </div>
+
             </DialogPanel>
           </TransitionChild>
         </div>
@@ -1069,12 +1163,30 @@ async function handleSubmit() {
     <!-- Modal: selección de municipio -->
     <TransitionRoot as="template" :show="showCityModal">
       <Dialog as="div" class="relative z-50" @close="() => {}">
-        <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-150" leave-from="opacity-100" leave-to="opacity-0">
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-200"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="ease-in duration-150"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
           <div class="fixed inset-0 bg-brand-bg-dark/70 backdrop-blur-sm" />
         </TransitionChild>
+
         <div class="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
-          <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0 translate-y-4 scale-95" enter-to="opacity-100 translate-y-0 scale-100" leave="ease-in duration-150" leave-from="opacity-100 translate-y-0 scale-100" leave-to="opacity-0 translate-y-2 scale-95">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-200"
+            enter-from="opacity-0 translate-y-4 scale-95"
+            enter-to="opacity-100 translate-y-0 scale-100"
+            leave="ease-in duration-150"
+            leave-from="opacity-100 translate-y-0 scale-100"
+            leave-to="opacity-0 translate-y-2 scale-95"
+          >
             <DialogPanel class="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-6 md:p-10 max-h-[90vh] overflow-y-auto">
+
               <div class="text-center mb-8">
                 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-bold tracking-widest uppercase mb-3">
                   <MapPin class="w-3.5 h-3.5" />
@@ -1109,6 +1221,7 @@ async function handleSubmit() {
                   </div>
                 </button>
               </div>
+
             </DialogPanel>
           </TransitionChild>
         </div>

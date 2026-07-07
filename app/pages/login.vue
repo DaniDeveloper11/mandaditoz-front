@@ -56,6 +56,14 @@
 
       </div>
 
+      <!-- Solicitud pública -->
+      <p v-if="mode === 'register'" class="mt-5 text-center text-sm text-white/70">
+        ¿No quieres crear cuenta?
+        <a href="/negocios/publicar" class="font-semibold text-white underline hover:text-brand-primary transition">
+          Envía tu solicitud aquí
+        </a>
+      </p>
+
       <!-- Leyenda inferior -->
       <p class="mt-6 text-center text-xs text-white/30">
         Al continuar aceptas nuestros

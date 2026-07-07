@@ -173,7 +173,7 @@
         <div>
           <p class="text-white/40 text-xs font-semibold tracking-widest uppercase mb-4">Negocios</p>
           <ul class="space-y-3">
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Registra el tuyo</a></li>
+            <li><a href="/negocios/publicar" class="text-white/70 text-sm hover:text-white transition-colors">Registra el tuyo</a></li>
             <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Actualizar datos</a></li>
             <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Preguntas frecuentes</a></li>
           </ul>
