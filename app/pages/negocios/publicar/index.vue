@@ -130,6 +130,8 @@ const form = reactive({
   submitterName: '',
   submitterEmail: '',
   submitterPhone: '',
+
+  termsAccepted: false,
 })
 
 function togglePaymentMethod(value) {
@@ -232,6 +234,7 @@ function validateStep(idx) {
     if (!form.submitterEmail.trim()) errors.submitterEmail = 'Tu email es obligatorio'
     else if (!/^[^@]+@[^@]+\.[^@]+$/.test(form.submitterEmail)) errors.submitterEmail = 'Email inválido'
     if (!form.submitterPhone.replace(/\D/g, '')) errors.submitterPhone = 'Tu teléfono es obligatorio'
+    if (!form.termsAccepted) errors.termsAccepted = 'Debes aceptar los Términos y la Política de privacidad'
   }
   return errors
 }
@@ -339,6 +342,7 @@ function buildPayload() {
     submitterName: form.submitterName.trim(),
     submitterEmail: form.submitterEmail.trim().toLowerCase(),
     submitterPhone: cleanSubmitterPhone ? `+52${cleanSubmitterPhone}` : null,
+    termsAccepted: form.termsAccepted,
     hours: form.hours.map(h => ({
       dayOfWeek: h.dayOfWeek,
       openTime:  h.openTime,
@@ -1048,6 +1052,41 @@ async function handleSubmit() {
                     : '—' }}
                 </span>
               </div>
+            </div>
+
+            <!-- Aceptación de T&C -->
+            <div>
+              <button
+                type="button"
+                @click="form.termsAccepted = !form.termsAccepted"
+                :class="[
+                  'w-full flex items-start gap-3 p-4 rounded-2xl border-2 transition-all text-left',
+                  form.termsAccepted
+                    ? 'border-brand-primary bg-brand-primary/5'
+                    : stepErrors.termsAccepted
+                      ? 'border-red-300 bg-red-50/40'
+                      : 'border-gray-200 hover:border-gray-300 bg-white',
+                ]"
+              >
+                <div
+                  :class="[
+                    'w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors mt-0.5',
+                    form.termsAccepted ? 'bg-brand-primary border-brand-primary' : 'border-gray-300',
+                  ]"
+                >
+                  <Check v-if="form.termsAccepted" class="w-3.5 h-3.5 text-white" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-brand-text leading-relaxed">
+                    Acepto los
+                    <NuxtLink to="/terminos" target="_blank" class="font-semibold text-brand-primary underline hover:opacity-80" @click.stop>Términos de uso</NuxtLink>
+                    y la
+                    <NuxtLink to="/privacidad" target="_blank" class="font-semibold text-brand-primary underline hover:opacity-80" @click.stop>Política de privacidad</NuxtLink>
+                    de Mandaditoz.
+                  </p>
+                </div>
+              </button>
+              <p v-if="stepErrors.termsAccepted" class="text-red-600 text-xs mt-1.5">{{ stepErrors.termsAccepted }}</p>
             </div>
           </div>
         </template>
