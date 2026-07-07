@@ -6,6 +6,7 @@ definePageMeta({ layout: 'landing' })
 
 const router = useRouter()
 const store = useSearchStore()
+const cityStore = useCityStore()
 const { negocios, paginacion, pending } = useNegocios(computed(() => store.filtros))
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
 
@@ -75,7 +76,7 @@ const paginasVisibles = computed(() => {
             <template v-else>Directorio de negocios</template>
           </h1>
           <p class="text-brand-azulgris text-sm mt-1">
-            <template v-if="!pending">{{ totalResultados }} resultados · Etzatlán, Jalisco</template>
+            <template v-if="!pending">{{ totalResultados }} resultados · {{ cityStore.activeCityLabel }}</template>
             <template v-else>Buscando…</template>
           </p>
         </div>

@@ -9,6 +9,7 @@ definePageMeta({ layout: 'landing' })
 
 const router = useRouter()
 const { isLoggedIn, user } = useAuthStore()
+const cityStore = useCityStore()
 
 if (import.meta.client && !isLoggedIn) {
   router.replace('/login?redirect=/mis-negocios')
@@ -103,7 +104,7 @@ useSeoMeta({ title: 'Mis negocios | Mandaditoz' })
         </div>
         <h2 class="font-display font-black text-2xl text-brand-text mb-2">Aún no tienes negocios</h2>
         <p class="text-brand-azulgris text-sm max-w-md mx-auto mb-6">
-          Registra tu primer negocio para aparecer en el directorio de Etzatlán y llegar a más clientes.
+          Registra tu primer negocio para aparecer en el directorio de {{ cityStore.activeCityName }} y llegar a más clientes.
         </p>
         <NuxtLink
           to="/negocios/nuevo"

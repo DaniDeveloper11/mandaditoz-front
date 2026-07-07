@@ -6,6 +6,7 @@ definePageMeta({ layout: 'landing' })
 
 const router = useRouter()
 const store = useSearchStore()
+const cityStore = useCityStore()
 
 const { categorias, pending } = useCategorias({ limit: 100, allDepths: true })
 
@@ -36,7 +37,7 @@ function irACategoria(slug) {
         <p class="text-brand-azulgris text-xs font-semibold tracking-widest uppercase mb-2">Directorio</p>
         <h1 class="font-display font-black text-4xl md:text-5xl text-white">Todas las categorías</h1>
         <p class="text-brand-azulgris text-sm mt-3">
-          Explora los {{ categorias.length }} rubros disponibles en Etzatlán, Jalisco
+          Explora los {{ categorias.length }} rubros disponibles en {{ cityStore.activeCityLabel }}
         </p>
 
         <!-- Search -->

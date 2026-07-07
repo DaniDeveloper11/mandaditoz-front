@@ -6,6 +6,7 @@ definePageMeta({ layout: 'landing' })
 
 const router = useRouter()
 const store = useSearchStore()
+const cityStore = useCityStore()
 
 const searchQuery = ref('')
 
@@ -159,7 +160,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
         <!-- Left: headline -->
         <div class="flex-1 text-center md:text-left">
           <h1 class="font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight text-white">
-            Todo Etzatlán,<br>
+            Todo {{ cityStore.activeCityName }},<br>
             <span class="text-brand-primary-dark">en un lugar.</span>
           </h1>
           <p class="mt-4 text-brand-azulgris text-sm tracking-wide">
@@ -175,7 +176,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-primary shrink-0" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                 </svg>
-                Etzatlán
+                {{ cityStore.activeCityName }}
               </div>
               <input
                 v-model="searchQuery"
@@ -405,7 +406,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
           <div>
             <p class="text-brand-azulgris text-xs font-semibold tracking-widest uppercase mb-2">Directorio completo</p>
             <h2 class="font-display font-black text-4xl md:text-5xl text-white">Explorar el directorio</h2>
-            <p class="text-brand-azulgris text-sm mt-2">Etzatlán, Jalisco</p>
+            <p class="text-brand-azulgris text-sm mt-2">{{ cityStore.activeCityLabel }}</p>
           </div>
           <!-- Category filter pills -->
           <div class="flex flex-wrap gap-2">
@@ -561,7 +562,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
         <div class="max-w-xl">
           <p class="text-white/60 text-xs font-semibold tracking-widest uppercase mb-3">Para dueños de negocio</p>
           <h2 class="font-display font-black text-4xl md:text-5xl text-white leading-tight mb-4">
-            ¿Tienes un negocio<br>en Etzatlán?
+            ¿Tienes un negocio<br>en {{ cityStore.activeCityName }}?
           </h2>
           <p class="text-white/75 text-sm leading-relaxed">
             Regístralo gratis en Mandaditoz y llega a más clientes del municipio.<br class="hidden md:block">

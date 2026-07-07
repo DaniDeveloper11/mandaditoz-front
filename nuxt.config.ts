@@ -23,13 +23,13 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Mandaditoz — Directorio de Etzatlán',
+      title: 'Mandaditoz — Directorio de negocios locales',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
           name: 'description',
-          content: 'Encuentra negocios y servicios locales en Etzatlán, Jalisco. Gratis para todos.',
+          content: 'Encuentra negocios y servicios locales de tu municipio en Jalisco. Gratis para todos.',
         },
       ],
       link: [

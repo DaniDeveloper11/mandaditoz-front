@@ -10,17 +10,20 @@ const SORT_MAP = {
 export function useNegocios(filtros) {
   const config = useRuntimeConfig()
   const base   = config.public.apiBase
+  const cityStore = useCityStore()
 
   const key = computed(() => {
     const f = toValue(filtros)
-    return `negocios|cat:${f.categoria ?? ''}|q:${f.query ?? ''}|city:${f.ciudad ?? ''}|nb:${f.colonia ?? ''}|price:${f.priceLevel ?? ''}|feat:${!!f.isFeatured}|ver:${!!f.soloVerificados}|ord:${f.orden}|p:${f.pagina}`
+    const ciudad = f.ciudad ?? cityStore.activeCitySlug
+    return `negocios|cat:${f.categoria ?? ''}|q:${f.query ?? ''}|city:${ciudad ?? ''}|nb:${f.colonia ?? ''}|price:${f.priceLevel ?? ''}|feat:${!!f.isFeatured}|ver:${!!f.soloVerificados}|ord:${f.orden}|p:${f.pagina}`
   })
 
   const query = computed(() => {
     const f = toValue(filtros)
+    const ciudad = f.ciudad ?? cityStore.activeCitySlug
     return {
       ...(f.categoria       && { 'filters[category][slug][$eq]': f.categoria }),
-      ...(f.ciudad          && { 'filters[city][slug][$eq]': f.ciudad }),
+      ...(ciudad            && { 'filters[city][slug][$eq]': ciudad }),
       ...(f.colonia         && { 'filters[neighborhood][slug][$eq]': f.colonia }),
       ...(f.priceLevel      && { 'filters[priceLevel][$eq]': f.priceLevel }),
       ...(f.soloVerificados && { 'filters[isVerified][$eq]': true }),

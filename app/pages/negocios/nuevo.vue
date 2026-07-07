@@ -11,9 +11,11 @@ const { isLoggedIn } = useAuthStore()
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
 const { createBusiness, loading, error, clearError } = useNegocioCreate()
 const { publishedCount, publishedLimit, canPublishMore } = useMisNegocios()
+const cityStore = useCityStore()
 
 onMounted(() => {
   if (!isLoggedIn) router.replace('/login?redirect=/negocios/nuevo')
+  cityStore.fetchCities()
 })
 
 watch(canPublishMore, (v) => {
@@ -52,8 +54,8 @@ const form = reactive({
   calle: '',
   numero: '',
   colonia: '',
-  municipio: 'Etzatlán',
-  estado: 'Jalisco',
+  cityDocumentId: cityStore.activeCity?.documentId ?? null,
+  estado: cityStore.activeCityState ?? 'Jalisco',
   website: '',
 
   hours: DAY_ORDER.map(day => ({
@@ -81,11 +83,20 @@ function validateStep(idx) {
   if (idx === 1) {
     if (!form.phone.replace(/\D/g, '')) errors.phone = 'Al menos un teléfono es obligatorio'
     if (!form.calle.trim())             errors.calle = 'La calle es obligatoria'
+    if (!form.cityDocumentId)           errors.cityDocumentId = 'Selecciona un municipio'
     if (form.email && !/^[^@]+@[^@]+\.[^@]+$/.test(form.email)) errors.email = 'Email inválido'
     if (form.website && !/^https?:\/\/[^\s]+\.[^\s]+$/.test(form.website)) errors.website = 'URL inválida (debe iniciar con http:// o https://)'
   }
   return errors
 }
+
+const selectedCity = computed(() =>
+  cityStore.cities.find(c => c.documentId === form.cityDocumentId) ?? null
+)
+
+const selectedCityName = computed(() =>
+  selectedCity.value?.name ?? cityStore.activeCityName
+)
 
 function goNext() {
   const errors = validateStep(currentStep.value)
@@ -143,7 +154,7 @@ function buildPayload() {
   const rawText = [
     [form.calle, form.numero].filter(Boolean).join(' '),
     form.colonia,
-    form.municipio,
+    selectedCityName.value,
     form.estado,
   ].filter(Boolean).join(', ')
 
@@ -154,6 +165,7 @@ function buildPayload() {
     email: form.email.trim() || null,
     website: form.website.trim() || null,
     category: form.categoryId,
+    ...(form.cityDocumentId && { city: form.cityDocumentId }),
     phones,
     address: {
       street: form.calle.trim(),
@@ -204,7 +216,7 @@ const selectedCategoryName = computed(() =>
         </div>
         <h1 class="font-display font-black text-3xl md:text-4xl text-brand-text">Registra tu negocio</h1>
         <p class="text-brand-azulgris text-sm mt-2 max-w-md mx-auto">
-          En unos pasos tu negocio aparecerá en el directorio de Etzatlán.
+          En unos pasos tu negocio aparecerá en el directorio de {{ cityStore.activeCityName }}.
         </p>
       </div>
 
@@ -402,8 +414,23 @@ const selectedCategoryName = computed(() =>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Municipio</label>
-                <input v-model="form.municipio" type="text" placeholder="Etzatlán" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Municipio *</label>
+                <div class="relative">
+                  <select
+                    v-model="form.cityDocumentId"
+                    class="w-full appearance-none border rounded-xl px-4 py-2.5 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition pr-10"
+                    :class="stepErrors.cityDocumentId ? 'border-red-300' : 'border-gray-200'"
+                  >
+                    <option :value="null" disabled>
+                      {{ cityStore.citiesPending ? 'Cargando municipios…' : 'Selecciona un municipio' }}
+                    </option>
+                    <option v-for="c in cityStore.cities" :key="c.documentId" :value="c.documentId">
+                      {{ c.name }}<span v-if="c.stateName">, {{ c.stateName }}</span>
+                    </option>
+                  </select>
+                  <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
+                <p v-if="stepErrors.cityDocumentId" class="text-red-600 text-xs mt-1.5">{{ stepErrors.cityDocumentId }}</p>
               </div>
               <div>
                 <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Estado</label>
@@ -499,7 +526,7 @@ const selectedCategoryName = computed(() =>
               <div class="grid grid-cols-[140px_1fr] gap-4 px-5 py-3.5 text-sm">
                 <span class="text-brand-azulgris">Dirección</span>
                 <span class="font-semibold text-brand-text">
-                  {{ [form.calle, form.numero].filter(Boolean).join(' ') || '—' }}<span v-if="form.colonia">, {{ form.colonia }}</span>, {{ form.municipio }}, {{ form.estado }}
+                  {{ [form.calle, form.numero].filter(Boolean).join(' ') || '—' }}<span v-if="form.colonia">, {{ form.colonia }}</span>, {{ selectedCityName }}, {{ form.estado }}
                 </span>
               </div>
             </div>

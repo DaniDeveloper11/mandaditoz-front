@@ -84,8 +84,16 @@ function formatTime(t) {
   return `${hour > 12 ? hour - 12 : hour || 12}:${m} ${hour >= 12 ? 'pm' : 'am'}`
 }
 
+const cityStore = useCityStore()
+
 useSeoMeta({
-  title: () => negocio.value ? `${negocio.value.name} — Etzatlán, Jalisco | Mandaditoz` : 'Cargando...',
+  title: () => {
+    if (!negocio.value) return 'Cargando...'
+    const cityLabel = negocio.value.city?.name
+      ? `${negocio.value.city.name}, Jalisco`
+      : cityStore.activeCityLabel
+    return `${negocio.value.name} — ${cityLabel} | Mandaditoz`
+  },
   description: () => negocio.value?.shortDescription ?? negocio.value?.description,
 })
 

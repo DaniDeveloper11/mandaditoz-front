@@ -15,6 +15,7 @@ const slug = computed(() => route.params.slug)
 const { negocio, pending, error, refresh: refreshNegocio } = useNegocio(slug, { includeDrafts: true })
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
 const { updateBusiness, loading, error: saveError, clearError } = useNegocioEdit()
+const cityStore = useCityStore()
 
 const editorMeta = useState('editorMeta', () => ({
   name: '',
@@ -68,7 +69,7 @@ const form = reactive({
   calle: '',
   numero: '',
   colonia: '',
-  municipio: '',
+  cityDocumentId: null,
   estado: 'Jalisco',
   website: '',
   // Horario
@@ -124,7 +125,7 @@ watch(negocio, (val) => {
   form.calle            = val.addressRaw?.street ?? ''
   form.numero           = val.addressRaw?.exteriorNumber ?? ''
   form.colonia          = val.neighborhood?.name ?? ''
-  form.municipio        = val.city?.name ?? 'Etzatlán'
+  form.cityDocumentId   = val.city?.documentId ?? cityStore.activeCity?.documentId ?? null
   form.estado           = 'Jalisco'
   form.website          = val.website ?? ''
 
@@ -206,9 +207,15 @@ function removeTag(tag) {
 }
 
 // ── Contacto helpers ──
+const selectedCity = computed(() =>
+  cityStore.cities.find(c => c.documentId === form.cityDocumentId) ?? null
+)
+const selectedCityName = computed(() =>
+  selectedCity.value?.name ?? cityStore.activeCityName
+)
 const mapAddressLabel = computed(() => {
   const linea = [form.calle, form.numero].filter(Boolean).join(' ')
-  return [linea, form.colonia, form.municipio, form.estado].filter(Boolean).join(' — ')
+  return [linea, form.colonia, selectedCityName.value, form.estado].filter(Boolean).join(' — ')
 })
 
 // ── Redes sociales helpers ──
@@ -373,7 +380,7 @@ function buildPayload() {
   const rawText = [
     [form.calle, form.numero].filter(Boolean).join(' '),
     form.colonia,
-    form.municipio,
+    selectedCityName.value,
     form.estado,
   ].filter(Boolean).join(', ')
 
@@ -393,6 +400,7 @@ function buildPayload() {
     website: form.website || null,
     tags: form.tags.map(t => t.documentId),
     category: form.categoryId ?? null,
+    city: form.cityDocumentId ?? null,
     address,
     phones,
     hours: form.hours.map(h => ({
@@ -451,6 +459,7 @@ async function handleSave() {
 
 onMounted(() => {
   editorMeta.value.onSave = handleSave
+  cityStore.fetchCities()
 })
 
 const stats = [
@@ -700,7 +709,20 @@ const stats = [
             <div class="grid grid-cols-2 gap-5 mb-7">
               <div>
                 <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Municipio</label>
-                <input v-model="form.municipio" type="text" placeholder="Etzatlán" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                <div class="relative">
+                  <select
+                    v-model="form.cityDocumentId"
+                    class="w-full appearance-none border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition pr-10"
+                  >
+                    <option :value="null" disabled>
+                      {{ cityStore.citiesPending ? 'Cargando municipios…' : 'Selecciona un municipio' }}
+                    </option>
+                    <option v-for="c in cityStore.cities" :key="c.documentId" :value="c.documentId">
+                      {{ c.name }}<span v-if="c.stateName">, {{ c.stateName }}</span>
+                    </option>
+                  </select>
+                  <ChevronDown class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
               <div>
                 <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Estado</label>

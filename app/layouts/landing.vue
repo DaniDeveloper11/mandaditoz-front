@@ -1,11 +1,14 @@
 <template>
   <header class="relative isolate z-10 bg-white ">
     <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
-      <div class="flex lg:flex-1">
+      <div class="flex lg:flex-1 items-center gap-3">
         <a href="/" class="-m-1.5 p-1.5">
           <span class="sr-only">Mandaditoz</span>
           <img class="h-14 w-auto " :src="logoLight" alt="Mandaditoz" />
         </a>
+        <div class="hidden sm:block">
+          <LayoutCitySwitcher />
+        </div>
       </div>
       <div class="flex lg:hidden">
         <button type="button" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700" @click="mobileMenuOpen = true">
@@ -88,6 +91,9 @@
         <div class="mt-6 flow-root">
           <div class="-my-6 divide-y divide-gray-500/10 ">
             <div class="space-y-2 py-6">
+              <div class="-mx-3 px-3 pb-2">
+                <LayoutCitySwitcher />
+              </div>
               <Disclosure as="div" class="-mx-3" v-slot="{ open }">
                 <DisclosureButton class="flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
                   Categorías
@@ -147,9 +153,9 @@
         <div class="md:col-span-1">
           <img :src="logoDark" alt="Mandaditoz" class="h-8 w-auto mb-4" />
           <p class="text-white/60 text-sm leading-relaxed mb-4">
-            El directorio gratuito de negocios locales de Etzatlán, Jalisco. De vecinos para vecinos.
+            El directorio gratuito de negocios locales de {{ cityStore.activeCityLabel }}. De vecinos para vecinos.
           </p>
-          <p class="text-white/30 text-xs">Etzatlán, Jalisco · México</p>
+          <p class="text-white/30 text-xs">{{ cityStore.activeCityLabel }} · México</p>
         </div>
 
         <!-- Directorio -->
@@ -187,7 +193,7 @@
 
       <!-- Bottom bar -->
       <div class="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p class="text-white/30 text-xs">© 2026 Mandaditoz · Hecho con orgullo en Etzatlán, Jalisco.</p>
+        <p class="text-white/30 text-xs">© 2026 Mandaditoz · Hecho con orgullo en {{ cityStore.activeCityLabel }}.</p>
         <p class="text-white/30 text-xs">Directorio 100% gratuito · Información aportada por la comunidad</p>
       </div>
 
@@ -208,6 +214,7 @@ import { getCategoriaConfig } from '~/utils/categorias'
 
 const { isLoggedIn, user, logout } = useAuthStore()
 const { categorias } = useCategorias()
+const cityStore = useCityStore()
 
 const logoLight = '/logo-cielo-horizontal.svg'
 const logoDark = 'logo-cielo-horizontal-dark.svg'
