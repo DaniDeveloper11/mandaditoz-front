@@ -5,10 +5,59 @@ import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 definePageMeta({ layout: 'landing' })
 
 const router = useRouter()
+const route = useRoute()
 const store = useSearchStore()
 const cityStore = useCityStore()
 const { negocios, paginacion, pending } = useNegocios(computed(() => store.filtros))
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
+
+// --- Sincronización URL ↔ store ------------------------------------------
+// Los query params sobre /list permiten compartir URLs. Al abrir la página
+// se aplican al store (y `ciudad` cambia la ciudad activa global); cuando
+// el usuario cambia filtros, la URL se reescribe con router.replace.
+{
+  const q = route.query
+  if (typeof q.q === 'string') store.filtros.query = q.q
+  if (typeof q.categoria === 'string') store.filtros.categoria = q.categoria
+  if (typeof q.orden === 'string') store.filtros.orden = q.orden
+  if (typeof q.porPagina === 'string') {
+    const n = parseInt(q.porPagina, 10)
+    if (!Number.isNaN(n)) store.filtros.porPagina = n
+  }
+  if (typeof q.pagina === 'string') {
+    const n = parseInt(q.pagina, 10)
+    if (!Number.isNaN(n) && n >= 1) store.filtros.pagina = n
+  }
+  if (q.verificados === '1' || q.verificados === 'true') {
+    store.filtros.soloVerificados = true
+  }
+  if (typeof q.ciudad === 'string' && q.ciudad !== cityStore.activeCitySlug) {
+    cityStore.setActiveCity(q.ciudad)
+  }
+}
+
+watch(
+  () => ({
+    q: store.filtros.query,
+    categoria: store.filtros.categoria,
+    ciudad: cityStore.activeCitySlug,
+    orden: store.filtros.orden,
+    porPagina: store.filtros.porPagina,
+    pagina: store.filtros.pagina,
+    verificados: store.filtros.soloVerificados,
+  }),
+  (v) => {
+    const query = {}
+    if (v.q) query.q = v.q
+    if (v.categoria) query.categoria = v.categoria
+    if (v.ciudad) query.ciudad = v.ciudad
+    if (v.orden && v.orden !== 'rating') query.orden = v.orden
+    if (v.porPagina && v.porPagina !== 12) query.porPagina = String(v.porPagina)
+    if (v.pagina && v.pagina > 1) query.pagina = String(v.pagina)
+    if (v.verificados) query.verificados = '1'
+    router.replace({ query })
+  },
+)
 
 const PRICE_OPTIONS = [
   { value: null, label: 'Cualquier precio' },
