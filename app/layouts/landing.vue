@@ -1,5 +1,5 @@
 <template>
-  <header class="relative isolate z-10 bg-white ">
+  <header class="relative isolate z-40 bg-white ">
     <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
       <div class="flex lg:flex-1 items-center gap-3">
         <a href="/" class="-m-1.5 p-1.5">
@@ -13,7 +13,7 @@
       <div class="flex lg:hidden">
         <button type="button" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700" @click="mobileMenuOpen = true">
           <span class="sr-only">Open main menu</span>
-          <Bars3Icon class="size-6" aria-hidden="true" />
+          <Menu class="size-6" aria-hidden="true" />
         </button>
       </div>
       <PopoverGroup class="hidden lg:flex lg:gap-x-12">
@@ -32,8 +32,15 @@
                     :href="`/list?categoria=${cat.slug}`"
                     class="group flex items-center gap-3 rounded-lg p-3 hover:bg-gray-50 transition"
                   >
-                    <div :class="['flex size-9 shrink-0 items-center justify-center rounded-lg', getCategoriaConfig(cat.slug).iconBg]">
-                      <component :is="getCategoriaConfig(cat.slug).icon" :class="['size-5', getCategoriaConfig(cat.slug).iconColor]" />
+                    <div
+                      :class="['flex size-9 shrink-0 items-center justify-center rounded-lg', cat.color ? '' : getCategoriaConfig(cat.slug).iconBg]"
+                      :style="cat.color ? { backgroundColor: cat.color + '33' } : {}"
+                    >
+                      <component
+                        :is="getLucideIcon(cat.icon)"
+                        :class="['size-5', getCategoriaConfig(cat.slug).iconColor]"
+                        :style="cat.color ? { color: cat.color } : {}"
+                      />
                     </div>
                     <div class="min-w-0">
                       <p class="text-sm font-semibold text-gray-900 group-hover:text-brand-primary transition">{{ cat.name }}</p>
@@ -51,7 +58,7 @@
           </transition>
         </Popover>
 
-        <a href="#" class="text-sm/6 font-semibold text-gray-900">Mapa</a>
+        <!-- <a href="#" class="text-sm/6 font-semibold text-gray-900">Mapa</a> -->
         <a href="#" class="text-sm/6 font-semibold text-gray-900">¿Cómo funciona?</a>
       </PopoverGroup>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-x-4">
@@ -85,7 +92,7 @@
           </a>
           <button type="button" class="-m-2.5 rounded-md p-2.5 text-gray-700" @click="mobileMenuOpen = false">
             <span class="sr-only">Close menu</span>
-            <XMarkIcon class="size-6" aria-hidden="true" />
+            <X class="size-6" aria-hidden="true" />
           </button>
         </div>
         <div class="mt-6 flow-root">
@@ -97,7 +104,7 @@
               <Disclosure as="div" class="-mx-3" v-slot="{ open }">
                 <DisclosureButton class="flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
                   Categorías
-                  <ChevronDownIcon :class="[open ? 'rotate-180' : '', 'size-5 flex-none']" aria-hidden="true" />
+                  <ChevronDown :class="[open ? 'rotate-180' : '', 'size-5 flex-none transition-transform']" aria-hidden="true" />
                 </DisclosureButton>
                 <DisclosurePanel class="mt-2 space-y-1">
                   <DisclosureButton
@@ -107,12 +114,16 @@
                     :href="`/list?categoria=${cat.slug}`"
                     class="flex items-center gap-3 rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
                   >
-                    <component :is="getCategoriaConfig(cat.slug).icon" :class="['size-4 shrink-0', getCategoriaConfig(cat.slug).iconColor]" />
+                    <component
+                      :is="getLucideIcon(cat.icon)"
+                      :class="['size-4 shrink-0', getCategoriaConfig(cat.slug).iconColor]"
+                      :style="cat.color ? { color: cat.color } : {}"
+                    />
                     {{ cat.name }}
                   </DisclosureButton>
                 </DisclosurePanel>
               </Disclosure>
-              <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Mapa</a>
+            <!--<a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Mapa</a> -->
               <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">¿Cómo funciona?</a>
             </div>
             <div class="py-6 space-y-1">
@@ -162,9 +173,9 @@
         <div>
           <p class="text-white/40 text-xs font-semibold tracking-widest uppercase mb-4">Directorio</p>
           <ul class="space-y-3">
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Buscar negocio</a></li>
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Categorías</a></li>
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Mapa interactivo</a></li>
+            <li><a href="/#buscador" class="text-white/70 text-sm hover:text-white transition-colors">Buscar negocio</a></li>
+            <li><a href="/categorias" class="text-white/70 text-sm hover:text-white transition-colors">Categorías</a></li>
+            <!-- <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Mapa interactivo</a></li> -->
             <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Novedades</a></li>
           </ul>
         </div>
@@ -174,7 +185,6 @@
           <p class="text-white/40 text-xs font-semibold tracking-widest uppercase mb-4">Negocios</p>
           <ul class="space-y-3">
             <li><a href="/negocios/publicar" class="text-white/70 text-sm hover:text-white transition-colors">Registra el tuyo</a></li>
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Actualizar datos</a></li>
             <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Preguntas frecuentes</a></li>
           </ul>
         </div>
@@ -185,7 +195,9 @@
           <ul class="space-y-3">
             <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">¿Qué es Mandaditoz?</a></li>
             <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Contacto</a></li>
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Privacidad</a></li>
+            <li><a href="/privacidad" class="text-white/70 text-sm hover:text-white transition-colors">Privacidad</a></li>
+            <li><a href="/terminos" class="text-white/70 text-sm hover:text-white transition-colors">Terminos</a></li>
+
           </ul>
         </div>
 
@@ -208,9 +220,8 @@ import {
   Disclosure, DisclosureButton, DisclosurePanel,
   Popover, PopoverButton, PopoverGroup, PopoverPanel,
 } from '@headlessui/vue'
-import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
-import { ChevronDownIcon } from '@heroicons/vue/20/solid'
-import { getCategoriaConfig } from '~/utils/categorias'
+import { Menu, X, ChevronDown } from '@lucide/vue'
+import { getCategoriaConfig, getLucideIcon } from '~/utils/categorias'
 
 const { isLoggedIn, user, logout } = useAuthStore()
 const { categorias } = useCategorias()

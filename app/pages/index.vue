@@ -5,15 +5,34 @@ import { getLucideIcon } from '~/utils/categorias'
 definePageMeta({ layout: 'landing' })
 
 const router = useRouter()
+const route = useRoute()
 const store = useSearchStore()
 const cityStore = useCityStore()
 
 const searchQuery = ref('')
+const searchInput = ref(null)
 
 function buscar() {
   store.setQuery(searchQuery.value)
   router.push('/list')
 }
+
+function focusSearchInput() {
+  const el = searchInput.value
+  if (!el) return
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  el.focus({ preventScroll: true })
+}
+
+onMounted(() => {
+  if (route.hash === '#buscador') {
+    nextTick(focusSearchInput)
+  }
+})
+
+watch(() => route.hash, (h) => {
+  if (h === '#buscador') nextTick(focusSearchInput)
+})
 
 // Featured businesses
 const { negocios: featured, pending: featuredPending } = useNegocios(ref({
@@ -179,6 +198,8 @@ const { categorias: categoriaCatalog } = useCategorias(10)
                 {{ cityStore.activeCityName }}
               </div>
               <input
+                ref="searchInput"
+                id="buscador"
                 v-model="searchQuery"
                 type="text"
                 placeholder="¿Qué estás buscando?"
