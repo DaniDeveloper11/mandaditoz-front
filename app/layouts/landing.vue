@@ -23,13 +23,14 @@
           </PopoverButton>
 
           <transition enter-active-class="transition ease-out duration-200" enter-from-class="opacity-0 -translate-y-1" enter-to-class="translate-y-0" leave-active-class="transition ease-in duration-150" leave-from-class="translate-y-0" leave-to-class="opacity-0 -translate-y-1">
-            <PopoverPanel class="absolute inset-x-0 top-16 bg-white shadow-lg ring-1 ring-gray-900/5">
+            <PopoverPanel v-slot="{ close }" class="absolute inset-x-0 top-16 bg-white shadow-lg ring-1 ring-gray-900/5">
               <div class="mx-auto max-w-7xl px-6 py-8 lg:px-8">
                 <div class="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3 lg:grid-cols-4">
                   <a
                     v-for="cat in categorias"
                     :key="cat.slug"
                     :href="`/list?categoria=${cat.slug}`"
+                    @click.prevent="irACategoria(cat.slug); close()"
                     class="group flex items-center gap-3 rounded-lg p-3 hover:bg-gray-50 transition"
                   >
                     <div
@@ -112,6 +113,7 @@
                     :key="cat.slug"
                     as="a"
                     :href="`/list?categoria=${cat.slug}`"
+                    @click.prevent="irACategoria(cat.slug); mobileMenuOpen = false"
                     class="flex items-center gap-3 rounded-lg py-2 pl-6 pr-3 text-sm font-semibold text-gray-900 hover:bg-gray-50"
                   >
                     <component
@@ -227,6 +229,13 @@ import { getCategoriaConfig, getLucideIcon } from '~/utils/categorias'
 const { isLoggedIn, user, logout } = useAuthStore()
 const { categorias } = useCategorias()
 const cityStore = useCityStore()
+const searchStore = useSearchStore()
+const router = useRouter()
+
+function irACategoria(slug) {
+  searchStore.setCategoria(slug)
+  router.push('/list')
+}
 
 const logoLight = '/logo-cielo-horizontal.svg'
 const logoDark = 'logo-cielo-horizontal-dark.svg'

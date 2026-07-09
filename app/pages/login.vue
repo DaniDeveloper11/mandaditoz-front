@@ -70,9 +70,9 @@
       <!-- Leyenda inferior -->
       <p class="mt-6 text-center text-xs text-white/30">
         Al continuar aceptas nuestros
-        <a href="#" class="underline hover:text-white/60 transition">Términos de uso</a>
+        <a href="/terminos" class="underline hover:text-white/60 transition">Términos de uso</a>
         y
-        <a href="#" class="underline hover:text-white/60 transition">Política de privacidad</a>.
+        <a href="/privacidad" class="underline hover:text-white/60 transition">Política de privacidad</a>.
       </p>
     </div>
 
