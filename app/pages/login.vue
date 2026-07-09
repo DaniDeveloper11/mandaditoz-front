@@ -2,9 +2,12 @@
   <div class="min-h-screen flex flex-col items-center justify-center bg-brand-bg-dark px-4 py-12">
 
     <!-- Logo -->
-    <a href="/" class="mb-8">
-      <img src="/logo-cielo-horizontal.svg" alt="Mandaditoz" class="h-10 w-auto" />
-    </a>
+    <div class="flex w-full justify-center">
+      <a href="/" class="mb-8">
+        <img :src="logoLight" alt="Mandaditoz" class="h-14 sm:h-20 w-auto" />
+      </a>
+
+    </div>
 
     <!-- Card -->
     <div class="w-full max-w-md">
@@ -83,6 +86,8 @@ definePageMeta({ layout: false })
 
 const route = useRoute()
 const mode = ref(route.query.type === 'r' ? 'register' : 'login')
+const logoLight = '/logo-cielo-horizontal-dark.svg'
+
 
 const titles = {
   login: 'Bienvenido de vuelta',

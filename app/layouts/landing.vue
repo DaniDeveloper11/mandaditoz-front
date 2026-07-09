@@ -58,8 +58,8 @@
           </transition>
         </Popover>
 
-        <!-- <a href="#" class="text-sm/6 font-semibold text-gray-900">Mapa</a> -->
-        <a href="#" class="text-sm/6 font-semibold text-gray-900">¿Cómo funciona?</a>
+        <a href="/about" class="text-sm/6 font-semibold text-gray-900">Nosotros</a> 
+        <a href="/how-to-work" class="text-sm/6 font-semibold text-gray-900">¿Cómo funciona?</a>
       </PopoverGroup>
       <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-x-4">
         <template v-if="isLoggedIn">
@@ -87,7 +87,7 @@
       <DialogPanel class="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10 ">
         <div class="flex items-center justify-between">
           <a href="#" class="-m-1.5 p-1.5">
-            <span class="sr-only">Your Company</span>
+            <span class="sr-only">Mandaditoz</span>
             <img class="h-14 w-auto " :src="logoLight" />
           </a>
           <button type="button" class="-m-2.5 rounded-md p-2.5 text-gray-700" @click="mobileMenuOpen = false">
@@ -193,7 +193,8 @@
         <div>
           <p class="text-white/40 text-xs font-semibold tracking-widest uppercase mb-4">Proyecto</p>
           <ul class="space-y-3">
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">¿Qué es Mandaditoz?</a></li>
+<!--             <li><a href="/how-to-work" class="text-white/70 text-sm hover:text-white transition-colors"></a>¿Como funciona?</li> -->
+            <li><a href="/about" class="text-white/70 text-sm hover:text-white transition-colors">Nosotros</a></li>
             <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Contacto</a></li>
             <li><a href="/privacidad" class="text-white/70 text-sm hover:text-white transition-colors">Privacidad</a></li>
             <li><a href="/terminos" class="text-white/70 text-sm hover:text-white transition-colors">Terminos</a></li>
