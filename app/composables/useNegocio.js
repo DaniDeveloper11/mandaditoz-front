@@ -31,5 +31,7 @@ export function useNegocio(slug, options = {}) {
     : null
   )
 
-  return { negocio, pending, error, refresh }
+  const raw = computed(() => data.value?.data?.[0] ?? null)
+
+  return { negocio, pending, error, refresh, raw }
 }

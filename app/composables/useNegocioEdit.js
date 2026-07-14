@@ -25,8 +25,20 @@ export function useNegocioEdit() {
 
   async function updateHours(businessDocumentId, hours) {
     const headers = authHeaders()
+    const current = Array.isArray(hours) ? hours : (hours?.current ?? [])
+    const toDelete = Array.isArray(hours) ? [] : (hours?.toDelete ?? [])
+
     await Promise.all(
-      hours.map(({ documentId, openTime, closeTime, ...fields }) => {
+      toDelete.map(docId =>
+        $fetch(`${config.public.apiBase}/business-hours/${docId}`, {
+          method: 'DELETE',
+          headers,
+        })
+      )
+    )
+
+    await Promise.all(
+      current.map(({ documentId, openTime, closeTime, ...fields }) => {
         const data = {
           ...fields,
           openTime:  toStrapiTime(openTime),
@@ -94,6 +106,18 @@ export function useNegocioEdit() {
     }))
   }
 
+  async function syncLogo(logo) {
+    if (!logo) return {}
+    if (logo.file) {
+      const uploaded = await uploadFile(logo.file)
+      return { logo: uploaded.id }
+    }
+    if (logo.remove) {
+      return { logo: null }
+    }
+    return {}
+  }
+
   async function syncMenu(menu) {
     if (!menu) return {}
 
@@ -128,10 +152,13 @@ export function useNegocioEdit() {
     loading.value = true
     error.value = null
     try {
-      const { hours, photos, menu, ...businessData } = data
-      const menuPayload = await syncMenu(menu)
+      const { hours, photos, menu, logo, ...businessData } = data
+      const [menuPayload, logoPayload] = await Promise.all([
+        syncMenu(menu),
+        syncLogo(logo),
+      ])
       await Promise.all([
-        update(documentId, { ...businessData, ...menuPayload }),
+        update(documentId, { ...businessData, ...menuPayload, ...logoPayload }),
         updateHours(documentId, hours ?? []),
         syncPhotos(documentId, photos),
       ])

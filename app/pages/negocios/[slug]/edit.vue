@@ -3,6 +3,7 @@ import {
   LayoutList, Phone, Clock, Image as ImageIcon,
   Share2, Star, X, Pencil, ChevronDown, MapPin, Info, Plus, PlusCircle, Check,
   FileText, UploadCloud, Menu as MenuIcon,
+  CreditCard, Banknote, ArrowLeftRight, Wallet,
 } from '@lucide/vue'
 import {
   Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption,
@@ -12,7 +13,16 @@ definePageMeta({ layout: 'editor' })
 
 const route = useRoute()
 const slug = computed(() => route.params.slug)
-const { negocio, pending, error, refresh: refreshNegocio } = useNegocio(slug, { includeDrafts: true })
+const { negocio, pending, error, refresh: refreshNegocio, raw: rawNegocio } = useNegocio(slug, { includeDrafts: true })
+
+if (import.meta.dev) {
+  watch(rawNegocio, (val) => {
+    if (val) console.log('[edit] raw backend →', JSON.parse(JSON.stringify(val)))
+  }, { immediate: true })
+  watch(negocio, (val) => {
+    if (val) console.log('[edit] negocio mapeado →', JSON.parse(JSON.stringify(val)))
+  }, { immediate: true })
+}
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
 const { updateBusiness, loading, error: saveError, clearError } = useNegocioEdit()
 const cityStore = useCityStore()
@@ -34,8 +44,15 @@ const sections = [
   { id: 'horario',     label: 'Horario',             icon: Clock },
   { id: 'fotos',       label: 'Fotos',               icon: ImageIcon },
   { id: 'menu',        label: 'Menú',                icon: MenuIcon },
+  { id: 'pago',        label: 'Métodos de pago',     icon: Wallet },
   { id: 'redes',       label: 'Redes sociales',      icon: Share2 },
   { id: 'estado',      label: 'Estado y visibilidad', icon: Star },
+]
+
+const PAYMENT_METHODS = [
+  { value: 'cash',     label: 'Efectivo',      description: 'Pagos en efectivo al recibir.',   icon: Banknote,        iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
+  { value: 'transfer', label: 'Transferencia', description: 'SPEI o transferencia bancaria.',  icon: ArrowLeftRight,  iconBg: 'bg-blue-50',    iconColor: 'text-blue-700' },
+  { value: 'card',     label: 'Tarjeta',       description: 'Débito o crédito con terminal.',  icon: CreditCard,      iconBg: 'bg-purple-50',  iconColor: 'text-purple-600' },
 ]
 
 const currentSection = computed(() => sections.find(s => s.id === activeSection.value))
@@ -72,14 +89,25 @@ const form = reactive({
   cityDocumentId: null,
   estado: 'Jalisco',
   website: '',
-  // Horario
+  // Horario (array plano; múltiples franjas por día)
   hours: DAY_ORDER.map(day => ({
+    documentId: null,
     dayOfWeek: day,
     openTime: '07:00',
     closeTime: '14:00',
     isClosed: false,
     is24Hours: false,
+    sortOrder: 0,
   })),
+  // Métodos de pago
+  paymentMethods: [],
+  // Logo
+  logo: {
+    url: null,
+    file: null,
+    removed: false,
+    isNew: false,
+  },
   // Fotos
   photos: [],
   // Menú
@@ -105,8 +133,10 @@ const form = reactive({
 
 const newTag = ref('')
 const deletedPhotoIds = ref([])
+const deletedHourIds = ref([])
 const photoError = ref('')
 const menuError = ref('')
+const logoError = ref('')
 
 watch(negocio, (val) => {
   if (!val) return
@@ -129,15 +159,34 @@ watch(negocio, (val) => {
   form.estado           = 'Jalisco'
   form.website          = val.website ?? ''
 
-  const existingHours = Object.fromEntries((val.hours ?? []).map(h => [h.dayOfWeek, h]))
-  form.hours = DAY_ORDER.map(day => ({
-    documentId: existingHours[day]?.documentId ?? null,
-    dayOfWeek:  day,
-    openTime:   existingHours[day]?.openTime  ?? '07:00',
-    closeTime:  existingHours[day]?.closeTime ?? '14:00',
-    isClosed:   existingHours[day]?.isClosed  ?? false,
-    is24Hours:  existingHours[day]?.is24Hours ?? false,
-  }))
+  const slotsByDay = {}
+  ;(val.hours ?? []).forEach((h) => {
+    (slotsByDay[h.dayOfWeek] ??= []).push(h)
+  })
+  form.hours = DAY_ORDER.flatMap((day) => {
+    const slots = (slotsByDay[day] ?? []).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    if (!slots.length) {
+      return [{
+        documentId: null,
+        dayOfWeek: day,
+        openTime: '09:00',
+        closeTime: '18:00',
+        isClosed: true,
+        is24Hours: false,
+        sortOrder: 0,
+      }]
+    }
+    return slots.map((s, i) => ({
+      documentId: s.documentId ?? null,
+      dayOfWeek: day,
+      openTime: (s.openTime ?? '07:00').slice(0, 5),
+      closeTime: (s.closeTime ?? '14:00').slice(0, 5),
+      isClosed: !!s.isClosed,
+      is24Hours: !!s.is24Hours,
+      sortOrder: i,
+    }))
+  })
+  deletedHourIds.value = []
 
   const socialMap = Object.fromEntries(
     (val.socialLinks ?? []).map(s => [s.platform?.toLowerCase(), s.url ?? s.handle ?? ''])
@@ -145,6 +194,15 @@ watch(negocio, (val) => {
   form.social.facebook  = extractSocialHandle(socialMap.facebook,  'facebook.com/')
   form.social.instagram = extractSocialHandle(socialMap.instagram, 'instagram.com/')
   form.social.tiktok    = extractSocialHandle(socialMap.tiktok,    'tiktok.com/@')
+
+  form.paymentMethods = Array.isArray(val.paymentMethods) ? [...val.paymentMethods] : []
+
+  if (form.logo.url?.startsWith('blob:')) URL.revokeObjectURL(form.logo.url)
+  form.logo.url = val.logo?.url ?? null
+  form.logo.file = null
+  form.logo.removed = false
+  form.logo.isNew = false
+  logoError.value = ''
 
   form.visibility.isPublished = val.businessStatus !== 'draft'
   form.visibility.isFeatured  = val.isFeatured ?? false
@@ -218,21 +276,118 @@ const mapAddressLabel = computed(() => {
   return [linea, form.colonia, selectedCityName.value, form.estado].filter(Boolean).join(' — ')
 })
 
+// ── Horario helpers ──
+const hoursByDay = computed(() => {
+  const map = Object.fromEntries(DAY_ORDER.map(d => [d, []]))
+  form.hours.forEach((h) => { map[h.dayOfWeek]?.push(h) })
+  DAY_ORDER.forEach(d => map[d].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)))
+  return map
+})
+
+function isDayClosed(day) {
+  const slots = hoursByDay.value[day]
+  return !slots.length || slots.every(s => s.isClosed)
+}
+
+function toggleDayClosed(day) {
+  const slots = hoursByDay.value[day]
+  if (isDayClosed(day)) {
+    if (slots.length) {
+      slots.forEach((s) => { s.isClosed = false })
+    } else {
+      form.hours.push({
+        documentId: null,
+        dayOfWeek: day,
+        openTime: '09:00',
+        closeTime: '18:00',
+        isClosed: false,
+        is24Hours: false,
+        sortOrder: 0,
+      })
+    }
+  } else {
+    slots.forEach((s) => { s.isClosed = true })
+  }
+}
+
+function addSlot(day) {
+  const slots = hoursByDay.value[day]
+  const lastClose = slots[slots.length - 1]?.closeTime ?? '14:00'
+  form.hours.push({
+    documentId: null,
+    dayOfWeek: day,
+    openTime: lastClose,
+    closeTime: '18:00',
+    isClosed: false,
+    is24Hours: false,
+    sortOrder: slots.length,
+  })
+}
+
+function removeSlot(day, idx) {
+  const slot = hoursByDay.value[day][idx]
+  if (!slot) return
+  if (slot.documentId) deletedHourIds.value.push(slot.documentId)
+  const globalIdx = form.hours.indexOf(slot)
+  if (globalIdx > -1) form.hours.splice(globalIdx, 1)
+}
+
 // ── Redes sociales helpers ──
 function extractSocialHandle(raw, domainPrefix) {
   if (!raw) return ''
-  const clean = raw.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')
-  if (clean.toLowerCase().startsWith(domainPrefix)) {
-    return clean.slice(domainPrefix.length).replace(/^@/, '')
+  let clean = String(raw).trim()
+  const prefix = domainPrefix.toLowerCase()
+  for (let i = 0; i < 5; i++) {
+    const before = clean
+    clean = clean.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/+$/, '')
+    if (clean.toLowerCase().startsWith(prefix)) {
+      clean = clean.slice(prefix.length).replace(/^@/, '')
+    }
+    if (clean === before) break
   }
-  return raw
+  return clean
 }
 
 // ── Fotos helpers ──
 const MAX_PHOTOS = 10
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024
+const MAX_LOGO_SIZE = 2 * 1024 * 1024
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
 const fileInputRef = ref(null)
+const logoInputRef = ref(null)
+
+function triggerLogoInput() {
+  logoInputRef.value?.click()
+}
+
+function onLogoSelected(e) {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  logoError.value = ''
+  if (!file) return
+  if (!ALLOWED_MIME.includes(file.type)) {
+    logoError.value = 'Formato no soportado (JPG, PNG o WebP)'
+    return
+  }
+  if (file.size > MAX_LOGO_SIZE) {
+    logoError.value = 'El logo supera los 2 MB'
+    return
+  }
+  if (form.logo.url?.startsWith('blob:')) URL.revokeObjectURL(form.logo.url)
+  form.logo.url = URL.createObjectURL(file)
+  form.logo.file = file
+  form.logo.isNew = true
+  form.logo.removed = false
+}
+
+function removeLogo() {
+  if (form.logo.url?.startsWith('blob:')) URL.revokeObjectURL(form.logo.url)
+  form.logo.url = null
+  form.logo.file = null
+  form.logo.isNew = false
+  form.logo.removed = true
+  logoError.value = ''
+}
 
 function triggerFileInput() {
   fileInputRef.value?.click()
@@ -343,16 +498,26 @@ function setMenuMode(mode) {
   menuError.value = ''
 }
 
+// ── Métodos de pago helpers ──
+function togglePaymentMethod(value) {
+  const idx = form.paymentMethods.indexOf(value)
+  if (idx >= 0) form.paymentMethods.splice(idx, 1)
+  else form.paymentMethods.push(value)
+}
+
 // ── Guardar ──
 watch(loading, (val) => {
   editorMeta.value.saving = val
 })
 
 function buildPayload() {
+  const fbHandle = extractSocialHandle(form.social.facebook,  'facebook.com/')
+  const igHandle = extractSocialHandle(form.social.instagram, 'instagram.com/')
+  const ttHandle = extractSocialHandle(form.social.tiktok,    'tiktok.com/@')
   const socialLinks = [
-    form.social.facebook  && { platform: 'facebook',  url: `https://facebook.com/${form.social.facebook}` },
-    form.social.instagram && { platform: 'instagram', url: `https://instagram.com/${form.social.instagram}` },
-    form.social.tiktok    && { platform: 'tiktok',    url: `https://tiktok.com/@${form.social.tiktok}` },
+    fbHandle && { platform: 'facebook',  url: `https://facebook.com/${fbHandle}` },
+    igHandle && { platform: 'instagram', url: `https://instagram.com/${igHandle}` },
+    ttHandle && { platform: 'tiktok',    url: `https://tiktok.com/@${ttHandle}` },
   ].filter(Boolean)
 
   const cleanPhone = form.phone.replace(/\D/g, '')
@@ -399,21 +564,34 @@ function buildPayload() {
     email: form.email || null,
     website: form.website || null,
     tags: form.tags.map(t => t.documentId),
+    paymentMethods: form.paymentMethods.length ? [...form.paymentMethods] : null,
     category: form.categoryId ?? null,
     city: form.cityDocumentId ?? null,
     address,
     phones,
-    hours: form.hours.map(h => ({
-      documentId: h.documentId,
-      dayOfWeek:  h.dayOfWeek,
-      openTime:   h.openTime,
-      closeTime:  h.closeTime,
-      isClosed:   h.isClosed,
-      is24Hours:  h.is24Hours,
-    })),
+    hours: {
+      current: DAY_ORDER.flatMap(day =>
+        form.hours
+          .filter(h => h.dayOfWeek === day)
+          .map((h, i) => ({
+            documentId: h.documentId,
+            dayOfWeek:  h.dayOfWeek,
+            openTime:   h.openTime,
+            closeTime:  h.closeTime,
+            isClosed:   h.isClosed,
+            is24Hours:  h.is24Hours,
+            sortOrder:  i,
+          }))
+      ),
+      toDelete: deletedHourIds.value.slice(),
+    },
     socialLinks,
     isFeatured:     form.visibility.isFeatured,
     businessStatus: form.visibility.isPublished ? 'published' : 'draft',
+    logo: {
+      file: form.logo.file,
+      remove: form.logo.removed && !form.logo.file,
+    },
     photos: {
       current: form.photos.map((p, i) => ({
         isNew: p.isNew,
@@ -549,18 +727,44 @@ const stats = [
 
             <!-- Logo + nombre -->
             <div class="flex items-start gap-5 mb-7">
-              <div class="relative shrink-0">
-                <div class="w-16 h-16 rounded-xl bg-brand-bg-dark flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
-                  <img v-if="negocio.logo?.url" :src="negocio.logo.url" :alt="negocio.name" class="w-full h-full object-cover" />
-                  <span v-else>{{ (form.name || '?').charAt(0).toUpperCase() }}</span>
+              <div class="flex flex-col items-center gap-2 shrink-0">
+                <div class="relative">
+                  <div class="w-16 h-16 rounded-xl bg-brand-bg-dark flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+                    <img v-if="form.logo.url" :src="form.logo.url" :alt="form.name" class="w-full h-full object-cover" />
+                    <span v-else>{{ (form.name || '?').charAt(0).toUpperCase() }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    @click="triggerLogoInput"
+                    class="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-amber-500 hover:bg-amber-600 rounded-full flex items-center justify-center shadow transition-colors"
+                    title="Cambiar logo"
+                  >
+                    <Pencil class="w-3 h-3 text-white" />
+                  </button>
                 </div>
-                <button type="button" class="absolute -bottom-1.5 -right-1.5 w-6 h-6 bg-amber-500 hover:bg-amber-600 rounded-full flex items-center justify-center shadow transition-colors" title="Cambiar logo">
-                  <Pencil class="w-3 h-3 text-white" />
+                <button
+                  v-if="form.logo.url"
+                  type="button"
+                  @click="removeLogo"
+                  class="text-[11px] text-brand-azulgris hover:text-red-600 transition-colors"
+                >
+                  Quitar
                 </button>
+                <input
+                  ref="logoInputRef"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  class="hidden"
+                  @change="onLogoSelected"
+                />
               </div>
               <div class="flex-1">
                 <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Nombre del negocio</label>
                 <input v-model="form.name" type="text" placeholder="Nombre del negocio" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                <p v-if="logoError" class="text-red-600 text-xs mt-1.5">{{ logoError }}</p>
+                <p v-else-if="form.logo.isNew" class="text-brand-azulgris text-xs mt-1.5">Logo nuevo. Se subirá al guardar.</p>
+                <p v-else-if="form.logo.removed" class="text-brand-azulgris text-xs mt-1.5">Logo eliminado. Se aplicará al guardar.</p>
+                <p v-else class="text-gray-400 text-xs mt-1.5">JPG, PNG o WebP. Máx. 2 MB.</p>
               </div>
             </div>
 
@@ -761,55 +965,75 @@ const stats = [
           <template v-else-if="activeSection === 'horario'">
 
             <!-- Cabecera de columnas -->
-            <div class="grid grid-cols-[120px_1fr_24px_1fr_64px] gap-4 items-center pb-3 mb-1 border-b border-gray-100">
+            <div class="grid grid-cols-[120px_1fr_64px] gap-4 items-center pb-3 mb-1 border-b border-gray-100">
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Día</span>
-              <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Apertura</span>
-              <span />
-              <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Cierre</span>
+              <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Horarios</span>
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400 text-right">Abierto</span>
             </div>
 
             <!-- Filas por día -->
             <div
-              v-for="row in form.hours"
-              :key="row.dayOfWeek"
-              class="grid grid-cols-[120px_1fr_24px_1fr_64px] gap-4 items-center py-3.5 border-b border-gray-50 last:border-0"
+              v-for="day in DAY_ORDER"
+              :key="day"
+              class="grid grid-cols-[120px_1fr_64px] gap-4 items-start py-4 border-b border-gray-50 last:border-0"
             >
-              <span class="font-semibold text-sm text-brand-text">{{ DAY_LABELS[row.dayOfWeek] }}</span>
+              <span class="font-semibold text-sm text-brand-text pt-2.5">{{ DAY_LABELS[day] }}</span>
 
-              <!-- Apertura -->
-              <input
-                v-model="row.openTime"
-                type="time"
-                :disabled="row.isClosed"
-                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-50"
-              />
-
-              <span class="text-gray-400 text-center text-sm select-none">–</span>
-
-              <!-- Cierre -->
-              <input
-                v-model="row.closeTime"
-                type="time"
-                :disabled="row.isClosed"
-                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-50"
-              />
-
-              <!-- Toggle abierto/cerrado -->
-              <div class="flex justify-end">
+              <!-- Franjas del día -->
+              <div v-if="!isDayClosed(day)" class="space-y-2">
+                <div
+                  v-for="(slot, idx) in hoursByDay[day]"
+                  :key="slot.documentId ?? `new-${day}-${idx}`"
+                  class="grid grid-cols-[1fr_24px_1fr_32px] gap-3 items-center"
+                >
+                  <input
+                    v-model="slot.openTime"
+                    type="time"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                  />
+                  <span class="text-gray-400 text-center text-sm select-none">–</span>
+                  <input
+                    v-model="slot.closeTime"
+                    type="time"
+                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                  />
+                  <button
+                    v-if="hoursByDay[day].length > 1"
+                    type="button"
+                    @click="removeSlot(day, idx)"
+                    class="w-8 h-8 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors"
+                    :title="`Quitar franja ${idx + 1}`"
+                  >
+                    <X class="w-3.5 h-3.5" />
+                  </button>
+                  <span v-else />
+                </div>
                 <button
                   type="button"
-                  @click="row.isClosed = !row.isClosed"
+                  @click="addSlot(day)"
+                  class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-primary hover:underline"
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                  Agregar franja
+                </button>
+              </div>
+              <div v-else class="text-sm text-gray-400 pt-2.5 italic">Cerrado</div>
+
+              <!-- Toggle abierto/cerrado -->
+              <div class="flex justify-end pt-2">
+                <button
+                  type="button"
+                  @click="toggleDayClosed(day)"
                   :class="[
                     'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none',
-                    !row.isClosed ? 'bg-brand-bg-dark' : 'bg-gray-200',
+                    !isDayClosed(day) ? 'bg-brand-bg-dark' : 'bg-gray-200',
                   ]"
-                  :aria-label="DAY_LABELS[row.dayOfWeek]"
+                  :aria-label="DAY_LABELS[day]"
                 >
                   <span
                     :class="[
                       'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                      !row.isClosed ? 'translate-x-6' : 'translate-x-1',
+                      !isDayClosed(day) ? 'translate-x-6' : 'translate-x-1',
                     ]"
                   />
                 </button>
@@ -1080,6 +1304,49 @@ const stats = [
 
             <p v-if="menuError" class="text-red-600 text-xs mt-3">{{ menuError }}</p>
 
+          </template>
+
+          <!-- ══ Métodos de pago ══ -->
+          <template v-else-if="activeSection === 'pago'">
+            <div class="space-y-3">
+              <button
+                v-for="pm in PAYMENT_METHODS"
+                :key="pm.value"
+                type="button"
+                @click="togglePaymentMethod(pm.value)"
+                :class="[
+                  'w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left',
+                  form.paymentMethods.includes(pm.value)
+                    ? 'border-brand-primary bg-brand-primary/5'
+                    : 'border-gray-200 hover:border-gray-300 bg-white',
+                ]"
+              >
+                <div :class="['w-12 h-12 rounded-xl flex items-center justify-center shrink-0', pm.iconBg]">
+                  <component :is="pm.icon" :class="['w-6 h-6', pm.iconColor]" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-sm text-brand-text">{{ pm.label }}</p>
+                  <p class="text-brand-azulgris text-xs mt-0.5">{{ pm.description }}</p>
+                </div>
+                <div
+                  :class="[
+                    'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors',
+                    form.paymentMethods.includes(pm.value)
+                      ? 'bg-brand-primary border-brand-primary'
+                      : 'border-gray-300',
+                  ]"
+                >
+                  <Check v-if="form.paymentMethods.includes(pm.value)" class="w-3.5 h-3.5 text-white" />
+                </div>
+              </button>
+            </div>
+
+            <div class="mt-5 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
+              <Info class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <p class="text-blue-700 text-xs leading-relaxed">
+                Puedes seleccionar más de uno. Aparecerán como distintivos en el perfil del negocio.
+              </p>
+            </div>
           </template>
 
           <!-- ══ Redes sociales ══ -->
