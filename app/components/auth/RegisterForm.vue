@@ -192,13 +192,13 @@ async function handleSubmit() {
 
     await Swal.fire({
       icon: 'success',
-      title: '¡Cuenta creada!',
-      text: `Bienvenido, ${form.displayName || form.username}. Tu cuenta fue registrada correctamente.`,
-      confirmButtonText: 'Continuar',
+      title: '¡Revisa tu correo!',
+      text: `Enviamos un enlace de confirmación a ${form.email}. Ábrelo para activar tu cuenta e iniciar sesión.`,
+      confirmButtonText: 'Ir a iniciar sesión',
       confirmButtonColor: '#1D5A8A',
     })
 
-    navigateTo(route.query.redirect ?? '/')
+    navigateTo({ path: '/login', query: route.query.redirect ? { redirect: route.query.redirect } : {} })
   } catch (e) {
     const msg = e?.data?.error?.message ?? 'Error al crear la cuenta. Intenta de nuevo.'
     Swal.fire({

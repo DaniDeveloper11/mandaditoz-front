@@ -8,12 +8,10 @@ export function useAuth() {
     if (displayName) body.displayName = displayName
     if (phone)       body.phone       = phone
 
-    const data = await $fetch(`${base}/auth/register-owner`, {
+    return await $fetch(`${base}/auth/register-owner`, {
       method: 'POST',
       body,
     })
-    store.setAuth(data.jwt, data.user)
-    return data
   }
 
   async function login({ identifier, password }) {

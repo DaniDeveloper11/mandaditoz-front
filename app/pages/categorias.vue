@@ -8,14 +8,49 @@ const router = useRouter()
 const store = useSearchStore()
 const cityStore = useCityStore()
 
-const { categorias, pending } = useCategorias({ limit: 100, allDepths: true })
+const { categorias, pending } = useCategorias({ limit: 100, allDepths: true, ciudad: true })
+
+// Conteo de negocios por categoría en la ciudad activa.
+// Traemos solo id + category.slug para calcular el número real del municipio.
+const config = useRuntimeConfig()
+const conteoQueryKey = computed(() => `cat-counts|${cityStore.activeCitySlug ?? ''}`)
+const conteoQuery = computed(() => ({
+  'filters[city][slug][$eq]': cityStore.activeCitySlug,
+  'filters[businessStatus][$eq]': 'published',
+  'filters[archivedAt][$null]': true,
+  'fields[0]': 'id',
+  'populate[category][fields][0]': 'slug',
+  'pagination[pageSize]': 500,
+}))
+const { data: conteoData } = useFetch(`${config.public.apiBase}/businesses`, {
+  key: conteoQueryKey,
+  query: conteoQuery,
+  headers: { 'Content-Type': 'application/json' },
+})
+
+const conteoPorCategoria = computed(() => {
+  const counts = {}
+  for (const item of conteoData.value?.data ?? []) {
+    const slug = item.category?.slug
+    if (!slug) continue
+    counts[slug] = (counts[slug] ?? 0) + 1
+  }
+  return counts
+})
+
+const categoriasConConteo = computed(() =>
+  categorias.value.map(cat => ({
+    ...cat,
+    businessCount: conteoPorCategoria.value[cat.slug] ?? 0,
+  })),
+)
 
 const filtro = ref('')
 
 const categoriasFiltradas = computed(() => {
   const q = filtro.value.trim().toLowerCase()
-  if (!q) return categorias.value
-  return categorias.value.filter(cat =>
+  if (!q) return categoriasConConteo.value
+  return categoriasConConteo.value.filter(cat =>
     cat.name?.toLowerCase().includes(q) ||
     cat.description?.toLowerCase().includes(q) ||
     cat.slug?.toLowerCase().includes(q),
