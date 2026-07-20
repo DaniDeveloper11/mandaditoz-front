@@ -186,16 +186,16 @@ const { categorias: categoriaCatalog } = useCategorias(10)
             Negocios locales · 100% gratis
           </p>
 
-          <div class="mt-6 flex flex-col sm:flex-row items-center md:items-start gap-3">
+          <div class="mt-6 flex flex-col sm:flex-row md:flex-col lg:flex-row items-center md:items-start gap-3 sm:gap-4 md:gap-2 lg:gap-3">
             <a
               href="/negocios/publicar"
-              class="inline-flex items-center gap-2 rounded-lg bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold px-5 py-3 text-sm shadow-md active:scale-95 transition-all duration-150"
+              class="inline-flex w-full sm:w-auto md:w-full lg:w-auto items-center justify-center gap-2 rounded-lg bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold px-5 py-3 text-sm shadow-md active:scale-95 transition-all duration-150 whitespace-nowrap"
             >
               <Store class="size-4" />
               Publica tu negocio gratis
               <ArrowRight class="size-4" />
             </a>
-            <span class="text-xs text-brand-azulgris/80">
+            <span class="text-xs text-brand-azulgris/80 text-center md:text-left">
               Sin crear cuenta · Publicamos en 24-48 h
             </span>
           </div>
