@@ -1,5 +1,5 @@
 <script setup>
-import { LayoutGrid, MapPin, Phone, Clock, Star } from '@lucide/vue'
+import { LayoutGrid, MapPin, Phone, Clock, Star, Store, ArrowRight } from '@lucide/vue'
 import { getLucideIcon } from '~/utils/categorias'
 
 definePageMeta({ layout: 'landing' })
@@ -185,6 +185,20 @@ const { categorias: categoriaCatalog } = useCategorias(10)
           <p class="mt-4 text-brand-azulgris text-sm tracking-wide">
             Negocios locales · 100% gratis
           </p>
+
+          <div class="mt-6 flex flex-col sm:flex-row items-center md:items-start gap-3">
+            <a
+              href="/negocios/publicar"
+              class="inline-flex items-center gap-2 rounded-lg bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold px-5 py-3 text-sm shadow-md active:scale-95 transition-all duration-150"
+            >
+              <Store class="size-4" />
+              Publica tu negocio gratis
+              <ArrowRight class="size-4" />
+            </a>
+            <span class="text-xs text-brand-azulgris/80">
+              Sin crear cuenta · Publicamos en 24-48 h
+            </span>
+          </div>
         </div>
 
         <!-- Right: search bar -->
