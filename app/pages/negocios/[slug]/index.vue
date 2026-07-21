@@ -23,7 +23,7 @@ const hasMenu = computed(() => !!negocio.value?.menuPdf?.url || (negocio.value?.
 const tabs = computed(() => {
   const base = [
     { id: 'informacion', label: 'Información' },
-    { id: 'resenas',     label: 'Reseñas' },
+   // { id: 'resenas',     label: 'Reseñas' },
     { id: 'fotos',       label: 'Fotos' },
   ]
   if (hasMenu.value) base.splice(1, 0, { id: 'menu', label: 'Menú' })
@@ -498,7 +498,7 @@ async function submitClaimForm() {
                 </div>
 
                 <div class="flex items-center gap-3 mt-3 flex-wrap">
-                  <div class="flex items-center gap-1.5">
+                  <!-- <div class="flex items-center gap-1.5">
                     <div class="flex gap-0.5">
                       <Star
                         v-for="i in 5"
@@ -507,8 +507,9 @@ async function submitClaimForm() {
                       />
                     </div>
                     <span class="text-amber-400 font-black text-2xl leading-none ml-1">{{ (negocio.ratingAverage ?? 0).toFixed(1) }}</span>
+
                     <span class="text-white/50 text-sm">{{ negocio.ratingCount ?? 0 }} reseñas</span>
-                  </div>
+                  </div> -->
                   <span class="text-white/20 select-none">|</span>
                   <div class="flex items-center gap-1.5 text-white/60 text-sm">
                     <MapPin class="w-4 h-4 shrink-0" />

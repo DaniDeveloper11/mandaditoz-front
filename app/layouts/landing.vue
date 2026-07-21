@@ -197,7 +197,7 @@
           <ul class="space-y-3">
 <!--             <li><a href="/how-to-work" class="text-white/70 text-sm hover:text-white transition-colors"></a>¿Como funciona?</li> -->
             <li><a href="/about" class="text-white/70 text-sm hover:text-white transition-colors">Nosotros</a></li>
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Contacto</a></li>
+            <li><a href="/contacto" class="text-white/70 text-sm hover:text-white transition-colors">Contacto</a></li>
             <li><a href="/privacidad" class="text-white/70 text-sm hover:text-white transition-colors">Privacidad</a></li>
             <li><a href="/terminos" class="text-white/70 text-sm hover:text-white transition-colors">Terminos</a></li>
 
