@@ -160,6 +160,7 @@ export function mapCategoria(item) {
     isActive: item.isActive ?? true,
     isFeatured: !!item.isFeatured,
     businessCount: item.businessCount ?? 0,
+    totalBusinessCount: item.totalBusinessCount ?? 0,
     parent: item.parent ? mapCategoria(item.parent) : null,
     children: (item.children ?? []).map(mapCategoria),
   }
