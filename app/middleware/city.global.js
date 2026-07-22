@@ -4,9 +4,8 @@ export default defineNuxtRouteMiddleware((to) => {
   const slug = raw.trim().toLowerCase()
   if (!slug) return
 
-  const cookie = useCookie('city:active', {
-    maxAge: 60 * 60 * 24 * 365,
-    sameSite: 'lax',
-  })
-  if (cookie.value !== slug) cookie.value = slug
+  const cityStore = useCityStore()
+  if (cityStore.activeCitySlug !== slug) {
+    cityStore.setActiveCity(slug)
+  }
 })
