@@ -46,11 +46,11 @@ const { negocios: featured, pending: featuredPending } = useNegocios(ref({
 }))
 
 // 6 categorías para el grid "¿Qué estás buscando?"
-const { categorias: categoriasGrid } = useCategorias(8)
+const { categorias: categoriasGrid } = useCategorias(12)
 
 // Todas las categorías para los carruseles y los pills de filtro
 const { categorias: categoriasCarrusel } = useCategorias(30)
-const { categorias: categoriaCatalog } = useCategorias(10)
+const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: true, ciudad: true })
 </script>
 
 <template>
