@@ -23,7 +23,10 @@ export function useNegocios(filtros) {
     const ciudad = f.ciudad ?? cityStore.activeCitySlug
     return {
       ...(f.categoria       && { 'filters[category][slug][$eq]': f.categoria }),
-      ...(ciudad            && { 'filters[city][slug][$eq]': ciudad }),
+      ...(ciudad            && {
+        'filters[$or][0][city][slug][$eq]': ciudad,
+        'filters[$or][1][visibleInAllCities][$eq]': true,
+      }),
       ...(f.colonia         && { 'filters[neighborhood][slug][$eq]': f.colonia }),
       ...(f.priceLevel      && { 'filters[priceLevel][$eq]': f.priceLevel }),
       ...(f.soloVerificados && { 'filters[isVerified][$eq]': true }),

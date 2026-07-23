@@ -1,7 +1,7 @@
 <script setup>
 import {
   LayoutList, Phone, Clock, Image as ImageIcon,
-  Share2, Star, X, Pencil, ChevronDown, MapPin, Info, Plus, PlusCircle, Check,
+  Share2, Star, X, Pencil, ChevronDown, MapPin, Globe, Info, Plus, PlusCircle, Check,
   FileText, UploadCloud, Menu as MenuIcon,
   CreditCard, Banknote, ArrowLeftRight, Wallet,
 } from '@lucide/vue'
@@ -128,6 +128,7 @@ const form = reactive({
   visibility: {
     isPublished: true,
     isFeatured: false,
+    visibleInAllCities: false,
   },
 })
 
@@ -204,8 +205,9 @@ watch(negocio, (val) => {
   form.logo.isNew = false
   logoError.value = ''
 
-  form.visibility.isPublished = val.businessStatus !== 'draft'
-  form.visibility.isFeatured  = val.isFeatured ?? false
+  form.visibility.isPublished        = val.businessStatus !== 'draft'
+  form.visibility.isFeatured         = val.isFeatured ?? false
+  form.visibility.visibleInAllCities = val.visibleInAllCities ?? false
 
   form.photos = (val.photos ?? []).map((p, i) => ({
     id: p.id ?? null,
@@ -586,8 +588,9 @@ function buildPayload() {
       toDelete: deletedHourIds.value.slice(),
     },
     socialLinks,
-    isFeatured:     form.visibility.isFeatured,
-    businessStatus: form.visibility.isPublished ? 'published' : 'draft',
+    isFeatured:         form.visibility.isFeatured,
+    visibleInAllCities: form.visibility.visibleInAllCities,
+    businessStatus:     form.visibility.isPublished ? 'published' : 'draft',
     logo: {
       file: form.logo.file,
       remove: form.logo.removed && !form.logo.file,
@@ -1471,6 +1474,34 @@ const stats = [
                     :class="[
                       'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
                       form.visibility.isFeatured ? 'translate-x-6' : 'translate-x-1',
+                    ]"
+                  />
+                </button>
+              </div>
+
+              <!-- Visible en todos los municipios -->
+              <div class="flex items-start justify-between gap-6 p-5 rounded-2xl border border-gray-200">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <Globe class="w-4 h-4 text-sky-600" />
+                    <p class="font-semibold text-brand-text text-sm">Visible en todos los municipios</p>
+                  </div>
+                  <p class="text-brand-azulgris text-xs leading-relaxed">
+                    Tu negocio también aparecerá en las búsquedas de otros municipios, además de su municipio base.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  @click="form.visibility.visibleInAllCities = !form.visibility.visibleInAllCities"
+                  :class="[
+                    'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none mt-0.5',
+                    form.visibility.visibleInAllCities ? 'bg-brand-bg-dark' : 'bg-gray-200',
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                      form.visibility.visibleInAllCities ? 'translate-x-6' : 'translate-x-1',
                     ]"
                   />
                 </button>

@@ -266,6 +266,7 @@ export function mapNegocio(item) {
     })),
     isVerified: !!item.isVerified,
     isFeatured: !!item.isFeatured,
+    visibleInAllCities: !!item.visibleInAllCities,
     businessStatus: item.businessStatus,
     ownershipStatus: item.ownershipStatus ?? 'unclaimed',
     viewCount: item.viewCount ?? 0,

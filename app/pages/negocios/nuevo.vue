@@ -2,7 +2,7 @@
 import {
   LayoutList, Phone, Clock, Star, ChevronDown, ChevronLeft, ChevronRight,
   Check, Info, Sparkles, AlertCircle, Package, Utensils, LayoutGrid,
-  MapPin, MapPinOff, Wallet, Banknote, ArrowLeftRight, CreditCard,
+  MapPin, MapPinOff, Globe, Wallet, Banknote, ArrowLeftRight, CreditCard,
   Image as ImageIcon, BookOpen, Upload, FileText, X, Loader2,
 } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
@@ -69,6 +69,7 @@ const form = reactive({
   colonia: '',
   cityDocumentId: cityStore.activeCity?.documentId ?? null,
   estado: cityStore.activeCityState ?? 'Jalisco',
+  visibleInAllCities: false,
   website: '',
 
   hours: DAY_ORDER.map(day => ({
@@ -324,6 +325,7 @@ function buildPayload() {
     ...(form.cityDocumentId && { city: form.cityDocumentId }),
     phones,
     isMobile: form.isMobile,
+    visibleInAllCities: form.visibleInAllCities,
     address,
     paymentMethods: form.paymentMethods.length ? form.paymentMethods : null,
     logo: form.logo?.id ?? null,
@@ -749,6 +751,31 @@ async function handleSubmit() {
                 </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              @click="form.visibleInAllCities = !form.visibleInAllCities"
+              :class="[
+                'w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left',
+                form.visibleInAllCities ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-200 hover:border-gray-300 bg-white',
+              ]"
+            >
+              <div class="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-slate-100">
+                <Globe class="w-5 h-5 text-slate-600" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-sm text-brand-text">Visible en todos los municipios</p>
+                <p class="text-brand-azulgris text-xs mt-0.5">Tu negocio también aparecerá en búsquedas de otros municipios, además de tu municipio base.</p>
+              </div>
+              <div
+                :class="[
+                  'w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors',
+                  form.visibleInAllCities ? 'bg-brand-primary border-brand-primary' : 'border-gray-300',
+                ]"
+              >
+                <Check v-if="form.visibleInAllCities" class="w-3.5 h-3.5 text-white" />
+              </div>
+            </button>
 
             <div>
               <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">
