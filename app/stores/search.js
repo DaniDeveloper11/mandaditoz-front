@@ -8,6 +8,7 @@ const DEFAULT_FILTROS = {
   colonia: null,
   priceLevel: null,
   soloVerificados: false,
+  isFeatured: false,
   orden: 'rating',
   pagina: 1,
   porPagina: 12,
@@ -52,6 +53,11 @@ export const useSearchStore = defineStore('search', () => {
     filtros.value.pagina = 1
   }
 
+  function toggleDestacados() {
+    filtros.value.isFeatured = !filtros.value.isFeatured
+    filtros.value.pagina = 1
+  }
+
   function setPorPagina(n) {
     filtros.value.porPagina = n
     filtros.value.pagina = 1
@@ -75,6 +81,7 @@ export const useSearchStore = defineStore('search', () => {
     setOrden,
     setPorPagina,
     toggleVerificados,
+    toggleDestacados,
     setPagina,
     reset,
   }

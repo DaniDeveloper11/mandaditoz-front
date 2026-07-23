@@ -1,5 +1,5 @@
 <script setup>
-import { LayoutGrid, MapPin, Phone, Clock, Star, Store, ArrowRight, ChevronDown } from '@lucide/vue'
+import { LayoutGrid, MapPin, Phone, Clock, Star, Store, ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from '@lucide/vue'
 import { getLucideIcon } from '~/utils/categorias'
 
 definePageMeta({ layout: 'landing' })
@@ -38,12 +38,17 @@ watch(() => route.hash, (h) => {
 const { negocios: featured, pending: featuredPending } = useNegocios(ref({
   isFeatured: true,
   pagina: 1,
-  porPagina: 3,
+  porPagina: 100,
   orden: 'rating',
   categoria: null,
   soloVerificados: false,
   query: '',
 }))
+
+const featuredEl = ref(null)
+function scrollFeatured(dir) {
+  featuredEl.value?.scrollBy({ left: dir * 344, behavior: 'smooth' })
+}
 
 // 6 categorías para el grid "¿Qué estás buscando?"
 const { categorias: categoriasGrid } = useCategorias(12)
@@ -252,66 +257,88 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
 
         <div class="flex items-center justify-between mb-8">
           <h2 class="font-display font-black text-3xl md:text-4xl text-brand-text">Negocios destacados</h2>
-          <a href="/list" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors whitespace-nowrap">Ver todos →</a>
-        </div>
-
-        <!-- Loading -->
-        <div v-if="featuredPending" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div v-for="i in 3" :key="i" class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm flex flex-col animate-pulse">
-            <!-- accent bar -->
-            <div class="h-1.5 w-full bg-gray-200" />
-            <div class="p-5 flex flex-col flex-1">
-              <!-- logo + name -->
-              <div class="flex items-start gap-4 mb-4">
-                <div class="w-14 h-14 rounded-xl bg-gray-200 shrink-0" />
-                <div class="flex-1 pt-1 space-y-2">
-                  <div class="h-4 bg-gray-200 rounded w-3/4" />
-                  <div class="flex gap-2">
-                    <div class="h-5 bg-gray-200 rounded-full w-20" />
-                    <div class="h-5 bg-gray-200 rounded-full w-16" />
-                  </div>
-                </div>
-              </div>
-              <!-- description -->
-              <div class="space-y-2 mb-4">
-                <div class="h-3 bg-gray-200 rounded w-full" />
-                <div class="h-3 bg-gray-200 rounded w-5/6" />
-                <div class="h-3 bg-gray-200 rounded w-4/6" />
-              </div>
-              <!-- stars -->
-              <div class="flex items-center gap-1.5 mb-3">
-                <div class="flex gap-0.5">
-                  <div v-for="j in 5" :key="j" class="w-4 h-4 bg-gray-200 rounded" />
-                </div>
-                <div class="h-3 bg-gray-200 rounded w-8" />
-                <div class="h-3 bg-gray-200 rounded w-16" />
-              </div>
-              <!-- address + phone -->
-              <div class="space-y-2 mb-5">
-                <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 bg-gray-200 rounded shrink-0" />
-                  <div class="h-3 bg-gray-200 rounded w-2/3" />
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-4 h-4 bg-gray-200 rounded shrink-0" />
-                  <div class="h-3 bg-gray-200 rounded w-1/2" />
-                </div>
-              </div>
-              <!-- CTA -->
-              <div class="mt-auto">
-                <div class="h-12 bg-gray-200 rounded-xl w-full" />
-              </div>
-            </div>
+          <div class="flex items-center gap-3">
+            <a href="/list?destacados=1" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors whitespace-nowrap">Ver todos →</a>
+            <button
+              @click="scrollFeatured(-1)"
+              class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-brand-text hover:bg-gray-50 transition-colors"
+              aria-label="Anterior"
+            >
+              <ChevronLeft class="w-4 h-4" />
+            </button>
+            <button
+              @click="scrollFeatured(1)"
+              class="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-brand-text hover:bg-gray-50 transition-colors"
+              aria-label="Siguiente"
+            >
+              <ChevronRight class="w-4 h-4" />
+            </button>
           </div>
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <a
-            v-for="biz in featured"
-            :key="biz.id"
-            :href="`/negocios/${biz.slug}`"
-            class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
-          >
+        <!-- Carousel -->
+        <div
+          ref="featuredEl"
+          class="flex gap-6 overflow-x-auto pb-2 -mx-6 px-6 md:mx-0 md:px-0"
+          style="scrollbar-width: none; -webkit-overflow-scrolling: touch;"
+        >
+          <!-- Loading skeletons -->
+          <template v-if="featuredPending">
+            <div v-for="i in 3" :key="i" class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm flex flex-col animate-pulse shrink-0 w-80">
+              <!-- accent bar -->
+              <div class="h-1.5 w-full bg-gray-200" />
+              <div class="p-5 flex flex-col flex-1">
+                <!-- logo + name -->
+                <div class="flex items-start gap-4 mb-4">
+                  <div class="w-14 h-14 rounded-xl bg-gray-200 shrink-0" />
+                  <div class="flex-1 pt-1 space-y-2">
+                    <div class="h-4 bg-gray-200 rounded w-3/4" />
+                    <div class="flex gap-2">
+                      <div class="h-5 bg-gray-200 rounded-full w-20" />
+                      <div class="h-5 bg-gray-200 rounded-full w-16" />
+                    </div>
+                  </div>
+                </div>
+                <!-- description -->
+                <div class="space-y-2 mb-4">
+                  <div class="h-3 bg-gray-200 rounded w-full" />
+                  <div class="h-3 bg-gray-200 rounded w-5/6" />
+                  <div class="h-3 bg-gray-200 rounded w-4/6" />
+                </div>
+                <!-- stars -->
+                <div class="flex items-center gap-1.5 mb-3">
+                  <div class="flex gap-0.5">
+                    <div v-for="j in 5" :key="j" class="w-4 h-4 bg-gray-200 rounded" />
+                  </div>
+                  <div class="h-3 bg-gray-200 rounded w-8" />
+                  <div class="h-3 bg-gray-200 rounded w-16" />
+                </div>
+                <!-- address + phone -->
+                <div class="space-y-2 mb-5">
+                  <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 bg-gray-200 rounded shrink-0" />
+                    <div class="h-3 bg-gray-200 rounded w-2/3" />
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <div class="w-4 h-4 bg-gray-200 rounded shrink-0" />
+                    <div class="h-3 bg-gray-200 rounded w-1/2" />
+                  </div>
+                </div>
+                <!-- CTA -->
+                <div class="mt-auto">
+                  <div class="h-12 bg-gray-200 rounded-xl w-full" />
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
+            <a
+              v-for="biz in featured"
+              :key="biz.id"
+              :href="`/negocios/${biz.slug}`"
+              class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col shrink-0 w-80"
+            >
             <!-- Cover photo -->
             <div class="relative h-28 shrink-0">
               <img
@@ -397,6 +424,7 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
               </div>
             </div>
           </a>
+          </template>
         </div>
 
       </div>

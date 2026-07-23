@@ -31,6 +31,9 @@ const { categorias } = useCategorias({ limit: 100, allDepths: true })
   if (q.verificados === '1' || q.verificados === 'true') {
     store.filtros.soloVerificados = true
   }
+  if (q.destacados === '1' || q.destacados === 'true') {
+    store.filtros.isFeatured = true
+  }
   if (typeof q.ciudad === 'string' && q.ciudad !== cityStore.activeCitySlug) {
     cityStore.setActiveCity(q.ciudad)
   }
@@ -45,6 +48,7 @@ watch(
     porPagina: store.filtros.porPagina,
     pagina: store.filtros.pagina,
     verificados: store.filtros.soloVerificados,
+    destacados: store.filtros.isFeatured,
   }),
   (v) => {
     const query = {}
@@ -55,6 +59,7 @@ watch(
     if (v.porPagina && v.porPagina !== 12) query.porPagina = String(v.porPagina)
     if (v.pagina && v.pagina > 1) query.pagina = String(v.pagina)
     if (v.verificados) query.verificados = '1'
+    if (v.destacados) query.destacados = '1'
     router.replace({ query })
   },
 )
@@ -232,15 +237,28 @@ const paginasVisibles = computed(() => {
 
         </div>
 
-        <!-- Verified toggle -->
-        <div class="flex items-center gap-2.5">
-          <span class="text-sm text-brand-text font-medium">Mostrar solo verificadas</span>
-          <button
-            @click="store.toggleVerificados()"
-            :class="['relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none', store.filtros.soloVerificados ? 'bg-brand-primary' : 'bg-gray-300']"
-          >
-            <span :class="['absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200', store.filtros.soloVerificados ? 'translate-x-4' : 'translate-x-0']" />
-          </button>
+        <!-- Toggles: destacados + verificadas -->
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div class="flex items-center gap-2.5">
+            <span class="text-sm text-brand-text font-medium">Solo destacados</span>
+            <button
+              @click="store.toggleDestacados()"
+              :class="['relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none', store.filtros.isFeatured ? 'bg-brand-primary' : 'bg-gray-300']"
+              aria-label="Alternar solo destacados"
+            >
+              <span :class="['absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200', store.filtros.isFeatured ? 'translate-x-4' : 'translate-x-0']" />
+            </button>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="text-sm text-brand-text font-medium">Mostrar solo verificadas</span>
+            <button
+              @click="store.toggleVerificados()"
+              :class="['relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none', store.filtros.soloVerificados ? 'bg-brand-primary' : 'bg-gray-300']"
+              aria-label="Alternar solo verificadas"
+            >
+              <span :class="['absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200', store.filtros.soloVerificados ? 'translate-x-4' : 'translate-x-0']" />
+            </button>
+          </div>
         </div>
       </div>
 
