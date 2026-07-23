@@ -14,6 +14,12 @@ export const useCityStore = defineStore('city', () => {
     default: () => DEFAULT_CITY.slug,
   })
 
+  const onboarded = useCookie('city:onboarded', {
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+    default: () => null,
+  })
+
   const cities = useState('city:list', () => [])
   const citiesPending = useState('city:pending', () => false)
 
@@ -52,8 +58,15 @@ export const useCityStore = defineStore('city', () => {
       : activeCityName.value,
   )
 
+  const isOnboarded = computed(() => !!onboarded.value)
+
+  function markOnboarded() {
+    onboarded.value = '1'
+  }
+
   function setActiveCity(slug) {
     activeCitySlug.value = slug
+    onboarded.value = '1'
   }
 
   return {
@@ -64,7 +77,9 @@ export const useCityStore = defineStore('city', () => {
     activeCityLabel,
     cities,
     citiesPending,
+    isOnboarded,
     fetchCities,
     setActiveCity,
+    markOnboarded,
   }
 })

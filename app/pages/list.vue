@@ -124,8 +124,22 @@ const paginasVisibles = computed(() => {
             </template>
             <template v-else>Directorio de negocios</template>
           </h1>
-          <p class="text-brand-azulgris text-sm mt-1">
-            <template v-if="!pending">{{ totalResultados }} resultados · {{ cityStore.activeCityLabel }}</template>
+          <p class="text-brand-azulgris text-sm mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <template v-if="!pending">
+              <span>{{ totalResultados }} resultados ·</span>
+              <CityPickerPopover>
+                <template #trigger="{ activeLabel }">
+                  <button
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-semibold text-brand-text hover:border-brand-primary hover:text-brand-primary transition focus:outline-none"
+                  >
+                    <MapPin class="w-3 h-3 text-brand-primary" />
+                    <span class="truncate max-w-[10rem]">{{ activeLabel }}</span>
+                    <ChevronDown class="w-3 h-3 opacity-60" />
+                  </button>
+                </template>
+              </CityPickerPopover>
+            </template>
             <template v-else>Buscando…</template>
           </p>
         </div>

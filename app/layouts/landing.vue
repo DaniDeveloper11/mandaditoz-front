@@ -6,9 +6,7 @@
           <span class="sr-only">Mandaditoz</span>
           <img class="h-14 w-auto " :src="logoLight" alt="Mandaditoz" />
         </a>
-        <div class="hidden sm:block">
-          <LayoutCitySwitcher />
-        </div>
+        <LayoutCitySwitcher />
       </div>
       <div class="flex lg:hidden">
         <button type="button" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700" @click="mobileMenuOpen = true">
@@ -99,9 +97,6 @@
         <div class="mt-6 flow-root">
           <div class="-my-6 divide-y divide-gray-500/10 ">
             <div class="space-y-2 py-6">
-              <div class="-mx-3 px-3 pb-2">
-                <LayoutCitySwitcher />
-              </div>
               <Disclosure as="div" class="-mx-3" v-slot="{ open }">
                 <DisclosureButton class="flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
                   Categorías
@@ -214,10 +209,12 @@
 
     </div>
   </footer>
+
+  <CityPickerModal v-model:open="showWelcome" />
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import {
   Dialog, DialogPanel,
   Disclosure, DisclosureButton, DisclosurePanel,
@@ -240,6 +237,12 @@ function irACategoria(slug) {
 const logoLight = '/logo-cielo-horizontal.svg'
 const logoDark = 'logo-cielo-horizontal-dark.svg'
 const mobileMenuOpen = ref(false)
+const showWelcome = ref(false)
+
+onMounted(async () => {
+  await cityStore.fetchCities()
+  if (!cityStore.isOnboarded) showWelcome.value = true
+})
 
 function handleLogout() {
   logout()

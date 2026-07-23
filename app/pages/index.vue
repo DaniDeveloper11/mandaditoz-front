@@ -1,5 +1,5 @@
 <script setup>
-import { LayoutGrid, MapPin, Phone, Clock, Star, Store, ArrowRight } from '@lucide/vue'
+import { LayoutGrid, MapPin, Phone, Clock, Star, Store, ArrowRight, ChevronDown } from '@lucide/vue'
 import { getLucideIcon } from '~/utils/categorias'
 
 definePageMeta({ layout: 'landing' })
@@ -57,7 +57,7 @@ const { categorias: categoriaCatalog } = useCategorias(10)
   <main class="flex-1">
 
     <!-- Hero -->
-    <section class="relative overflow-hidden bg-brand-bg-dark py-12 md:py-20 px-6 md:px-12">
+    <section class="relative overflow-x-clip bg-brand-bg-dark py-12 md:py-20 px-6 md:px-12">
       <!-- Background cityscape -->
       <div class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 opacity-20 z-0">
         <svg viewBox="0 0 640 170" width="640" height="170" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -179,7 +179,18 @@ const { categorias: categoriaCatalog } = useCategorias(10)
         <!-- Left: headline -->
         <div class="flex-1 text-center md:text-left">
           <h1 class="font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight text-white">
-            Todo {{ cityStore.activeCityName }},<br>
+            Todo
+            <CityPickerPopover>
+              <template #trigger="{ activeName }">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 border-b border-dashed border-white/40 hover:border-white transition text-white font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight focus:outline-none"
+                >
+                  {{ activeName }}
+                  <ChevronDown class="w-5 h-5 sm:w-6 sm:h-6 opacity-70" />
+                </button>
+              </template>
+            </CityPickerPopover><br>
             <span class="text-brand-primary-dark">en un lugar.</span>
           </h1>
           <p class="mt-4 text-brand-azulgris text-sm tracking-wide">
@@ -203,24 +214,30 @@ const { categorias: categoriaCatalog } = useCategorias(10)
 
         <!-- Right: search bar -->
         <div class="w-full md:flex-1">
-          <form @submit.prevent="buscar" class="flex flex-col sm:flex-row items-stretch bg-white rounded-xl overflow-hidden shadow-lg">
+          <form @submit.prevent="buscar" class="flex flex-col sm:flex-row items-stretch bg-white rounded-xl shadow-lg">
             <div class="flex flex-1 border-b sm:border-b-0">
-              <div class="flex items-center gap-2 px-4 py-3.5 border-r border-gray-200 text-brand-text font-medium text-sm whitespace-nowrap">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-brand-primary shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                </svg>
-                {{ cityStore.activeCityName }}
-              </div>
+              <CityPickerPopover>
+                <template #trigger="{ activeName }">
+                  <button
+                    type="button"
+                    class="flex items-center gap-2 px-4 py-3.5 border-r border-gray-200 text-brand-text font-medium text-sm whitespace-nowrap hover:bg-gray-50 transition focus:outline-none rounded-t-xl sm:rounded-t-none sm:rounded-l-xl"
+                  >
+                    <MapPin class="h-4 w-4 text-brand-primary shrink-0" />
+                    {{ activeName }}
+                    <ChevronDown class="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                </template>
+              </CityPickerPopover>
               <input
                 ref="searchInput"
                 id="buscador"
                 v-model="searchQuery"
                 type="text"
                 placeholder="¿Qué estás buscando?"
-                class="flex-1 min-w-0 px-4 py-3.5 text-brand-text placeholder-gray-400 text-sm focus:outline-none"
+                class="flex-1 min-w-0 px-4 py-3.5 text-brand-text placeholder-gray-400 text-sm focus:outline-none rounded-b-xl sm:rounded-none"
               />
             </div>
-            <button type="submit" class="hidden sm:block bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold px-6 py-3.5 text-sm transition-colors duration-150 w-full sm:w-auto">
+            <button type="submit" class="hidden sm:block bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold px-6 py-3.5 text-sm transition-colors duration-150 w-full sm:w-auto sm:rounded-r-xl">
               Buscar
             </button>
           </form>

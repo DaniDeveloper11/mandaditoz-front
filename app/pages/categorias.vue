@@ -1,5 +1,5 @@
 <script setup>
-import { Search, LayoutGrid, Store } from '@lucide/vue'
+import { Search, LayoutGrid, Store, MapPin, ChevronDown } from '@lucide/vue'
 import { getLucideIcon, getCategoriaConfig } from '~/utils/categorias'
 
 definePageMeta({ layout: 'landing' })
@@ -36,8 +36,20 @@ function irACategoria(slug) {
       <div class="max-w-6xl mx-auto">
         <p class="text-brand-azulgris text-xs font-semibold tracking-widest uppercase mb-2">Directorio</p>
         <h1 class="font-display font-black text-4xl md:text-5xl text-white">Todas las categorías</h1>
-        <p class="text-brand-azulgris text-sm mt-3">
-          Explora los {{ categorias.length }} rubros disponibles en {{ cityStore.activeCityLabel }}
+        <p class="text-brand-azulgris text-sm mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-2">
+          <span>Explora los {{ categorias.length }} rubros disponibles en</span>
+          <CityPickerPopover>
+            <template #trigger="{ activeLabel }">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:bg-white/20 hover:border-white/40 transition focus:outline-none"
+              >
+                <MapPin class="w-3.5 h-3.5" />
+                <span class="truncate max-w-[10rem]">{{ activeLabel }}</span>
+                <ChevronDown class="w-3.5 h-3.5 opacity-70" />
+              </button>
+            </template>
+          </CityPickerPopover>
         </p>
 
         <!-- Search -->
