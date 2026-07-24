@@ -1,25 +1,65 @@
 <script setup>
 import {
   Plus, Pencil, ExternalLink, Star, Eye, MapPin, Store, Sparkles,
-  AlertCircle, ChevronRight,
+  AlertCircle, ChevronRight, Info, Trash2, X, Loader2, TriangleAlert,
 } from '@lucide/vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { getCategoriaConfig } from '~/utils/categorias'
 
 definePageMeta({ layout: 'landing' })
 
 const router = useRouter()
-const { isLoggedIn, user } = useAuthStore()
+const { isLoggedIn, user, token } = useAuthStore()
 const cityStore = useCityStore()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase
 
-if (import.meta.client && !isLoggedIn) {
-  router.replace('/login?redirect=/mis-negocios')
-}
+onMounted(() => {
+  if (!isLoggedIn) router.replace('/login?redirect=/mis-negocios')
+})
 
 const { negocios, publishedCount, publishedLimit, canPublishMore, pending, error, refresh } = useMisNegocios()
 
+const archiveTarget = ref(null)
+const archiving = ref(false)
+const archiveError = ref('')
+
+function promptArchive(negocio) {
+  archiveError.value = ''
+  archiveTarget.value = negocio
+}
+
+function cancelArchive() {
+  if (archiving.value) return
+  archiveTarget.value = null
+}
+
+async function confirmArchive() {
+  const negocio = archiveTarget.value
+  if (!negocio) return
+  archiving.value = true
+  archiveError.value = ''
+  try {
+    await $fetch(`${apiBase}/businesses/${negocio.documentId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: { data: { archivedAt: new Date().toISOString() } },
+    })
+    archiveTarget.value = null
+    await refresh()
+  } catch (e) {
+    archiveError.value = e?.data?.error?.message || 'No pudimos archivar el negocio. Intenta de nuevo.'
+  } finally {
+    archiving.value = false
+  }
+}
+
 const stats = computed(() => {
   const total = negocios.value.length
-  const drafts = negocios.value.filter(n => n.businessStatus !== 'published').length
+  const drafts = negocios.value.filter(n => n.businessStatus === 'draft').length
   const totalViews = negocios.value.reduce((sum, n) => sum + (n.viewCount ?? 0), 0)
   return { total, drafts, totalViews }
 })
@@ -191,9 +231,19 @@ useSeoMeta({ title: 'Mis negocios | Mandaditoz' })
                 class="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-black/20 pointer-events-none"
               />
 
-              <!-- Badge de estado -->
+              <!-- Badge de estado (clickeable → /estado si no está publicado) -->
               <div class="absolute top-3 right-3">
+                <NuxtLink
+                  v-if="negocio.businessStatus !== 'published'"
+                  :to="`/negocios/${negocio.slug}/estado`"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm backdrop-blur-sm bg-white/95 hover:bg-white transition-colors"
+                  :class="statusMeta(negocio.businessStatus).pill"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :class="statusMeta(negocio.businessStatus).dot" />
+                  {{ statusMeta(negocio.businessStatus).label }}
+                </NuxtLink>
                 <span
+                  v-else
                   class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold shadow-sm backdrop-blur-sm bg-white/95"
                   :class="statusMeta(negocio.businessStatus).pill"
                 >
@@ -267,6 +317,7 @@ useSeoMeta({ title: 'Mis negocios | Mandaditoz' })
                   Editar
                 </NuxtLink>
                 <a
+                  v-if="negocio.businessStatus === 'published'"
                   :href="`/negocios/${negocio.slug}`"
                   target="_blank"
                   rel="noopener"
@@ -275,6 +326,22 @@ useSeoMeta({ title: 'Mis negocios | Mandaditoz' })
                   <ExternalLink class="w-3.5 h-3.5" />
                   Ver
                 </a>
+                <NuxtLink
+                  v-else
+                  :to="`/negocios/${negocio.slug}/estado`"
+                  class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-brand-text text-xs font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  <Info class="w-3.5 h-3.5" />
+                  Estado
+                </NuxtLink>
+                <button
+                  type="button"
+                  @click="promptArchive(negocio)"
+                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-400 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors shrink-0"
+                  aria-label="Archivar negocio"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           </div>
@@ -299,5 +366,104 @@ useSeoMeta({ title: 'Mis negocios | Mandaditoz' })
       </template>
 
     </div>
+
+    <!-- Modal: confirmar archivado -->
+    <TransitionRoot as="template" :show="archiveTarget !== null">
+      <Dialog as="div" class="relative z-50" @close="cancelArchive">
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-200"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="ease-in duration-150"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-brand-bg-dark/70 backdrop-blur-sm" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-200"
+            enter-from="opacity-0 translate-y-4 scale-95"
+            enter-to="opacity-100 translate-y-0 scale-100"
+            leave="ease-in duration-150"
+            leave-from="opacity-100 translate-y-0 scale-100"
+            leave-to="opacity-0 translate-y-2 scale-95"
+          >
+            <DialogPanel class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6">
+              <div class="flex items-start gap-4 mb-5">
+                <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center shrink-0">
+                  <TriangleAlert class="w-6 h-6 text-red-600" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <DialogTitle class="font-display font-black text-lg text-brand-text">
+                    Archivar negocio
+                  </DialogTitle>
+                  <p class="text-brand-azulgris text-sm mt-1">
+                    Se dejará de mostrar en tu panel y en el directorio.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  @click="cancelArchive"
+                  :disabled="archiving"
+                  class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-brand-text hover:bg-gray-50 transition-colors shrink-0 disabled:opacity-50"
+                  aria-label="Cerrar"
+                >
+                  <X class="w-4 h-4" />
+                </button>
+              </div>
+
+              <div v-if="archiveTarget" class="flex items-center gap-3 p-4 rounded-xl bg-slate-50 border border-gray-100 mb-5">
+                <div class="w-11 h-11 rounded-xl bg-white border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
+                  <img
+                    v-if="archiveTarget.logo?.url"
+                    :src="archiveTarget.logo.url"
+                    :alt="archiveTarget.name"
+                    class="w-full h-full object-contain"
+                  />
+                  <span v-else class="font-display font-black text-brand-text">
+                    {{ archiveTarget.name?.[0]?.toUpperCase() }}
+                  </span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-sm text-brand-text truncate">{{ archiveTarget.name }}</p>
+                  <p v-if="archiveTarget.category?.name" class="text-brand-azulgris text-xs mt-0.5 truncate">{{ archiveTarget.category.name }}</p>
+                </div>
+              </div>
+
+              <div v-if="archiveError" class="mb-4 flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+                <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{{ archiveError }}</span>
+              </div>
+
+              <div class="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  @click="cancelArchive"
+                  :disabled="archiving"
+                  class="px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-brand-text hover:bg-gray-50 transition-colors disabled:opacity-60"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  @click="confirmArchive"
+                  :disabled="archiving"
+                  class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <Loader2 v-if="archiving" class="w-4 h-4 animate-spin" />
+                  <Trash2 v-else class="w-4 h-4" />
+                  {{ archiving ? 'Archivando…' : 'Archivar' }}
+                </button>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+
   </div>
 </template>

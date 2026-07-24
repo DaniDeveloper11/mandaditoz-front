@@ -34,7 +34,7 @@ const QUICK_CATEGORIES = [
   },
   {
     id: 'restaurantes',
-    slug: 'restaurantes',
+    slug: 'restaurante',
     label: 'Restaurantes',
     description: 'Comida, bebidas, tacos, mariscos y más.',
     icon: Utensils,
@@ -166,7 +166,8 @@ const form = reactive({
   cityDocumentId: cityStore.activeCity?.documentId ?? null,
   estado: cityStore.activeCityState ?? 'Jalisco',
   visibleInAllCities: false,
-  website: '',
+  facebook: '',
+  instagram: '',
 
   hours: DAY_ORDER.map(day => ({
     dayOfWeek: day,
@@ -280,7 +281,6 @@ function validateStep(idx) {
     if (!form.phone.replace(/\D/g, '')) errors.phone = 'Al menos un teléfono es obligatorio'
     if (!form.cityDocumentId)           errors.cityDocumentId = 'Selecciona un municipio'
     if (form.email && !/^[^@]+@[^@]+\.[^@]+$/.test(form.email)) errors.email = 'Email inválido'
-    if (form.website && !/^https?:\/\/[^\s]+\.[^\s]+$/.test(form.website)) errors.website = 'URL inválida (debe iniciar con http:// o https://)'
   }
   if (idx === 5) {
     if (!form.paymentMethods.length) errors.paymentMethods = 'Selecciona al menos un método de pago'
@@ -337,7 +337,29 @@ function goTo(idx) {
   currentStep.value = idx
 }
 
+function extractSocialHandle(raw, domainPrefix) {
+  if (!raw) return ''
+  let clean = String(raw).trim()
+  const prefix = domainPrefix.toLowerCase()
+  for (let i = 0; i < 5; i++) {
+    const before = clean
+    clean = clean.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/+$/, '')
+    if (clean.toLowerCase().startsWith(prefix)) {
+      clean = clean.slice(prefix.length).replace(/^@/, '')
+    }
+    if (clean === before) break
+  }
+  return clean.replace(/^@/, '')
+}
+
 function buildPayload() {
+  const fbHandle = extractSocialHandle(form.facebook,  'facebook.com/')
+  const igHandle = extractSocialHandle(form.instagram, 'instagram.com/')
+  const socialLinks = [
+    fbHandle && { platform: 'facebook',  url: `https://facebook.com/${fbHandle}` },
+    igHandle && { platform: 'instagram', url: `https://instagram.com/${igHandle}` },
+  ].filter(Boolean)
+
   const cleanPhone = form.phone.replace(/\D/g, '')
   const cleanWa    = form.whatsapp.replace(/\D/g, '')
   const samePhone  = cleanPhone && cleanWa && cleanPhone === cleanWa
@@ -383,7 +405,7 @@ function buildPayload() {
     shortDescription: form.shortDescription.trim() || null,
     description: form.description.trim() || null,
     email: form.email.trim() || null,
-    website: form.website.trim() || null,
+    socialLinks: socialLinks.length ? socialLinks : null,
     category: form.categoryId,
     city: form.cityDocumentId,
     phones,
@@ -415,7 +437,7 @@ async function handleSubmit() {
   if (Object.keys(errors).length) {
     stepErrors.value = errors
     if (errors.name || errors.categoryId) currentStep.value = 0
-    else if (errors.phone || errors.cityDocumentId || errors.email || errors.website) currentStep.value = 3
+    else if (errors.phone || errors.cityDocumentId || errors.email) currentStep.value = 3
     else if (errors.paymentMethods) currentStep.value = 5
     else currentStep.value = 6
     return
@@ -889,18 +911,43 @@ async function handleSubmit() {
               </div>
             </button>
 
-            <div>
-              <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">
-                Sitio web <span class="font-normal normal-case text-gray-400">(opcional)</span>
-              </label>
-              <input
-                v-model="form.website"
-                type="url"
-                placeholder="https://mipagina.com"
-                class="w-full border rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
-                :class="stepErrors.website ? 'border-red-300' : 'border-gray-200'"
-              />
-              <p v-if="stepErrors.website" class="text-red-600 text-xs mt-1.5">{{ stepErrors.website }}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">
+                  Facebook <span class="font-normal normal-case text-gray-400">(opcional)</span>
+                </label>
+                <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-brand-primary/30 focus-within:border-brand-primary transition">
+                  <span class="px-3 py-2.5 bg-gray-50 border-r border-gray-200 shrink-0 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-[#1877F2]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.99 22 12z"/>
+                    </svg>
+                  </span>
+                  <input
+                    v-model="form.facebook"
+                    type="text"
+                    placeholder="@minegocio o URL"
+                    class="flex-1 px-3 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none bg-transparent"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">
+                  Instagram <span class="font-normal normal-case text-gray-400">(opcional)</span>
+                </label>
+                <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-brand-primary/30 focus-within:border-brand-primary transition">
+                  <span class="px-3 py-2.5 bg-gray-50 border-r border-gray-200 shrink-0 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-[#E4405F]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                    </svg>
+                  </span>
+                  <input
+                    v-model="form.instagram"
+                    type="text"
+                    placeholder="@minegocio o URL"
+                    class="flex-1 px-3 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none bg-transparent"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </template>
