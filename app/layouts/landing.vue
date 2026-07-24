@@ -13,11 +13,17 @@
           target="_blank"
           rel="noopener noreferrer"
           :title="cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial de la ciudad'"
-          class="relative inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-brand-text hover:border-brand-primary hover:text-brand-primary transition"
+          class="relative inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white p-1 sm:pl-2 sm:pr-3 sm:py-1.5 text-sm font-semibold text-brand-text hover:border-brand-primary hover:text-brand-primary transition"
         >
-          <BookOpen class="w-3.5 h-3.5 text-brand-primary" />
+          <img
+            v-if="cityStore.activeCity.bloggerAvatar?.url"
+            :src="cityStore.activeCity.bloggerAvatar.formats?.thumbnail?.url || cityStore.activeCity.bloggerAvatar.url"
+            :alt="cityStore.activeCity.bloggerName || 'Blogger'"
+            class="size-7 sm:size-5 rounded-full object-cover ring-1 ring-gray-200"
+          />
+          <BookOpen v-else class="size-5 sm:size-3.5 text-brand-primary" />
           <span class="hidden sm:inline truncate max-w-[10rem]">
-            {{ cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial' }}
+            {{ cityStore.activeCity.bloggerName ? `${cityStore.activeCity.bloggerName}` : 'Blog oficial' }}
           </span>
           <span class="absolute -top-0.5 -right-0.5 flex size-2.5">
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-terracota opacity-75"></span>
@@ -162,7 +168,13 @@
                 @click="mobileMenuOpen = false"
                 class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
               >
-                <BookOpen class="size-5 text-gray-400" aria-hidden="true" />
+                <img
+                  v-if="cityStore.activeCity.bloggerAvatar?.url"
+                  :src="cityStore.activeCity.bloggerAvatar.formats?.thumbnail?.url || cityStore.activeCity.bloggerAvatar.url"
+                  :alt="cityStore.activeCity.bloggerName || 'Blogger'"
+                  class="size-6 rounded-full object-cover ring-1 ring-gray-200"
+                />
+                <BookOpen v-else class="size-5 text-gray-400" aria-hidden="true" />
                 {{ cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial' }}
               </a>
             </div>
