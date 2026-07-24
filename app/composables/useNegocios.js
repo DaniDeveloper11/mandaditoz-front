@@ -41,6 +41,7 @@ export function useNegocios(filtros) {
       'populate[neighborhood]': true,
       'populate[tags]': true,
       'populate[geo]': true,
+      'populate[address]': true,
       'populate[logo]': true,
       'populate[coverPhoto]': true,
       'populate[hours]': true,
