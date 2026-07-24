@@ -120,15 +120,51 @@
                   </DisclosureButton>
                 </DisclosurePanel>
               </Disclosure>
-            <!--<a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Mapa</a> -->
-              <a href="#" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">¿Cómo funciona?</a>
+              <a href="/how-to-work" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">¿Cómo funciona?</a>
             </div>
+
+            <div class="py-6">
+              <p class="-mx-3 px-3 pb-2 text-xs font-semibold tracking-widest uppercase text-gray-400">Directorio</p>
+              <a href="/#buscador" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <Search class="size-5 text-gray-400" aria-hidden="true" />
+                Buscar negocio
+              </a>
+              <a href="/categorias" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <LayoutGrid class="size-5 text-gray-400" aria-hidden="true" />
+                Todas las categorías
+              </a>
+              <a href="/negocios/publicar" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <Store class="size-5 text-gray-400" aria-hidden="true" />
+                Registra tu negocio
+              </a>
+            </div>
+
+            <div class="py-6">
+              <p class="-mx-3 px-3 pb-2 text-xs font-semibold tracking-widest uppercase text-gray-400">Proyecto</p>
+              <a href="/about" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <Info class="size-5 text-gray-400" aria-hidden="true" />
+                Nosotros
+              </a>
+              <a href="/contacto" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <Mail class="size-5 text-gray-400" aria-hidden="true" />
+                Contacto
+              </a>
+              <a href="/privacidad" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <Shield class="size-5 text-gray-400" aria-hidden="true" />
+                Privacidad
+              </a>
+              <a href="/terminos" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <FileText class="size-5 text-gray-400" aria-hidden="true" />
+                Términos
+              </a>
+            </div>
+
             <div class="py-6 space-y-1">
               <template v-if="isLoggedIn">
                 <p class="-mx-3 px-3 py-2 text-sm text-gray-500">
                   {{ user?.displayName || user?.username }}
                 </p>
-                <a href="/mis-negocios" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <a href="/mis-negocios" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
                   Mis negocios
                 </a>
                 <button
@@ -139,8 +175,8 @@
                 </button>
               </template>
               <template v-else>
-                <a href="/login" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Iniciar sesión</a>
-                <a href="/login?type=r" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-brand-primary">Registra tu negocio</a>
+                <a href="/login" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Iniciar sesión</a>
+                <a href="/login?type=r" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-brand-primary">Registra tu negocio</a>
               </template>
             </div>
           </div>
@@ -220,7 +256,7 @@ import {
   Disclosure, DisclosureButton, DisclosurePanel,
   Popover, PopoverButton, PopoverGroup, PopoverPanel,
 } from '@headlessui/vue'
-import { Menu, X, ChevronDown } from '@lucide/vue'
+import { Menu, X, ChevronDown, Search, LayoutGrid, Store, Info, Mail, Shield, FileText } from '@lucide/vue'
 import { getCategoriaConfig, getLucideIcon } from '~/utils/categorias'
 
 const { isLoggedIn, user, logout } = useAuthStore()
