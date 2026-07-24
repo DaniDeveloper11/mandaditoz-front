@@ -4,6 +4,7 @@ import {
   Check, Info, Sparkles, AlertCircle, Package, Utensils, LayoutGrid,
   MapPin, MapPinOff, Globe, Wallet, Banknote, ArrowLeftRight, CreditCard,
   Image as ImageIcon, BookOpen, Upload, FileText, X, Loader2,
+  Car, Beer, Scissors, BedDouble, Droplets, Sandwich,
 } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
@@ -183,10 +184,64 @@ const QUICK_CATEGORIES = [
     iconColor: 'text-blue-700',
   },
   {
+    id: 'taxi',
+    slug: 'taxi',
+    label: 'Taxi',
+    description: 'Servicio de taxi y transporte local.',
+    icon: Car,
+    iconBg: 'bg-yellow-50',
+    iconColor: 'text-yellow-600',
+  },
+  {
+    id: 'bar',
+    slug: 'bar',
+    label: 'Bar',
+    description: 'Bares, cantinas y cervecerías.',
+    icon: Beer,
+    iconBg: 'bg-orange-50',
+    iconColor: 'text-orange-600',
+  },
+  {
+    id: 'belleza',
+    slug: 'belleza',
+    label: 'Belleza',
+    description: 'Estéticas, salones y cuidado personal.',
+    icon: Scissors,
+    iconBg: 'bg-pink-50',
+    iconColor: 'text-pink-600',
+  },
+  {
+    id: 'hospedaje',
+    slug: 'hospedaje',
+    label: 'Hospedaje',
+    description: 'Hoteles, posadas y cabañas.',
+    icon: BedDouble,
+    iconBg: 'bg-indigo-50',
+    iconColor: 'text-indigo-600',
+  },
+  {
+    id: 'autolavado',
+    slug: 'autolavados',
+    label: 'Autolavado',
+    description: 'Lavado y detallado de autos.',
+    icon: Droplets,
+    iconBg: 'bg-cyan-50',
+    iconColor: 'text-cyan-600',
+  },
+  {
+    id: 'tacos',
+    slug: 'tacos',
+    label: 'Tacos',
+    description: 'Taquerías, tacos y antojitos.',
+    icon: Sandwich,
+    iconBg: 'bg-red-50',
+    iconColor: 'text-red-600',
+  },
+  {
     id: 'otros',
     slug: null,
     label: 'Otros',
-    description: 'Elegir categoría en el siguiente paso.',
+    description: 'Elege la categoría que mas te guste en el siguiente paso.',
     icon: LayoutGrid,
     iconBg: 'bg-slate-100',
     iconColor: 'text-slate-500',
@@ -1057,33 +1112,33 @@ async function handleSubmit() {
         </TransitionChild>
         <div class="fixed inset-0 flex items-center justify-center p-4 overflow-y-auto">
           <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0 translate-y-4 scale-95" enter-to="opacity-100 translate-y-0 scale-100" leave="ease-in duration-150" leave-from="opacity-100 translate-y-0 scale-100" leave-to="opacity-0 translate-y-2 scale-95">
-            <DialogPanel class="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-6 md:p-10">
-              <div class="text-center mb-8">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-bold tracking-widest uppercase mb-3">
-                  <Sparkles class="w-3.5 h-3.5" />
+            <DialogPanel class="w-full max-w-3xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 md:p-10 my-4">
+              <div class="text-center mb-5 sm:mb-6 md:mb-8">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-[10px] sm:text-xs font-bold tracking-widest uppercase mb-2 sm:mb-3">
+                  <Sparkles class="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   Comencemos
                 </div>
-                <DialogTitle class="font-display font-black text-2xl md:text-3xl text-brand-text">
+                <DialogTitle class="font-display font-black text-xl sm:text-2xl md:text-3xl text-brand-text leading-tight">
                   ¿Qué tipo de negocio quieres publicar?
                 </DialogTitle>
-                <p class="text-brand-azulgris text-sm mt-2">
+                <p class="text-brand-azulgris text-xs sm:text-sm mt-1.5 sm:mt-2">
                   Elige la opción que mejor describa tu negocio.
                 </p>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
                 <button
                   v-for="quick in QUICK_CATEGORIES"
                   :key="quick.id"
                   type="button"
                   @click="pickQuickCategory(quick)"
-                  class="group flex md:flex-col items-center md:text-center gap-4 md:gap-3 p-5 md:p-6 rounded-2xl border-2 border-gray-100 hover:border-brand-primary hover:bg-brand-primary/5 transition-all text-left md:text-center"
+                  class="group flex flex-col items-center text-center gap-2 sm:gap-3 p-3 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl border-2 border-gray-100 hover:border-brand-primary hover:bg-brand-primary/5 transition-all"
                 >
-                  <div :class="['w-14 h-14 md:w-16 md:h-16 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105', quick.iconBg]">
-                    <component :is="quick.icon" :class="['w-7 h-7 md:w-8 md:h-8', quick.iconColor]" />
+                  <div :class="['w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105', quick.iconBg]">
+                    <component :is="quick.icon" :class="['w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8', quick.iconColor]" />
                   </div>
                   <div class="min-w-0 flex-1">
-                    <p class="font-display font-black text-lg text-brand-text mb-1">{{ quick.label }}</p>
-                    <p class="text-brand-azulgris text-xs leading-relaxed">{{ quick.description }}</p>
+                    <p class="font-display font-black text-sm sm:text-base md:text-lg text-brand-text sm:mb-1 leading-tight">{{ quick.label }}</p>
+                    <p class="hidden sm:block text-brand-azulgris text-xs leading-relaxed">{{ quick.description }}</p>
                   </div>
                 </button>
               </div>
