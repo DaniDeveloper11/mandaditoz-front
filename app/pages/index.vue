@@ -28,6 +28,12 @@ onMounted(() => {
   if (route.hash === '#buscador') {
     nextTick(focusSearchInput)
   }
+  rafId = requestAnimationFrame(marqueeTick)
+})
+
+onBeforeUnmount(() => {
+  if (rafId) cancelAnimationFrame(rafId)
+  if (resumeTimer) clearTimeout(resumeTimer)
 })
 
 watch(() => route.hash, (h) => {
@@ -46,9 +52,71 @@ const { negocios: featured, pending: featuredPending } = useNegocios(ref({
 }))
 
 const featuredEl = ref(null)
-function scrollFeatured(dir) {
-  featuredEl.value?.scrollBy({ left: dir * 344, behavior: 'smooth' })
+const isPaused = ref(false)
+const MARQUEE_STEP = 344
+const MARQUEE_SPEED_PX_PER_SEC = 35
+
+function getLoopOffset() {
+  const el = featuredEl.value
+  if (!el) return 0
+  const items = el.querySelectorAll('[data-loop-item]')
+  const half = Math.floor(items.length / 2)
+  const firstDup = items[half]
+  return firstDup ? firstDup.offsetLeft : 0
 }
+
+function scrollFeatured(dir) {
+  const el = featuredEl.value
+  if (!el) return
+  const loopOffset = getLoopOffset()
+  if (loopOffset > 0) {
+    if (dir > 0 && el.scrollLeft + MARQUEE_STEP >= loopOffset) {
+      el.scrollLeft -= loopOffset
+    } else if (dir < 0 && el.scrollLeft - MARQUEE_STEP < 0) {
+      el.scrollLeft += loopOffset
+    }
+  }
+  el.scrollBy({ left: dir * MARQUEE_STEP, behavior: 'smooth' })
+}
+
+function pauseMarquee() { isPaused.value = true }
+function resumeMarquee() { isPaused.value = false }
+
+let resumeTimer = null
+function resumeMarqueeDelayed() {
+  if (resumeTimer) clearTimeout(resumeTimer)
+  resumeTimer = setTimeout(() => { isPaused.value = false }, 1000)
+}
+
+let rafId = null
+let lastTs = 0
+let accum = 0
+
+function marqueeTick(ts) {
+  const el = featuredEl.value
+  if (el) {
+    const dt = lastTs ? (ts - lastTs) / 1000 : 0
+    if (!isPaused.value && dt > 0 && dt < 0.5) {
+      accum += MARQUEE_SPEED_PX_PER_SEC * dt
+      const px = Math.floor(accum)
+      if (px > 0) {
+        el.scrollLeft += px
+        accum -= px
+      }
+    }
+    const loopOffset = getLoopOffset()
+    if (loopOffset > 0 && el.scrollLeft >= loopOffset) {
+      el.scrollLeft -= loopOffset
+    }
+  }
+  lastTs = ts
+  rafId = requestAnimationFrame(marqueeTick)
+}
+
+const featuredLoop = computed(() => {
+  const arr = featured.value || []
+  return arr.length > 0 ? [...arr, ...arr] : []
+})
 
 // 6 categorías para el grid "¿Qué estás buscando?"
 const { categorias: categoriasGrid } = useCategorias(12)
@@ -281,6 +349,10 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
           ref="featuredEl"
           class="flex gap-6 overflow-x-auto pb-2 -mx-6 px-6 md:mx-0 md:px-0"
           style="scrollbar-width: none; -webkit-overflow-scrolling: touch;"
+          @mouseenter="pauseMarquee"
+          @mouseleave="resumeMarquee"
+          @touchstart.passive="pauseMarquee"
+          @touchend.passive="resumeMarqueeDelayed"
         >
           <!-- Loading skeletons -->
           <template v-if="featuredPending">
@@ -334,8 +406,9 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
 
           <template v-else>
             <a
-              v-for="biz in featured"
-              :key="biz.id"
+              v-for="(biz, index) in featuredLoop"
+              :key="`${biz.id}-${index}`"
+              data-loop-item
               :href="`/negocios/${biz.slug}`"
               class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col shrink-0 w-80"
             >
