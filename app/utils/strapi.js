@@ -130,6 +130,10 @@ export function mapCity(item) {
     slug: item.slug,
     center: item.center ?? null,
     businessCount: item.businessCount ?? 0,
+    blogUrl: item.blogUrl ?? null,
+    bloggerName: item.bloggerName ?? null,
+    bloggerBio: item.bloggerBio ?? null,
+    bloggerAvatar: item.bloggerAvatar ? mapMedia(item.bloggerAvatar) : null,
   }
 }
 

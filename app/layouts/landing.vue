@@ -1,12 +1,29 @@
 <template>
   <header class="relative isolate z-40 bg-white ">
     <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
-      <div class="flex lg:flex-1 items-center gap-3">
+      <div class="flex lg:flex-1 items-center gap-3 px-3">
         <a href="/" class="-m-1.5 p-1.5">
           <span class="sr-only">Mandaditoz</span>
           <img class="h-14 w-auto " :src="logoLight" alt="Mandaditoz" />
         </a>
         <LayoutCitySwitcher />
+        <a
+          v-if="cityStore.activeCity?.blogUrl"
+          :href="cityStore.activeCity.blogUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          :title="cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial de la ciudad'"
+          class="relative inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-brand-text hover:border-brand-primary hover:text-brand-primary transition"
+        >
+          <BookOpen class="w-3.5 h-3.5 text-brand-primary" />
+          <span class="hidden sm:inline truncate max-w-[10rem]">
+            {{ cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial' }}
+          </span>
+          <span class="absolute -top-0.5 -right-0.5 flex size-2.5">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-terracota opacity-75"></span>
+            <span class="relative inline-flex size-2.5 rounded-full bg-gradient-to-br from-brand-terracota to-brand-ocre ring-2 ring-white"></span>
+          </span>
+        </a>
       </div>
       <div class="flex lg:hidden">
         <button type="button" class="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700" @click="mobileMenuOpen = true">
@@ -137,6 +154,17 @@
                 <Store class="size-5 text-gray-400" aria-hidden="true" />
                 Registra tu negocio
               </a>
+              <a
+                v-if="cityStore.activeCity?.blogUrl"
+                :href="cityStore.activeCity.blogUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                @click="mobileMenuOpen = false"
+                class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+              >
+                <BookOpen class="size-5 text-gray-400" aria-hidden="true" />
+                {{ cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial' }}
+              </a>
             </div>
 
             <div class="py-6">
@@ -256,7 +284,7 @@ import {
   Disclosure, DisclosureButton, DisclosurePanel,
   Popover, PopoverButton, PopoverGroup, PopoverPanel,
 } from '@headlessui/vue'
-import { Menu, X, ChevronDown, Search, LayoutGrid, Store, Info, Mail, Shield, FileText } from '@lucide/vue'
+import { Menu, X, ChevronDown, Search, LayoutGrid, Store, Info, Mail, Shield, FileText, BookOpen } from '@lucide/vue'
 import { getCategoriaConfig, getLucideIcon } from '~/utils/categorias'
 
 const { isLoggedIn, user, logout } = useAuthStore()

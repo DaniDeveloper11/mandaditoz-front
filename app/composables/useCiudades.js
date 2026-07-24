@@ -7,6 +7,7 @@ export function useCiudades(limit = 50) {
   const { data, pending, error } = get('/cities', {
     'filters[isActive][$eq]': true,
     'populate[state]': true,
+    'populate[bloggerAvatar]': true,
     sort: 'name:asc',
     'pagination[pageSize]': limit,
   })

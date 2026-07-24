@@ -31,6 +31,7 @@ export const useCityStore = defineStore('city', () => {
         query: {
           'filters[isActive][$eq]': true,
           'populate[state]': true,
+          'populate[bloggerAvatar]': true,
           sort: 'name:asc',
           'pagination[pageSize]': 100,
         },
