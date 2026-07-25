@@ -4,7 +4,7 @@ import {
   Check, Info, Sparkles, AlertCircle, Package, Utensils, LayoutGrid,
   MapPin, MapPinOff, Globe, Wallet, Banknote, ArrowLeftRight, CreditCard,
   Image as ImageIcon, BookOpen, Upload, FileText, X, Loader2,
-  Car, Beer, Scissors, BedDouble, Droplets, Sandwich,
+  Car, Beer, Scissors, BedDouble, Droplets, Sandwich,Store
 } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
