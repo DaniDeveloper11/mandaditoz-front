@@ -21,16 +21,49 @@ export function useNegocios(filtros) {
   const query = computed(() => {
     const f = toValue(filtros)
     const ciudad = f.ciudad ?? cityStore.activeCitySlug
+
+    const andGroups = []
+    if (ciudad) {
+      andGroups.push({
+        '$or': [
+          { city: { slug: { '$eq': ciudad } } },
+          { visibleInAllCities: { '$eq': true } },
+        ],
+      })
+    }
+    if (f.query) {
+      andGroups.push({
+        '$or': [
+          { name:                { '$containsi': f.query } },
+          { category:            { name: { '$containsi': f.query } } },
+          { category:            { parent: { name: { '$containsi': f.query } } } },
+          { secondaryCategories: { name: { '$containsi': f.query } } },
+          { secondaryCategories: { parent: { name: { '$containsi': f.query } } } },
+          { tags:                { name: { '$containsi': f.query } } },
+        ],
+      })
+    }
+
+    const andParams = {}
+    andGroups.forEach((group, i) => {
+      group['$or'].forEach((cond, j) => {
+        const flatten = (obj, path) => {
+          for (const [k, v] of Object.entries(obj)) {
+            const next = `${path}[${k}]`
+            if (v && typeof v === 'object' && !Array.isArray(v)) flatten(v, next)
+            else andParams[next] = v
+          }
+        }
+        flatten(cond, `filters[$and][${i}][$or][${j}]`)
+      })
+    })
+
     return {
       ...(f.categoria       && { 'filters[category][slug][$eq]': f.categoria }),
-      ...(ciudad            && {
-        'filters[$or][0][city][slug][$eq]': ciudad,
-        'filters[$or][1][visibleInAllCities][$eq]': true,
-      }),
+      ...andParams,
       ...(f.colonia         && { 'filters[neighborhood][slug][$eq]': f.colonia }),
       ...(f.priceLevel      && { 'filters[priceLevel][$eq]': f.priceLevel }),
       ...(f.soloVerificados && { 'filters[isVerified][$eq]': true }),
-      ...(f.query           && { 'filters[name][$containsi]': f.query }),
       ...(f.isFeatured      && { 'filters[isFeatured][$eq]': true }),
       'filters[businessStatus][$eq]': 'published',
       'filters[archivedAt][$null]': true,
