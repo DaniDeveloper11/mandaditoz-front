@@ -16,6 +16,27 @@ const router = useRouter()
 const slug = computed(() => route.params.slug)
 const { negocio, pending, error } = useNegocio(slug)
 
+const { track: trackBusinessEvent } = useBusinessEvents()
+
+// Dispara profile_view una sola vez por carga cuando el negocio ya está resuelto.
+// El backend deduplica por sesión (30 min), así que recargas repetidas del mismo
+// usuario no inflan el contador.
+const viewTracked = ref(false)
+watch(negocio, (n) => {
+  if (n?.documentId && !viewTracked.value) {
+    viewTracked.value = true
+    trackBusinessEvent(n.documentId, 'profile_view')
+  }
+}, { immediate: true })
+
+function handlePhoneClick() {
+  if (negocio.value?.documentId) trackBusinessEvent(negocio.value.documentId, 'phone_click')
+}
+
+function handleWhatsappClick() {
+  if (negocio.value?.documentId) trackBusinessEvent(negocio.value.documentId, 'whatsapp_click')
+}
+
 const activeTab = ref('informacion')
 
 const hasMenu = computed(() => !!negocio.value?.menuPdf?.url || (negocio.value?.menuImages ?? []).length > 0)
@@ -604,6 +625,7 @@ async function submitClaimForm() {
               <a
                 v-if="negocio.phones.length"
                 :href="`tel:${negocio.phones[0].number}`"
+                @click="handlePhoneClick"
                 class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors"
               >
                 <Phone class="w-4 h-4" />
@@ -1023,6 +1045,7 @@ async function submitClaimForm() {
                   v-for="phone in negocio.phones"
                   :key="phone.number"
                   :href="`tel:${phone.number}`"
+                  @click="handlePhoneClick"
                   class="w-full flex items-center justify-center gap-2 bg-brand-bg-dark hover:opacity-90 text-white text-sm font-semibold py-3.5 rounded-xl transition-opacity"
                 >
                   <Phone class="w-4 h-4" />
@@ -1033,6 +1056,7 @@ async function submitClaimForm() {
                   :href="`https://wa.me/${negocio.phones.find(p => p.hasWhatsapp)?.number.replace(/\D/g, '') ?? ''}`"
                   target="_blank"
                   rel="noopener"
+                  @click="handleWhatsappClick"
                   class="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold py-3.5 rounded-xl transition-colors"
                 >
                   <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

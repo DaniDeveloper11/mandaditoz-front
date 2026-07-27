@@ -643,11 +643,14 @@ onMounted(() => {
   cityStore.fetchCities()
 })
 
-const stats = [
-  { value: 247, label: 'Vistas al perfil',  color: 'text-brand-text' },
-  { value: 38,  label: 'Clics en teléfono', color: 'text-amber-500' },
-  { value: 12,  label: 'Clics en WhatsApp', color: 'text-brand-text' },
-]
+const businessDocumentId = computed(() => negocio.value?.documentId ?? null)
+const { counts: statsCounts, pending: statsPending } = useBusinessStats(businessDocumentId, { range: '30d' })
+
+const stats = computed(() => [
+  { value: statsCounts.value.profile_view,   label: 'Vistas al perfil',  color: 'text-brand-text' },
+  { value: statsCounts.value.phone_click,    label: 'Clics en teléfono', color: 'text-amber-500' },
+  { value: statsCounts.value.whatsapp_click, label: 'Clics en WhatsApp', color: 'text-brand-text' },
+])
 </script>
 
 <template>
@@ -699,10 +702,13 @@ const stats = [
 
         <!-- Stats card -->
         <div class="mt-5 bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
-          <p class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-4">Este mes</p>
+          <p class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-4">Últimos 30 días</p>
           <div class="divide-y divide-gray-100">
             <div v-for="stat in stats" :key="stat.label" class="py-3 first:pt-0 last:pb-0">
-              <p :class="['font-display font-black text-3xl leading-none', stat.color]">{{ stat.value }}</p>
+              <p :class="['font-display font-black text-3xl leading-none', stat.color]">
+                <span v-if="statsPending" class="text-gray-300">—</span>
+                <span v-else>{{ stat.value.toLocaleString('es-MX') }}</span>
+              </p>
               <p class="text-brand-azulgris text-xs mt-1">{{ stat.label }}</p>
             </div>
           </div>
