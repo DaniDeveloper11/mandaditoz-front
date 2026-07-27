@@ -277,7 +277,7 @@ export function mapNegocio(item) {
     ratingAverage: Number(item.ratingAverage ?? 0),
     ratingCount: item.ratingCount ?? 0,
     reviewCount: item.reviewCount ?? 0,
-    isOpen: computeIsOpen(hours, hourExceptions),
+    isOpen: import.meta.client ? computeIsOpen(hours, hourExceptions) : null,
     category: item.category ? mapCategoria(item.category) : null,
     secondaryCategories: (item.secondaryCategories ?? []).map(mapCategoria).filter(Boolean),
     tags: (item.tags ?? []).map(mapTag).filter(Boolean),
