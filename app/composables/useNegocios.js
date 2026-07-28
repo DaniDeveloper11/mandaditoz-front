@@ -31,6 +31,14 @@ export function useNegocios(filtros) {
         ],
       })
     }
+    if (f.categoria) {
+      andGroups.push({
+        '$or': [
+          { category:            { slug: { '$eq': f.categoria } } },
+          { secondaryCategories: { slug: { '$eq': f.categoria } } },
+        ],
+      })
+    }
     if (f.query) {
       andGroups.push({
         '$or': [
@@ -59,7 +67,6 @@ export function useNegocios(filtros) {
     })
 
     return {
-      ...(f.categoria       && { 'filters[category][slug][$eq]': f.categoria }),
       ...andParams,
       ...(f.colonia         && { 'filters[neighborhood][slug][$eq]': f.colonia }),
       ...(f.priceLevel      && { 'filters[priceLevel][$eq]': f.priceLevel }),
