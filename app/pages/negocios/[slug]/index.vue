@@ -51,6 +51,13 @@ const tabs = computed(() => {
   return base
 })
 
+watch(tabs, (list) => {
+  const q = route.query.tab
+  if (typeof q === 'string' && list.some(t => t.id === q)) {
+    activeTab.value = q
+  }
+}, { immediate: true })
+
 const menuLightbox = ref({ open: false, index: 0 })
 function openMenuLightbox(i) { menuLightbox.value = { open: true, index: i } }
 function closeMenuLightbox()  { menuLightbox.value.open = false }
