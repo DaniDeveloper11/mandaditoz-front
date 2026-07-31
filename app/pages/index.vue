@@ -288,16 +288,16 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
         <!-- Right: search bar -->
         <div class="w-full md:flex-1">
           <form @submit.prevent="buscar" class="flex flex-col sm:flex-row items-stretch bg-white rounded-xl shadow-lg">
-            <div class="flex flex-1 border-b sm:border-b-0">
+            <div class="flex flex-col sm:flex-row flex-1">
               <CityPickerPopover>
                 <template #trigger="{ activeName }">
                   <button
                     type="button"
-                    class="flex items-center gap-2 px-4 py-3.5 border-r border-gray-200 text-brand-text font-medium text-sm whitespace-nowrap hover:bg-gray-50 transition focus:outline-none rounded-t-xl sm:rounded-t-none sm:rounded-l-xl"
+                    class="w-full sm:w-auto flex items-center gap-2 px-4 py-3.5 border-b sm:border-b-0 sm:border-r border-gray-200 text-brand-text font-medium text-base sm:text-sm whitespace-nowrap hover:bg-gray-50 transition focus:outline-none rounded-t-xl sm:rounded-t-none sm:rounded-l-xl"
                   >
                     <MapPin class="h-4 w-4 text-brand-primary shrink-0" />
-                    {{ activeName }}
-                    <ChevronDown class="h-3.5 w-3.5 text-gray-400" />
+                    <span class="truncate">{{ activeName }}</span>
+                    <ChevronDown class="h-3.5 w-3.5 text-gray-400 ml-auto sm:ml-0" />
                   </button>
                 </template>
               </CityPickerPopover>
@@ -307,10 +307,10 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
                 v-model="searchQuery"
                 type="text"
                 placeholder="¿Qué estás buscando?"
-                class="flex-1 min-w-0 px-4 py-3.5 text-brand-text placeholder-gray-400 text-sm focus:outline-none rounded-b-xl sm:rounded-none"
+                class="w-full flex-1 min-w-0 px-4 py-3.5 text-brand-text placeholder-gray-400 text-base sm:text-sm focus:outline-none border-b sm:border-b-0 border-gray-200"
               />
             </div>
-            <button type="submit" class="hidden sm:block bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold px-6 py-3.5 text-sm transition-colors duration-150 w-full sm:w-auto sm:rounded-r-xl">
+            <button type="submit" class="block bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold px-6 py-3.5 text-base sm:text-sm transition-colors duration-150 w-full sm:w-auto rounded-b-xl sm:rounded-b-none sm:rounded-r-xl">
               Buscar
             </button>
           </form>
