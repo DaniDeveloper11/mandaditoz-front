@@ -105,6 +105,56 @@ const paginasVisibles = computed(() => {
   const pages = new Set([1, total, current - 1, current, current + 1].filter(p => p >= 1 && p <= total))
   return [...pages].sort((a, b) => a - b)
 })
+
+// --- SEO: title/description/OG dinámicos según búsqueda o categoría --------
+const siteUrl = useRuntimeConfig().public.siteUrl
+
+const seoTitle = computed(() => {
+  const cityLabel = cityStore.activeCityLabel ?? 'Jalisco'
+  if (store.filtros.query) {
+    return `"${store.filtros.query}" en ${cityLabel} — Mandaditoz`
+  }
+  if (store.filtros.categoria) {
+    return `${categoriaLabel.value} en ${cityLabel} — Mandaditoz`
+  }
+  return `Directorio de negocios en ${cityLabel} — Mandaditoz`
+})
+
+const seoDescription = computed(() => {
+  const cityLabel = cityStore.activeCityLabel ?? 'Jalisco'
+  if (store.filtros.query) {
+    return `Encuentra negocios y servicios relacionados con "${store.filtros.query}" en ${cityLabel}. Directorio local gratis.`
+  }
+  if (store.filtros.categoria) {
+    return `Explora los mejores ${categoriaLabel.value.toLowerCase()} en ${cityLabel}. Horarios, contacto y ubicación.`
+  }
+  return `Descubre negocios y servicios locales en ${cityLabel}. Directorio gratis para toda la comunidad.`
+})
+
+const seoUrl = computed(() => {
+  const qs = new URLSearchParams()
+  if (store.filtros.query) qs.set('q', store.filtros.query)
+  if (store.filtros.categoria) qs.set('categoria', store.filtros.categoria)
+  if (cityStore.activeCitySlug) qs.set('ciudad', cityStore.activeCitySlug)
+  const query = qs.toString()
+  return `${siteUrl}/list${query ? `?${query}` : ''}`
+})
+
+useSeoMeta({
+  title: () => seoTitle.value,
+  description: () => seoDescription.value,
+
+  ogType: 'website',
+  ogTitle: () => seoTitle.value,
+  ogDescription: () => seoDescription.value,
+  ogImage: `${siteUrl}/og-default.jpg`,
+  ogUrl: () => seoUrl.value,
+
+  twitterCard: 'summary_large_image',
+  twitterTitle: () => seoTitle.value,
+  twitterDescription: () => seoDescription.value,
+  twitterImage: `${siteUrl}/og-default.jpg`,
+})
 </script>
 
 <template>
