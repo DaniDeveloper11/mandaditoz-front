@@ -239,16 +239,43 @@ const fullAddress = computed(() => {
 })
 
 const cityStore = useCityStore()
+const siteUrl = useRuntimeConfig().public.siteUrl
+
+const seoTitle = computed(() => {
+  if (!negocio.value) return 'Cargando...'
+  const cityLabel = negocio.value.city?.name
+    ? `${negocio.value.city.name}, Jalisco`
+    : cityStore.activeCityLabel
+  return `${negocio.value.name} — ${cityLabel} | Mandaditoz`
+})
+
+const seoDescription = computed(() =>
+  negocio.value?.shortDescription ?? negocio.value?.description ?? 'Encuentra este negocio en Mandaditoz.'
+)
+
+const seoImage = computed(() =>
+  negocio.value?.coverPhoto?.url
+    ?? negocio.value?.logo?.url
+    ?? negocio.value?.photos?.[0]?.url
+    ?? `${siteUrl}/og-default.jpg`
+)
+
+const seoUrl = computed(() => `${siteUrl}${route.path}`)
 
 useSeoMeta({
-  title: () => {
-    if (!negocio.value) return 'Cargando...'
-    const cityLabel = negocio.value.city?.name
-      ? `${negocio.value.city.name}, Jalisco`
-      : cityStore.activeCityLabel
-    return `${negocio.value.name} — ${cityLabel} | Mandaditoz`
-  },
-  description: () => negocio.value?.shortDescription ?? negocio.value?.description,
+  title: () => seoTitle.value,
+  description: () => seoDescription.value,
+
+  ogType: 'business.business',
+  ogTitle: () => seoTitle.value,
+  ogDescription: () => seoDescription.value,
+  ogImage: () => seoImage.value,
+  ogUrl: () => seoUrl.value,
+
+  twitterCard: 'summary_large_image',
+  twitterTitle: () => seoTitle.value,
+  twitterDescription: () => seoDescription.value,
+  twitterImage: () => seoImage.value,
 })
 
 const { isLoggedIn, user } = useAuthStore()

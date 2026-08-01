@@ -11,6 +11,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:1337/api',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL ?? 'https://mandaditoz.com',
     },
   },
 
@@ -24,6 +25,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'Mandaditoz — Directorio de negocios locales',
+      htmlAttrs: { lang: 'es-MX' },
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -31,6 +33,24 @@ export default defineNuxtConfig({
           name: 'description',
           content: 'Encuentra negocios y servicios locales de tu municipio en Jalisco. Gratis para todos.',
         },
+
+        // Open Graph (Facebook, WhatsApp, LinkedIn, Telegram)
+        { property: 'og:site_name', content: 'Mandaditoz' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:title', content: 'Mandaditoz — Directorio de negocios locales' },
+        { property: 'og:description', content: 'Encuentra negocios y servicios locales de tu municipio en Jalisco. Gratis para todos.' },
+        { property: 'og:image', content: 'https://mandaditoz.com/og-default.jpg' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:image:alt', content: 'Mandaditoz — Directorio de negocios locales' },
+        { property: 'og:locale', content: 'es_MX' },
+        { property: 'og:url', content: 'https://mandaditoz.com' },
+
+        // Twitter / X
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: 'Mandaditoz — Directorio de negocios locales' },
+        { name: 'twitter:description', content: 'Encuentra negocios y servicios locales de tu municipio en Jalisco.' },
+        { name: 'twitter:image', content: 'https://mandaditoz.com/og-default.jpg' },
       ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
