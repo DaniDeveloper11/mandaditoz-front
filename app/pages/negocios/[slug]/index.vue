@@ -278,16 +278,30 @@ useSeoMeta({
   twitterImage: () => seoImage.value,
 })
 
-const { isLoggedIn, user } = useAuthStore()
+const { isLoggedIn, user, token } = useAuthStore()
 const { submitClaim} = useClaim()
 
-const isOwner = computed(() => {
-  const uid = user.value?.id
-  const oid = negocio.value?.owner?.id
-  return !!(uid && oid && uid === oid)
-})
-
+const isOwner = ref(false)
 const qrOpen = ref(false)
+
+async function checkOwnership() {
+  if (!import.meta.client || !token || !slug.value) {
+    isOwner.value = false
+    return
+  }
+  try {
+    const apiBase = useRuntimeConfig().public.apiBase
+    const res = await $fetch(`${apiBase}/businesses/mine`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const list = res?.data ?? []
+    isOwner.value = list.some(n => n?.slug === slug.value)
+  } catch {
+    isOwner.value = false
+  }
+}
+
+watch([slug, () => user?.id], checkOwnership, { immediate: true })
 
 // Reclamar negocio
 const showClaimModal = ref(false)

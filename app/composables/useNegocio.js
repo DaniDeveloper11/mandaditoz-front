@@ -24,7 +24,6 @@ export function useNegocio(slug, options = {}) {
     'populate[reviews]': true,
     'populate[phones]': true,
     'populate[socialLinks]': true,
-    'populate[owner][fields][0]': 'id',
   })))
 
   const negocio = computed(() => data.value?.data?.[0]
