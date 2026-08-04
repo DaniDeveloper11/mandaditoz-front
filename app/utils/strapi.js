@@ -200,6 +200,26 @@ export function mapHourException(item) {
   }
 }
 
+export function mapReviewAuthor(user) {
+  if (!user) return null
+  return {
+    id: user.id,
+    documentId: user.documentId,
+    username: user.username,
+    displayName: user.displayName ?? user.username,
+    avatar: user.avatar ? mapMedia(user.avatar) : null,
+  }
+}
+
+export function mapReviewResponse(item) {
+  if (!item) return null
+  return {
+    text: item.text,
+    respondedAt: item.respondedAt,
+    respondedBy: item.respondedBy ? mapReviewAuthor(item.respondedBy) : null,
+  }
+}
+
 export function mapReview(item) {
   if (!item) return null
   return {
@@ -211,6 +231,10 @@ export function mapReview(item) {
     visitDate: item.visitDate,
     helpfulCount: item.helpfulCount ?? 0,
     editedAt: item.editedAt,
+    createdAt: item.createdAt,
+    author: mapReviewAuthor(item.author),
+    response: mapReviewResponse(item.response),
+    photos: (item.photos ?? []).map(mapMedia).filter(Boolean),
   }
 }
 

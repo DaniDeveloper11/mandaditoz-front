@@ -8,13 +8,14 @@ import {
   Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild,
   Popover, PopoverButton, PopoverPanel,
 } from '@headlessui/vue'
+import Swal from 'sweetalert2'
 
 definePageMeta({ layout: 'landing' })
 
 const route = useRoute()
 const router = useRouter()
 const slug = computed(() => route.params.slug)
-const { negocio, pending, error } = useNegocio(slug)
+const { negocio, pending, error, refresh: refreshNegocio } = useNegocio(slug)
 
 const { track: trackBusinessEvent } = useBusinessEvents()
 
@@ -44,7 +45,7 @@ const hasMenu = computed(() => !!negocio.value?.menuPdf?.url || (negocio.value?.
 const tabs = computed(() => {
   const base = [
     { id: 'informacion', label: 'Información' },
-   // { id: 'resenas',     label: 'Reseñas' },
+    { id: 'resenas',     label: 'Reseñas' },
     { id: 'fotos',       label: 'Fotos' },
   ]
   if (hasMenu.value) base.splice(1, 0, { id: 'menu', label: 'Menú' })
@@ -347,6 +348,73 @@ async function submitClaimForm() {
   }
 }
 
+// -- Reseñas ------------------------------------------------------------------
+const businessDocId = computed(() => negocio.value?.documentId ?? null)
+const { reviews, pending: reviewsPending, hasMore: reviewsHasMore, refresh: refreshReviews, loadMore: loadMoreReviews } = useReviews(businessDocId)
+const { deleteReview } = useReviewSubmit()
+
+const reviewModalOpen = ref(false)
+const editingReview = ref(null)
+const responseModalOpen = ref(false)
+const respondingReview = ref(null)
+
+const myReview = computed(() => {
+  const uid = user?.id
+  if (!uid) return null
+  return reviews.value.find(r => r.author?.id === uid) ?? null
+})
+
+async function openWriteReview() {
+  if (!isLoggedIn) {
+    router.push(`/login?redirect=${route.fullPath}`)
+    return
+  }
+  if (myReview.value) {
+    const result = await Swal.fire({
+      icon: 'info',
+      title: 'Ya reseñaste este negocio',
+      text: 'Solo puedes publicar una reseña por negocio. ¿Quieres editar la que ya tienes?',
+      showCancelButton: true,
+      confirmButtonText: 'Editar mi reseña',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#1D5A8A',
+      cancelButtonColor: '#94A3B8',
+    })
+    if (!result.isConfirmed) return
+    editingReview.value = myReview.value
+    reviewModalOpen.value = true
+    return
+  }
+  editingReview.value = null
+  reviewModalOpen.value = true
+}
+
+function openEditReview(review) {
+  editingReview.value = review
+  reviewModalOpen.value = true
+}
+
+async function onDeleteReview(review) {
+  if (!import.meta.client) return
+  if (!window.confirm('¿Borrar tu reseña? Esta acción no se puede deshacer.')) return
+  try {
+    await deleteReview(review.documentId)
+    await refreshReviews()
+    await refreshNegocio?.()
+  } catch {
+    if (import.meta.client) window.alert('No se pudo borrar la reseña.')
+  }
+}
+
+function openRespond(review) {
+  respondingReview.value = review
+  responseModalOpen.value = true
+}
+
+async function onReviewSaved() {
+  await refreshReviews()
+  await refresh?.()
+}
 </script>
 
 <template>
@@ -575,7 +643,11 @@ async function submitClaimForm() {
                 </div>
 
                 <div class="flex items-center gap-3 mt-3 flex-wrap">
-                  <!-- <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    @click="activeTab = 'resenas'"
+                    class="flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+                  >
                     <div class="flex gap-0.5">
                       <Star
                         v-for="i in 5"
@@ -584,9 +656,8 @@ async function submitClaimForm() {
                       />
                     </div>
                     <span class="text-amber-400 font-black text-2xl leading-none ml-1">{{ (negocio.ratingAverage ?? 0).toFixed(1) }}</span>
-
                     <span class="text-white/50 text-sm">{{ negocio.ratingCount ?? 0 }} reseñas</span>
-                  </div> -->
+                  </button>
                   <span class="text-white/20 select-none">|</span>
                   <div class="flex items-center gap-1.5 text-white/60 text-sm">
                     <MapPin class="w-4 h-4 shrink-0" />
@@ -905,15 +976,19 @@ async function submitClaimForm() {
             <!-- Reseñas tab -->
             <template v-if="activeTab === 'resenas'">
               <div class="bg-white rounded-2xl p-6 shadow-sm">
-                <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
                   <h2 class="font-display font-black text-xl text-brand-text">Reseñas</h2>
-                  <button class="bg-brand-bg-dark hover:opacity-90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-opacity">
-                    Escribir reseña
+                  <button
+                    v-if="!isOwner"
+                    type="button"
+                    @click="openWriteReview"
+                    class="bg-brand-bg-dark hover:opacity-90 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-opacity"
+                  >
+                    {{ myReview ? 'Editar mi reseña' : 'Escribir reseña' }}
                   </button>
                 </div>
 
-                <div v-if="negocio.reviews.length">
-                  <!-- Rating summary -->
+                <div v-if="reviews.length || (negocio.ratingCount ?? 0) > 0">
                   <div class="flex items-start gap-8 mb-8">
                     <div class="text-center shrink-0">
                       <div class="font-display font-black text-5xl text-brand-text leading-none">{{ (negocio.ratingAverage ?? 0).toFixed(1) }}</div>
@@ -924,36 +999,55 @@ async function submitClaimForm() {
                     </div>
                   </div>
 
-                  <!-- Individual reviews -->
                   <div class="divide-y divide-gray-100">
-                    <div v-for="review in negocio.reviews" :key="review.id" class="py-5 first:pt-0 last:pb-0">
-                      <div class="flex items-start justify-between gap-4">
-                        <div class="flex items-center gap-3">
-                          <div class="w-9 h-9 rounded-lg bg-slate-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                            {{ review.title?.charAt(0) ?? '?' }}
-                          </div>
-                          <div>
-                            <p class="font-semibold text-brand-text text-sm leading-tight">{{ review.title ?? 'Reseña' }}</p>
-                            <p class="text-brand-azulgris text-xs mt-0.5">{{ review.visitDate }}</p>
-                          </div>
-                        </div>
-                        <div class="flex gap-0.5 shrink-0">
-                          <Star
-                            v-for="i in 5"
-                            :key="i"
-                            :class="['w-3.5 h-3.5', i <= review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
-                          />
-                        </div>
-                      </div>
-                      <p class="text-brand-text text-sm leading-relaxed mt-3">{{ review.comment }}</p>
-                    </div>
+                    <ReviewCard
+                      v-for="r in reviews"
+                      :key="r.id"
+                      :review="r"
+                      :can-edit="!!user && r.author?.id === user.id"
+                      :can-respond="isOwner"
+                      :business-name="negocio.name"
+                      @edit="openEditReview"
+                      @delete="onDeleteReview"
+                      @respond="openRespond"
+                    />
                   </div>
+
+                  <div v-if="reviewsHasMore" class="mt-6 text-center">
+                    <button
+                      type="button"
+                      @click="loadMoreReviews"
+                      :disabled="reviewsPending"
+                      class="px-5 py-2 rounded-xl border border-gray-200 text-brand-text text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      {{ reviewsPending ? 'Cargando…' : 'Ver más reseñas' }}
+                    </button>
+                  </div>
+                </div>
+
+                <div v-else-if="reviewsPending" class="text-center py-12 text-brand-azulgris text-sm">
+                  Cargando reseñas…
                 </div>
 
                 <div v-else class="text-center py-12 text-brand-azulgris text-sm">
                   Aún no hay reseñas para este negocio.
+                  <span v-if="!isOwner" class="block mt-1">¡Sé el primero en compartir tu experiencia!</span>
                 </div>
               </div>
+
+              <ReviewFormModal
+                :open="reviewModalOpen"
+                :business="negocio"
+                :existing-review="editingReview"
+                @close="reviewModalOpen = false"
+                @saved="onReviewSaved"
+              />
+              <ReviewResponseModal
+                :open="responseModalOpen"
+                :review="respondingReview"
+                @close="responseModalOpen = false"
+                @saved="onReviewSaved"
+              />
             </template>
 
             <!-- Fotos tab -->
