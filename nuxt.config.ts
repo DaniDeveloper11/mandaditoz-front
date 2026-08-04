@@ -12,6 +12,7 @@ export default defineNuxtConfig({
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:1337/api',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL ?? 'https://mandaditoz.com',
+      clarityId: process.env.NUXT_PUBLIC_CLARITY_ID ?? '',
     },
   },
 
