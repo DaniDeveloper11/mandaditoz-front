@@ -2,7 +2,7 @@
 import {
   ChevronLeft, Star, MapPin, Share2, Phone, Check, Clock, Image as ImageIcon, Map, X, FileText, Download,
   Mail, Globe, CreditCard, Banknote, ArrowLeftRight,
-  Link as LinkIcon, MoreHorizontal,
+  Link as LinkIcon, MoreHorizontal, QrCode,
 } from '@lucide/vue'
 import {
   Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild,
@@ -280,6 +280,14 @@ useSeoMeta({
 
 const { isLoggedIn, user } = useAuthStore()
 const { submitClaim} = useClaim()
+
+const isOwner = computed(() => {
+  const uid = user.value?.id
+  const oid = negocio.value?.owner?.id
+  return !!(uid && oid && uid === oid)
+})
+
+const qrOpen = ref(false)
 
 // Reclamar negocio
 const showClaimModal = ref(false)
@@ -1110,8 +1118,24 @@ async function submitClaimForm() {
               </div>
             </div>
 
+            <!-- QR del menú (solo dueño) -->
+            <div v-if="isOwner" class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+              <p class="font-semibold text-brand-text text-sm mb-1">QR del menú</p>
+              <p class="text-brand-azulgris text-xs leading-relaxed mb-3">
+                Descarga un QR que abre tu menú al escanearlo. Imprímelo y colócalo en mesas o pared.
+              </p>
+              <button
+                type="button"
+                @click="qrOpen = true"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-brand-bg-dark text-white text-sm font-bold hover:opacity-90 transition-opacity"
+              >
+                <QrCode class="w-4 h-4" />
+                Generar QR
+              </button>
+            </div>
+
             <!-- Claim card -->
-            <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+            <div v-else class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
               <p class="font-semibold text-brand-text text-sm mb-1">¿Es tu negocio?</p>
               <p class="text-brand-azulgris text-xs leading-relaxed mb-3">
                 Reclamarlo te permite actualizar los datos, responder reseñas y acceder a estadísticas.
@@ -1339,6 +1363,9 @@ async function submitClaimForm() {
 
       </Dialog>
     </TransitionRoot>
+
+    <!-- Modal: QR del menú -->
+    <BusinessQrModal :open="qrOpen" :negocio="negocio" @close="qrOpen = false" />
 
   </div>
 </template>

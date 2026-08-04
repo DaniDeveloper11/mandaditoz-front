@@ -3,7 +3,7 @@ import {
   LayoutList, Phone, Clock, Image as ImageIcon,
   Share2, Star, X, Pencil, ChevronDown, MapPin, Globe, Info, Plus, PlusCircle, Check,
   FileText, UploadCloud, Menu as MenuIcon,
-  CreditCard, Banknote, ArrowLeftRight, Wallet,
+  CreditCard, Banknote, ArrowLeftRight, Wallet, QrCode,
 } from '@lucide/vue'
 import {
   Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption,
@@ -37,6 +37,8 @@ const editorMeta = useState('editorMeta', () => ({
 }))
 
 const activeSection = ref('informacion')
+
+const qrOpen = ref(false)
 
 const sections = [
   { id: 'informacion', label: 'Información básica', icon: LayoutList },
@@ -1169,6 +1171,25 @@ const stats = computed(() => [
           <!-- ══ Menú ══ -->
           <template v-else-if="activeSection === 'menu'">
 
+            <!-- QR del menú -->
+            <div class="mb-6 flex items-center gap-4 p-4 rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white">
+              <div class="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                <QrCode class="w-5 h-5 text-brand-text" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-brand-text text-sm">QR del menú</p>
+                <p class="text-brand-azulgris text-xs mt-0.5">Descárgalo, imprímelo y colócalo para que tus clientes vean tu menú desde el celular.</p>
+              </div>
+              <button
+                type="button"
+                @click="qrOpen = true"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-brand-bg-dark text-white text-sm font-bold hover:opacity-90 transition-opacity shrink-0"
+              >
+                <QrCode class="w-4 h-4" />
+                Generar QR
+              </button>
+            </div>
+
             <!-- Selector de formato -->
             <div class="mb-6">
               <p class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Formato del menú</p>
@@ -1529,5 +1550,8 @@ const stats = computed(() => [
 
     </div>
     </template>
+
+    <!-- Modal: QR del menú -->
+    <BusinessQrModal :open="qrOpen" :negocio="negocio" @close="qrOpen = false" />
   </div>
 </template>

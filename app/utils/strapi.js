@@ -291,6 +291,7 @@ export function mapNegocio(item) {
     coverPhoto,
     menuPdf,
     menuImages,
+    owner: item.owner ? { id: item.owner.id } : null,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }
