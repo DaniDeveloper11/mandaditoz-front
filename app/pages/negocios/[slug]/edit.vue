@@ -656,7 +656,7 @@ const stats = computed(() => [
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-6 py-8">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
 
     <div v-if="pending" class="flex items-center justify-center min-h-60">
       <div class="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
@@ -678,23 +678,23 @@ const stats = computed(() => [
       </button>
     </div>
 
-    <div class="flex gap-8 items-start">
+    <div class="flex flex-col lg:flex-row gap-6 lg:gap-8 lg:items-start">
 
       <!-- ── Sidebar ── -->
-      <aside class="w-52 shrink-0 sticky top-20">
+      <aside class="w-full lg:w-52 lg:shrink-0 lg:sticky lg:top-20">
 
-        <p class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-3 px-3">Secciones</p>
+        <p class="hidden lg:block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-3 px-3">Secciones</p>
 
-        <nav class="space-y-0.5">
+        <nav class="flex lg:flex-col gap-1 lg:gap-0.5 overflow-x-auto lg:overflow-visible -mx-4 sm:-mx-6 lg:mx-0 px-4 sm:px-6 lg:px-0 pb-2 lg:pb-0 no-scrollbar">
           <button
             v-for="section in sections"
             :key="section.id"
             @click="activeSection = section.id"
             :class="[
-              'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors text-left',
+              'w-auto lg:w-full flex items-center gap-2 lg:gap-3 px-3 py-2 lg:py-2.5 rounded-xl text-sm font-semibold transition-colors text-left shrink-0 whitespace-nowrap',
               activeSection === section.id
                 ? 'bg-brand-bg-dark text-white'
-                : 'text-brand-text hover:bg-gray-200/70',
+                : 'text-brand-text hover:bg-gray-200/70 bg-white/70 lg:bg-transparent border border-gray-200 lg:border-0',
             ]"
           >
             <component :is="section.icon" class="w-4 h-4 shrink-0" />
@@ -703,7 +703,7 @@ const stats = computed(() => [
         </nav>
 
         <!-- Stats card -->
-        <div class="mt-5 bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+        <div class="hidden lg:block mt-5 bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
           <p class="text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-4">Últimos 30 días</p>
           <div class="divide-y divide-gray-100">
             <div v-for="stat in stats" :key="stat.label" class="py-3 first:pt-0 last:pb-0">
@@ -720,16 +720,16 @@ const stats = computed(() => [
 
       <!-- ── Contenido de sección ── -->
       <div class="flex-1 min-w-0">
-        <div class="bg-white rounded-2xl shadow-sm p-8">
+        <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8">
 
           <!-- Encabezado de sección -->
-          <div class="flex items-center gap-3 pb-5 border-b border-gray-100 mb-7">
+          <div class="flex items-center gap-3 pb-4 sm:pb-5 border-b border-gray-100 mb-6 sm:mb-7">
             <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
               <component :is="currentSection.icon" class="w-4 h-4 text-brand-text" />
             </div>
-            <h2 class="font-display font-black text-2xl text-brand-text flex-1">{{ currentSection.label }}</h2>
-            <span v-if="activeSection === 'fotos'" class="text-sm text-brand-azulgris">
-              {{ form.photos.length }} / {{ MAX_PHOTOS }} fotos
+            <h2 class="font-display font-black text-xl sm:text-2xl text-brand-text flex-1 min-w-0">{{ currentSection.label }}</h2>
+            <span v-if="activeSection === 'fotos'" class="text-xs sm:text-sm text-brand-azulgris shrink-0 whitespace-nowrap">
+              {{ form.photos.length }} / {{ MAX_PHOTOS }}
             </span>
           </div>
 
@@ -855,9 +855,9 @@ const stats = computed(() => [
                         active ? 'bg-gray-50 text-brand-text' : 'text-brand-text',
                       ]"
                     >
-                      <span class="flex items-center gap-2 min-w-0">
+                      <span class="flex items-center gap-2 min-w-0 flex-1">
                         <Check :class="['w-3.5 h-3.5 shrink-0', active ? 'text-brand-primary' : 'text-transparent']" />
-                        <span class="truncate">{{ tag.name }}</span>
+                        <span class="truncate min-w-0">{{ tag.name }}</span>
                       </span>
                       <span class="text-xs text-gray-400 shrink-0">{{ tag.businessCount }}</span>
                     </li>
@@ -874,7 +874,7 @@ const stats = computed(() => [
           <template v-else-if="activeSection === 'contacto'">
 
             <!-- Teléfono + WhatsApp -->
-            <div class="grid grid-cols-2 gap-5 mb-7">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-7">
               <div>
                 <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Teléfono</label>
                 <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-brand-primary/30 focus-within:border-brand-primary transition">
@@ -901,7 +901,7 @@ const stats = computed(() => [
             </div>
 
             <!-- Calle + Número -->
-            <div class="grid grid-cols-[1fr_140px] gap-5 mb-7">
+            <div class="grid grid-cols-1 sm:grid-cols-[1fr_140px] gap-5 mb-7">
               <div>
                 <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Calle</label>
                 <input v-model="form.calle" type="text" placeholder="Av. Independencia" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
@@ -921,7 +921,7 @@ const stats = computed(() => [
             </div>
 
             <!-- Municipio + Estado -->
-            <div class="grid grid-cols-2 gap-5 mb-7">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-7">
               <div>
                 <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">Municipio</label>
                 <div class="relative">
@@ -975,8 +975,8 @@ const stats = computed(() => [
           <!-- ══ Horario ══ -->
           <template v-else-if="activeSection === 'horario'">
 
-            <!-- Cabecera de columnas -->
-            <div class="grid grid-cols-[120px_1fr_64px] gap-4 items-center pb-3 mb-1 border-b border-gray-100">
+            <!-- Cabecera de columnas (solo desktop) -->
+            <div class="hidden sm:grid sm:grid-cols-[120px_1fr_64px] gap-4 items-center pb-3 mb-1 border-b border-gray-100">
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Día</span>
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Horarios</span>
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400 text-right">Abierto</span>
@@ -986,27 +986,50 @@ const stats = computed(() => [
             <div
               v-for="day in DAY_ORDER"
               :key="day"
-              class="grid grid-cols-[120px_1fr_64px] gap-4 items-start py-4 border-b border-gray-50 last:border-0"
+              class="grid grid-cols-[1fr_auto] sm:grid-cols-[120px_1fr_64px] gap-x-4 gap-y-3 sm:gap-y-0 items-start py-4 border-b border-gray-50 last:border-0"
             >
-              <span class="font-semibold text-sm text-brand-text pt-2.5">{{ DAY_LABELS[day] }}</span>
+              <span class="font-semibold text-sm text-brand-text sm:pt-2.5">{{ DAY_LABELS[day] }}</span>
 
-              <!-- Franjas del día -->
-              <div v-if="!isDayClosed(day)" class="space-y-2">
+              <!-- Toggle abierto/cerrado (mobile: derecha del día; desktop: columna 3) -->
+              <div class="flex justify-end sm:col-start-3 sm:row-start-1 sm:pt-2">
+                <button
+                  type="button"
+                  @click="toggleDayClosed(day)"
+                  :class="[
+                    'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none',
+                    !isDayClosed(day) ? 'bg-brand-bg-dark' : 'bg-gray-200',
+                  ]"
+                  :aria-label="DAY_LABELS[day]"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
+                      !isDayClosed(day) ? 'translate-x-6' : 'translate-x-1',
+                    ]"
+                  />
+                </button>
+              </div>
+
+              <!-- Franjas del día (mobile: fila 2 col-span-2; desktop: columna 2) -->
+              <div
+                v-if="!isDayClosed(day)"
+                class="col-span-2 sm:col-span-1 sm:col-start-2 sm:row-start-1 space-y-2"
+              >
                 <div
                   v-for="(slot, idx) in hoursByDay[day]"
                   :key="slot.documentId ?? `new-${day}-${idx}`"
-                  class="grid grid-cols-[1fr_24px_1fr_32px] gap-3 items-center"
+                  class="grid grid-cols-[1fr_20px_1fr_32px] sm:grid-cols-[1fr_24px_1fr_32px] gap-2 sm:gap-3 items-center"
                 >
                   <input
                     v-model="slot.openTime"
                     type="time"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                    class="w-full min-w-0 border border-gray-200 rounded-xl px-2 sm:px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
                   />
                   <span class="text-gray-400 text-center text-sm select-none">–</span>
                   <input
                     v-model="slot.closeTime"
                     type="time"
-                    class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
+                    class="w-full min-w-0 border border-gray-200 rounded-xl px-2 sm:px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition"
                   />
                   <button
                     v-if="hoursByDay[day].length > 1"
@@ -1028,27 +1051,10 @@ const stats = computed(() => [
                   Agregar franja
                 </button>
               </div>
-              <div v-else class="text-sm text-gray-400 pt-2.5 italic">Cerrado</div>
-
-              <!-- Toggle abierto/cerrado -->
-              <div class="flex justify-end pt-2">
-                <button
-                  type="button"
-                  @click="toggleDayClosed(day)"
-                  :class="[
-                    'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none',
-                    !isDayClosed(day) ? 'bg-brand-bg-dark' : 'bg-gray-200',
-                  ]"
-                  :aria-label="DAY_LABELS[day]"
-                >
-                  <span
-                    :class="[
-                      'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                      !isDayClosed(day) ? 'translate-x-6' : 'translate-x-1',
-                    ]"
-                  />
-                </button>
-              </div>
+              <div
+                v-else
+                class="col-span-2 sm:col-span-1 sm:col-start-2 sm:row-start-1 text-sm text-gray-400 sm:pt-2.5 italic"
+              >Cerrado</div>
             </div>
 
             <!-- Nota informativa -->
@@ -1065,10 +1071,10 @@ const stats = computed(() => [
           <template v-else-if="activeSection === 'fotos'">
 
             <!-- Grid de fotos -->
-            <div class="grid gap-3" style="grid-template-columns: 2fr 1fr 1fr 1fr; grid-auto-rows: 200px;">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-3 auto-rows-[140px] sm:auto-rows-[170px] lg:auto-rows-[200px]">
 
-              <!-- Foto principal (row-span-2) -->
-              <div class="row-span-2 relative rounded-2xl overflow-hidden bg-brand-bg-dark group">
+              <!-- Foto principal (col-span-2 row-span-2) -->
+              <div class="col-span-2 row-span-2 sm:col-span-2 lg:col-span-1 relative rounded-2xl overflow-hidden bg-brand-bg-dark group">
                 <img
                   v-if="form.photos[0]?.url"
                   :src="form.photos[0].url"
@@ -1172,18 +1178,20 @@ const stats = computed(() => [
           <template v-else-if="activeSection === 'menu'">
 
             <!-- QR del menú -->
-            <div class="mb-6 flex items-center gap-4 p-4 rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white">
-              <div class="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center shrink-0">
-                <QrCode class="w-5 h-5 text-brand-text" />
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="font-semibold text-brand-text text-sm">QR del menú</p>
-                <p class="text-brand-azulgris text-xs mt-0.5">Descárgalo, imprímelo y colócalo para que tus clientes vean tu menú desde el celular.</p>
+            <div class="mb-6 p-4 rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                <div class="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                  <QrCode class="w-5 h-5 text-brand-text" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-brand-text text-sm">QR del menú</p>
+                  <p class="text-brand-azulgris text-xs mt-0.5">Descárgalo, imprímelo y colócalo para que tus clientes vean tu menú desde el celular.</p>
+                </div>
               </div>
               <button
                 type="button"
                 @click="qrOpen = true"
-                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-brand-bg-dark text-white text-sm font-bold hover:opacity-90 transition-opacity shrink-0"
+                class="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-brand-bg-dark text-white text-sm font-bold hover:opacity-90 transition-opacity shrink-0 w-full sm:w-auto"
               >
                 <QrCode class="w-4 h-4" />
                 Generar QR
@@ -1222,37 +1230,41 @@ const stats = computed(() => [
 
             <!-- Modo PDF -->
             <template v-if="form.menu.mode === 'pdf'">
-              <div v-if="form.menu.pdf" class="flex items-center gap-4 p-5 rounded-2xl border border-gray-200 bg-white">
-                <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-                  <FileText class="w-6 h-6 text-red-500" />
+              <div v-if="form.menu.pdf" class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl border border-gray-200 bg-white">
+                <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+                    <FileText class="w-6 h-6 text-red-500" />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-brand-text text-sm truncate">{{ form.menu.pdf.name || 'Menú.pdf' }}</p>
+                    <a
+                      v-if="!form.menu.pdf.url?.startsWith('blob:')"
+                      :href="form.menu.pdf.url"
+                      target="_blank"
+                      rel="noopener"
+                      class="text-brand-primary text-xs font-semibold hover:underline"
+                    >Ver PDF actual →</a>
+                    <p v-else class="text-gray-400 text-xs">Se subirá al guardar</p>
+                  </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-brand-text text-sm truncate">{{ form.menu.pdf.name || 'Menú.pdf' }}</p>
-                  <a
-                    v-if="!form.menu.pdf.url?.startsWith('blob:')"
-                    :href="form.menu.pdf.url"
-                    target="_blank"
-                    rel="noopener"
-                    class="text-brand-primary text-xs font-semibold hover:underline"
-                  >Ver PDF actual →</a>
-                  <p v-else class="text-gray-400 text-xs">Se subirá al guardar</p>
+                <div class="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    @click="triggerMenuPdfInput"
+                    class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-brand-text hover:bg-gray-50 transition-colors"
+                  >
+                    <Pencil class="w-3.5 h-3.5" />
+                    Reemplazar
+                  </button>
+                  <button
+                    type="button"
+                    @click="removeMenuPdf"
+                    class="w-9 h-9 shrink-0 rounded-lg bg-gray-50 hover:bg-red-50 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
+                    title="Quitar PDF"
+                  >
+                    <X class="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  @click="triggerMenuPdfInput"
-                  class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-brand-text hover:bg-gray-50 transition-colors"
-                >
-                  <Pencil class="w-3.5 h-3.5" />
-                  Reemplazar
-                </button>
-                <button
-                  type="button"
-                  @click="removeMenuPdf"
-                  class="w-9 h-9 rounded-lg bg-gray-50 hover:bg-red-50 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
-                  title="Quitar PDF"
-                >
-                  <X class="w-4 h-4" />
-                </button>
               </div>
 
               <button
@@ -1435,7 +1447,7 @@ const stats = computed(() => [
             <div class="space-y-4">
 
               <!-- Publicación -->
-              <div class="flex items-start justify-between gap-6 p-5 rounded-2xl border border-gray-200">
+              <div class="flex items-start justify-between gap-4 sm:gap-6 p-4 sm:p-5 rounded-2xl border border-gray-200">
                 <div class="min-w-0">
                   <p class="font-semibold text-brand-text text-sm mb-1">Estado de publicación</p>
                   <p class="text-brand-azulgris text-xs leading-relaxed">
@@ -1479,7 +1491,7 @@ const stats = computed(() => [
               </div>
 
               <!-- Destacado -->
-              <div class="flex items-start justify-between gap-6 p-5 rounded-2xl border border-gray-200">
+              <div class="flex items-start justify-between gap-4 sm:gap-6 p-4 sm:p-5 rounded-2xl border border-gray-200">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 mb-1">
                     <Star class="w-4 h-4 text-amber-500 fill-amber-500" />
@@ -1507,7 +1519,7 @@ const stats = computed(() => [
               </div>
 
               <!-- Visible en todos los municipios -->
-              <div class="flex items-start justify-between gap-6 p-5 rounded-2xl border border-gray-200">
+              <div class="flex items-start justify-between gap-4 sm:gap-6 p-4 sm:p-5 rounded-2xl border border-gray-200">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 mb-1">
                     <Globe class="w-4 h-4 text-sky-600" />
