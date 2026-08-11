@@ -9,6 +9,7 @@ import {
   Popover, PopoverButton, PopoverPanel,
 } from '@headlessui/vue'
 import Swal from 'sweetalert2'
+import { buildBusinessJsonLd, buildBreadcrumbJsonLd, serializeJsonLd } from '~/utils/seo'
 
 definePageMeta({ layout: 'landing' })
 
@@ -278,6 +279,35 @@ useSeoMeta({
   twitterDescription: () => seoDescription.value,
   twitterImage: () => seoImage.value,
 })
+
+// JSON-LD (schema.org) — LocalBusiness + BreadcrumbList.
+// Habilita rich results en Google: estrellas, horario, dirección, precio.
+const jsonLdScripts = computed(() => {
+  if (!negocio.value) return []
+  const scripts = []
+  const biz = buildBusinessJsonLd(negocio.value, { siteUrl, pageUrl: seoUrl.value })
+  if (biz) {
+    scripts.push({
+      type: 'application/ld+json',
+      innerHTML: serializeJsonLd(biz),
+    })
+  }
+  const crumbs = [
+    { name: 'Inicio', url: `${siteUrl}/` },
+    { name: negocio.value.category?.name ?? 'Directorio', url: `${siteUrl}/list` },
+    { name: negocio.value.name, url: seoUrl.value },
+  ]
+  scripts.push({
+    type: 'application/ld+json',
+    innerHTML: serializeJsonLd(buildBreadcrumbJsonLd(crumbs)),
+  })
+  return scripts
+})
+
+useHead(() => ({
+  link: [{ rel: 'canonical', href: seoUrl.value }],
+  script: jsonLdScripts.value,
+}))
 
 const { isLoggedIn, user, token } = useAuthStore()
 const { submitClaim} = useClaim()

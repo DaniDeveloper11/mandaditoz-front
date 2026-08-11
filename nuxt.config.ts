@@ -1,11 +1,13 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   srcDir: 'app/',
+  serverDir: 'server/',
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxt/image',
+    '@nuxtjs/sitemap',
   ],
 
   runtimeConfig: {
@@ -13,6 +15,30 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:1337/api',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL ?? 'https://mandaditoz.com',
       clarityId: process.env.NUXT_PUBLIC_CLARITY_ID ?? '',
+    },
+  },
+
+  site: {
+    url: process.env.NUXT_PUBLIC_SITE_URL ?? 'https://mandaditoz.com',
+    name: 'Mandaditoz',
+  },
+
+  sitemap: {
+    sources: ['/api/__sitemap__/urls'],
+    exclude: [
+      '/negocios/*/edit',
+      '/negocios/*/estado',
+      '/negocios/nuevo',
+      '/negocios/publicar',
+      '/negocios/publicar/**',
+      '/login',
+      '/reset-password',
+      '/mis-negocios',
+      '/cuenta/**',
+    ],
+    defaults: {
+      changefreq: 'weekly',
+      priority: 0.7,
     },
   },
 

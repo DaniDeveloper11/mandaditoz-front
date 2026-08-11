@@ -1,2 +1,11 @@
 User-Agent: *
-Disallow:
+Disallow: /login
+Disallow: /reset-password
+Disallow: /mis-negocios
+Disallow: /cuenta/
+Disallow: /negocios/nuevo
+Disallow: /negocios/publicar
+Disallow: /negocios/*/edit
+Disallow: /negocios/*/estado
+
+Sitemap: https://mandaditoz.com/sitemap.xml
