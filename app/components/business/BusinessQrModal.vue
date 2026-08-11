@@ -2,6 +2,7 @@
 import { Download, X, Copy, Check } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import QRCode from 'qrcode'
+import { businessUrl } from '~/utils/urls'
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -14,9 +15,8 @@ const config = useRuntimeConfig()
 const siteUrl = String(config.public?.siteUrl ?? '').replace(/\/$/, '')
 
 const menuUrl = computed(() => {
-  const slug = props.negocio?.slug
-  if (!slug) return ''
-  return `${siteUrl}/negocios/${slug}?tab=menu`
+  if (!props.negocio?.slug) return ''
+  return `${siteUrl}${businessUrl(props.negocio)}?tab=menu`
 })
 
 const qrDataUrl = ref('')

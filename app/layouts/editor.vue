@@ -6,6 +6,7 @@ const { user } = useAuthStore()
 const editorMeta = useState('editorMeta', () => ({
   name: '',
   slug: '',
+  publicUrl: '',
   isPublished: false,
   lastUpdated: null,
   saving: false,
@@ -22,9 +23,8 @@ const lastUpdatedLabel = computed(() => {
 })
 
 function handlePreview() {
-  if (editorMeta.value.slug) {
-    window.open(`/negocios/${editorMeta.value.slug}`, '_blank')
-  }
+  const target = editorMeta.value.publicUrl || (editorMeta.value.slug ? `/negocios/${editorMeta.value.slug}` : '')
+  if (target) window.open(target, '_blank')
 }
 
 function handleSave() {
@@ -69,7 +69,7 @@ function handleSave() {
         </div>
         <a
           v-if="editorMeta.slug"
-          :href="`/negocios/${editorMeta.slug}`"
+          :href="editorMeta.publicUrl || `/negocios/${editorMeta.slug}`"
           target="_blank"
           class="hidden sm:inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg border border-gray-300 text-sm font-semibold text-brand-text hover:bg-gray-50 transition-colors"
         >

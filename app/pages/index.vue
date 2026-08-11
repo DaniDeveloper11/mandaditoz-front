@@ -1,6 +1,7 @@
 <script setup>
 import { LayoutGrid, MapPin, Phone, Clock, Star, Store, ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from '@lucide/vue'
 import { getLucideIcon } from '~/utils/categorias'
+import { businessUrl } from '~/utils/urls'
 
 definePageMeta({ layout: 'landing' })
 
@@ -409,7 +410,7 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
               v-for="(biz, index) in featuredLoop"
               :key="`${biz.id}-${index}`"
               data-loop-item
-              :href="`/negocios/${biz.slug}`"
+              :href="businessUrl(biz)"
               class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col shrink-0 w-80"
             >
             <!-- Cover photo -->

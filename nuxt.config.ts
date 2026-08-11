@@ -26,11 +26,7 @@ export default defineNuxtConfig({
   sitemap: {
     sources: ['/api/__sitemap__/urls'],
     exclude: [
-      '/negocios/*/edit',
-      '/negocios/*/estado',
-      '/negocios/nuevo',
-      '/negocios/publicar',
-      '/negocios/publicar/**',
+      '/negocios/**',
       '/login',
       '/reset-password',
       '/mis-negocios',

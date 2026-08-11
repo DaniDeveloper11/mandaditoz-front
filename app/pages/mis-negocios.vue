@@ -6,6 +6,7 @@ import {
 } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { getCategoriaConfig } from '~/utils/categorias'
+import { businessUrl } from '~/utils/urls'
 
 definePageMeta({ layout: 'landing' })
 
@@ -321,7 +322,7 @@ useSeoMeta({ title: 'Mis negocios | Mandaditoz' })
                 </NuxtLink>
                 <a
                   v-if="negocio.businessStatus === 'published'"
-                  :href="`/negocios/${negocio.slug}`"
+                  :href="businessUrl(negocio)"
                   target="_blank"
                   rel="noopener"
                   class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 text-brand-text text-xs font-semibold hover:bg-gray-50 transition-colors"

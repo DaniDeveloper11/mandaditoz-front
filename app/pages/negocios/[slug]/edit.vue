@@ -8,6 +8,7 @@ import {
 import {
   Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption,
 } from '@headlessui/vue'
+import { businessUrl } from '~/utils/urls'
 
 definePageMeta({ layout: 'editor' })
 
@@ -30,6 +31,7 @@ const cityStore = useCityStore()
 const editorMeta = useState('editorMeta', () => ({
   name: '',
   slug: '',
+  publicUrl: '',
   isPublished: false,
   lastUpdated: null,
   saving: false,
@@ -242,6 +244,7 @@ watch(negocio, (val) => {
 
   editorMeta.value.name        = val.name ?? ''
   editorMeta.value.slug        = slug.value
+  editorMeta.value.publicUrl   = businessUrl(val)
   editorMeta.value.isPublished = true
 }, { immediate: true })
 

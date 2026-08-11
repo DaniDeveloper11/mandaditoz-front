@@ -2,7 +2,13 @@
  * Dynamic sitemap source: emite todas las URLs de negocios publicados
  * consumiendo Strapi. Se consume desde nuxt.config.ts:
  *   sitemap: { sources: ['/api/__sitemap__/urls'] }
+ *
+ * Formato: /[city-slug]/[business-slug]. Negocios sin ciudad o con
+ * visibleInAllCities caen al slug reservado "jalisco".
  */
+
+const FALLBACK_CITY_SLUG = 'jalisco'
+
 export default defineEventHandler(async () => {
   const config = useRuntimeConfig()
   const apiBase = config.public.apiBase
@@ -18,6 +24,8 @@ export default defineEventHandler(async () => {
           'filters[businessStatus][$eq]': 'published',
           'fields[0]': 'slug',
           'fields[1]': 'updatedAt',
+          'fields[2]': 'visibleInAllCities',
+          'populate[city][fields][0]': 'slug',
           'pagination[page]': page,
           'pagination[pageSize]': pageSize,
         },
@@ -26,8 +34,11 @@ export default defineEventHandler(async () => {
       const items = res?.data ?? []
       for (const b of items) {
         if (!b?.slug) continue
+        const citySlug = b.visibleInAllCities
+          ? FALLBACK_CITY_SLUG
+          : (b.city?.slug || FALLBACK_CITY_SLUG)
         urls.push({
-          loc: `/negocios/${b.slug}`,
+          loc: `/${citySlug}/${b.slug}`,
           lastmod: b.updatedAt ?? undefined,
           changefreq: 'weekly',
           priority: 0.8,

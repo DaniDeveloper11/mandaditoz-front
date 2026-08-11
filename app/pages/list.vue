@@ -1,6 +1,7 @@
 <script setup>
 import { MapPin, Phone, Star, BadgeCheck, ChevronLeft, ChevronRight, ChevronDown, Check } from '@lucide/vue'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
+import { businessUrl } from '~/utils/urls'
 
 definePageMeta({ layout: 'landing' })
 
@@ -328,7 +329,7 @@ useSeoMeta({
         <a
           v-for="biz in negocios"
           :key="biz.id"
-          :href="`/negocios/${biz.slug}`"
+          :href="businessUrl(biz)"
           class="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col gap-3 cursor-pointer"
         >
           <!-- Avatar + name + address -->

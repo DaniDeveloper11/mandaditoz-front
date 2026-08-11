@@ -3,6 +3,7 @@ import {
   CheckCircle2, Clock3, FileEdit, ArrowRight, Home, Eye,
   Pencil, ListChecks, AlertTriangle, Sparkles, Loader2,
 } from '@lucide/vue'
+import { businessUrl } from '~/utils/urls'
 
 definePageMeta({ layout: 'landing' })
 
@@ -191,7 +192,7 @@ const isOwner = computed(() =>
 
           <NuxtLink
             v-if="status === 'published'"
-            :to="`/negocios/${negocio.slug}`"
+            :to="businessUrl(negocio)"
             class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold text-brand-text hover:bg-white transition-colors"
           >
             <Eye class="w-4 h-4" />

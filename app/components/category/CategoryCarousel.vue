@@ -1,5 +1,6 @@
 <script setup>
 import { ChevronLeft, ChevronRight, Star, Store } from '@lucide/vue'
+import { businessUrl } from '~/utils/urls'
 
 const props = defineProps({
   slug: { type: String, required: true },
@@ -88,7 +89,7 @@ function scroll(dir) {
       <a
         v-for="biz in negocios"
         :key="biz.id"
-        :href="`/negocios/${biz.slug}`"
+        :href="businessUrl(biz)"
         class="bg-white rounded-2xl overflow-hidden shrink-0 w-56 flex flex-col hover:shadow-lg transition-shadow"
       >
         <!-- Cover photo -->
