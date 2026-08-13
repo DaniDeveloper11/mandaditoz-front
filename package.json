@@ -7,11 +7,18 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "build:mobile": "NUXT_MOBILE=1 NUXT_PUBLIC_API_BASE=https://mandaditoz-back-production.up.railway.app/api NUXT_PUBLIC_SITE_URL=https://mandaditoz.com nuxt generate",
+    "cap:sync": "npm run build:mobile && npx cap sync android",
+    "cap:open": "npx cap open android",
+    "cap:run": "npm run build:mobile && npx cap run android"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/core": "^8.5.0",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "@headlessui/vue": "^1.7.23",
     "@heroicons/vue": "^2.2.0",
     "@lucide/vue": "^1.21.0",
@@ -27,6 +34,7 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.0",
     "@nuxtjs/tailwindcss": "^6.14.0",
     "tailwindcss": "^3.4.17"

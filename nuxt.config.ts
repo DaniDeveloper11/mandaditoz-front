@@ -1,7 +1,13 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const isMobile = process.env.NUXT_MOBILE === '1'
+
 export default defineNuxtConfig({
   srcDir: 'app/',
   serverDir: 'server/',
+  ssr: !isMobile,
+  nitro: isMobile
+    ? { preset: 'static', prerender: { crawlLinks: false, routes: ['/'] } }
+    : undefined,
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
