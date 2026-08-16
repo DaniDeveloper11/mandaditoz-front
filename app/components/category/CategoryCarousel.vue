@@ -37,28 +37,31 @@ function scroll(dir) {
 <template>
   <div>
     <!-- Row header -->
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
-          <component :is="icon" class="w-5 h-5 text-white" />
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <div class="sm:flex items-center gap-2 sm:gap-3 min-w-0">
+       
+        <div class="flex">
+ <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+          <component :is="icon" class="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
-        <h3 class="font-display font-black text-2xl text-white">{{ name }}</h3>
-        <span class="inline-flex items-center gap-1 text-brand-azulgris text-sm bg-white/10 rounded-full px-2.5 py-0.5">
+        <h3 class="font-display font-black text-xl sm:text-2xl text-white truncate">{{ name }}</h3>
+        </div>
+        <span class="hidden sm:inline-flex items-center gap-1 text-brand-azulgris text-sm bg-white/10 rounded-full px-2.5 py-0.5 whitespace-nowrap shrink-0">
           <Store class="w-3.5 h-3.5" />
           {{ totalNegocios }} {{ totalNegocios === 1 ? 'negocio' : 'negocios' }}
         </span>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
         <a :href="`/list`" class="text-brand-azulgris text-sm hover:text-white transition-colors whitespace-nowrap">Ver todos →</a>
         <button
           @click="scroll(-1)"
-          class="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+          class="hidden sm:flex w-9 h-9 rounded-full border border-white/20 items-center justify-center text-white hover:bg-white/10 transition-colors"
         >
           <ChevronLeft class="w-4 h-4" />
         </button>
         <button
           @click="scroll(1)"
-          class="w-9 h-9 rounded-full border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+          class="hidden sm:flex w-9 h-9 rounded-full border border-white/20 items-center justify-center text-white hover:bg-white/10 transition-colors"
         >
           <ChevronRight class="w-4 h-4" />
         </button>
