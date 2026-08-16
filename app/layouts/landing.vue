@@ -1,10 +1,10 @@
 <template>
   <header class="relative isolate z-40 bg-white ">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
-      <div class="flex lg:flex-1 items-center gap-3 px-3">
-        <a href="/" class="-m-1.5 p-1.5">
+    <nav class="mx-auto flex max-w-7xl items-center justify-between gap-2 p-4 sm:p-6 lg:px-8" aria-label="Global">
+      <div class="flex lg:flex-1 items-center gap-2 sm:gap-3 min-w-0">
+        <a href="/" class="-m-1.5 p-1.5 shrink-0">
           <span class="sr-only">Mandaditoz</span>
-          <img class="h-14 w-auto " :src="logoLight" alt="Mandaditoz" />
+          <img class="h-10 lg:h-14 w-auto" :src="logoLight" alt="Mandaditoz" />
         </a>
         <LayoutCitySwitcher />
         <a
@@ -110,7 +110,7 @@
         <div class="flex items-center justify-between">
           <a href="#" class="-m-1.5 p-1.5">
             <span class="sr-only">Mandaditoz</span>
-            <img class="h-14 w-auto " :src="logoLight" />
+            <img class="h-10 sm:h-14 w-auto" :src="logoLight" />
           </a>
           <button type="button" class="-m-2.5 rounded-md p-2.5 text-gray-700" @click="mobileMenuOpen = false">
             <span class="sr-only">Close menu</span>
@@ -224,9 +224,9 @@
       </DialogPanel>
     </Dialog>
   </header>
-
+<main class="flex-1">
   <slot />
-
+</main>
   <footer class="bg-brand-bg-dark">
     <div class="max-w-6xl mx-auto px-6 md:px-12 pt-14 pb-8">
 

@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+
   html {
     font-family: theme('fontFamily.body');
     color: theme('colors.brand.text');

@@ -128,7 +128,7 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
 </script>
 
 <template>
-  <main class="flex-1">
+  
 
     <!-- Hero -->
     <section class="relative overflow-x-clip bg-brand-bg-dark py-12 md:py-20 px-6 md:px-12">
@@ -732,5 +732,5 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
       </div>
     </section>
 
-  </main>
+  
 </template>
