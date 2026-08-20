@@ -43,3 +43,8 @@ export function businessStatusUrl(negocio) {
   if (!negocio?.slug) return '/'
   return `/negocios/${negocio.slug}/estado`
 }
+
+export function businessMenuUrl(negocio) {
+  if (!negocio?.slug) return '/'
+  return `/negocios/${negocio.slug}/menu`
+}

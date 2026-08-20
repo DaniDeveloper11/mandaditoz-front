@@ -2,7 +2,7 @@
 import {
   Plus, Pencil, ExternalLink, Star, Eye, MapPin, Store, Sparkles,
   AlertCircle, ChevronRight, Info, Trash2, X, Loader2, TriangleAlert,
-  QrCode,
+  QrCode, UtensilsCrossed,
 } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { getCategoriaConfig } from '~/utils/categorias'
@@ -337,6 +337,14 @@ useSeoMeta({ title: 'Mis negocios | Mandaditoz' })
                 >
                   <Info class="w-3.5 h-3.5" />
                   Estado
+                </NuxtLink>
+                <NuxtLink
+                  :to="`/negocios/${negocio.slug}/menu`"
+                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-brand-text hover:bg-gray-50 transition-colors shrink-0"
+                  aria-label="Editar menú"
+                  title="Editar menú"
+                >
+                  <UtensilsCrossed class="w-3.5 h-3.5" />
                 </NuxtLink>
                 <button
                   type="button"

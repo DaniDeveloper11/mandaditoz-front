@@ -163,6 +163,7 @@ export function mapCategoria(item) {
     path: item.path,
     isActive: item.isActive ?? true,
     isFeatured: !!item.isFeatured,
+    isOrderable: !!item.isOrderable,
     businessCount: item.businessCount ?? 0,
     totalBusinessCount: item.totalBusinessCount ?? 0,
     parent: item.parent ? mapCategoria(item.parent) : null,
@@ -273,14 +274,15 @@ export function mapMenuItem(item) {
 }
 
 /**
- * Sección del menú. Devuelve null si está archivada o inactiva.
+ * Sección del menú. Devuelve null si está archivada, o si está inactiva y no
+ * se pidió incluirlas (el panel del dueño sí las necesita para reactivarlas).
  * El orden se resuelve en JS: el populate anidado de Strapi no garantiza
  * el orden de los hijos.
  */
-export function mapMenuSection(section) {
+export function mapMenuSection(section, { includeInactive = false } = {}) {
   if (!section) return null
   if (section.archivedAt) return null
-  if (section.isActive === false) return null
+  if (!includeInactive && section.isActive === false) return null
 
   const items = (section.items ?? [])
     .map(mapMenuItem)
@@ -293,6 +295,7 @@ export function mapMenuSection(section) {
     name: section.name,
     description: section.description ?? null,
     order: section.order ?? 0,
+    isActive: section.isActive !== false,
     items,
   }
 }
@@ -308,7 +311,9 @@ export function mapNegocio(item) {
   const menuPdf = item.menuPdf ? mapMedia(item.menuPdf) : null
   const menuImages = (item.menuImages ?? []).map(mapMedia).filter(Boolean)
   const menuSections = (item.menuSections ?? [])
-    .map(mapMenuSection)
+    // Explícito a propósito: .map(mapMenuSection) le pasaría el índice como
+    // segundo argumento, que ahora son las opciones del mapper.
+    .map(section => mapMenuSection(section))
     .filter(Boolean)
     .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es'))
 
