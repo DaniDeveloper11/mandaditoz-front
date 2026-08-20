@@ -9,6 +9,18 @@ const router = useRouter()
 const route = useRoute()
 const store = useSearchStore()
 const cityStore = useCityStore()
+const auth = useAuthStore()
+
+// Con sesión iniciada el dueño da de alta el negocio él mismo;
+// sin sesión va al formulario que no requiere cuenta.
+const publicarUrl = computed(() =>
+  auth.isLoggedIn ? '/negocios/nuevo' : '/negocios/publicar',
+)
+const publicarHint = computed(() =>
+  auth.isLoggedIn
+    ? 'Con tu cuenta · Publícalo al instante'
+    : 'Sin crear cuenta · Publicamos en 24-48 h',
+)
 
 const searchQuery = ref('')
 const searchInput = ref(null)
@@ -272,16 +284,16 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
           </p>
 
           <div class="mt-6 flex flex-col sm:flex-row md:flex-col lg:flex-row items-center md:items-start gap-3 sm:gap-4 md:gap-2 lg:gap-3">
-            <a
-              href="/negocios/publicar"
+            <NuxtLink
+              :to="publicarUrl"
               class="inline-flex w-full sm:w-auto md:w-full lg:w-auto items-center justify-center gap-2 rounded-lg bg-brand-primary hover:bg-brand-primary-dark text-white font-semibold px-5 py-3 text-sm shadow-md active:scale-95 transition-all duration-150 whitespace-nowrap"
             >
               <Store class="size-4" />
               Publica tu negocio gratis
               <ArrowRight class="size-4" />
-            </a>
+            </NuxtLink>
             <span class="text-xs text-brand-azulgris/80 text-center md:text-left">
-              Sin crear cuenta · Publicamos en 24-48 h
+              {{ publicarHint }}
             </span>
           </div>
         </div>
@@ -724,9 +736,9 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
           </p>
         </div>
         <div class="flex flex-col items-center gap-3 shrink-0">
-          <a href="#" class="bg-brand-bg-dark hover:opacity-90 text-white font-semibold text-sm px-8 py-4 rounded-xl transition-opacity whitespace-nowrap">
+          <NuxtLink :to="publicarUrl" class="bg-brand-bg-dark hover:opacity-90 text-white font-semibold text-sm px-8 py-4 rounded-xl transition-opacity whitespace-nowrap">
             Registra tu negocio gratis →
-          </a>
+          </NuxtLink>
           <p class="text-white/50 text-xs">Tarda menos de 5 minutos</p>
         </div>
       </div>

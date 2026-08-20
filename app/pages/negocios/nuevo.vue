@@ -4,7 +4,7 @@ import {
   Check, Info, Sparkles, AlertCircle, Package, Utensils, LayoutGrid,
   MapPin, MapPinOff, Globe, Wallet, Banknote, ArrowLeftRight, CreditCard,
   Image as ImageIcon, BookOpen, Upload, FileText, X, Loader2,
-  Car, Beer, Scissors, BedDouble, Droplets, Sandwich,Store
+  Car, Beer, Scissors, BedDouble, Droplets, Sandwich, Store, Camera
 } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
@@ -237,6 +237,24 @@ const QUICK_CATEGORIES = [
     icon: Sandwich,
     iconBg: 'bg-red-50',
     iconColor: 'text-red-600',
+  },
+  {
+    id: 'tienda',
+    slug: 'tienda',
+    label: 'Tienda',
+    description: 'Venta de abarrotes.',
+    icon: Store,
+    iconBg: 'bg-lime-50',
+    iconColor: 'text-lime-600',
+  },
+  {
+    id: 'fotografia',
+    slug: 'fotografia',
+    label: 'Fotografía',
+    description: 'Estudios, sesiones y video para eventos.',
+    icon: Camera,
+    iconBg: 'bg-violet-50',
+    iconColor: 'text-violet-600',
   },
   {
     id: 'otros',
