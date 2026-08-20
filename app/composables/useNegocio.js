@@ -18,6 +18,7 @@ export function useNegocio(slug, options = {}) {
     'populate[coverPhoto]': true,
     'populate[menuPdf]': true,
     'populate[menuImages]': true,
+    'populate[menuSections][populate][items][populate]': 'photo',
     'populate[photos][populate]': '*',
     'populate[hours]': true,
     'populate[hourExceptions]': true,

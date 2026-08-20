@@ -34,8 +34,30 @@ const CATEGORY_TO_SCHEMA_TYPE = {
   taquerias: 'Restaurant',
   cafeterias: 'CafeOrCoffeeShop',
   cafeteria: 'CafeOrCoffeeShop',
+  cafe: 'CafeOrCoffeeShop',
   bares: 'BarOrPub',
   bar: 'BarOrPub',
+  // Slugs de comida que existen en la base viva y antes caían a LocalBusiness.
+  // Sin un tipo Restaurant/Food* schema.org ignora `hasMenu`.
+  tacos: 'Restaurant',
+  mariscos: 'Restaurant',
+  birria: 'Restaurant',
+  carne: 'Restaurant',
+  carnitas: 'Restaurant',
+  pollo: 'Restaurant',
+  rosticeria: 'Restaurant',
+  lonche: 'Restaurant',
+  botanas: 'Restaurant',
+  ensalada: 'Restaurant',
+  sushi: 'Restaurant',
+  tamales: 'Restaurant',
+  'comida-y-bebidas': 'Restaurant',
+  pizza: 'FastFoodRestaurant',
+  alas: 'FastFoodRestaurant',
+  hamburguesas: 'FastFoodRestaurant',
+  panaderias: 'Bakery',
+  tortillerias: 'Bakery',
+  deposito: 'LiquorStore',
   tiendas: 'Store',
   tienda: 'Store',
   abarrotes: 'GroceryStore',
@@ -156,7 +178,53 @@ export function buildBusinessJsonLd(n, { siteUrl, pageUrl }) {
   if (n.website) sameAs.push(n.website)
   if (sameAs.length) jsonLd.sameAs = sameAs
 
+  const menu = buildMenuJsonLd(n, schemaType)
+  if (menu) jsonLd.hasMenu = menu
+
   return jsonLd
+}
+
+// schema.org solo reconoce `hasMenu` en establecimientos de comida.
+const TYPES_WITH_MENU = new Set([
+  'Restaurant',
+  'FastFoodRestaurant',
+  'CafeOrCoffeeShop',
+  'BarOrPub',
+  'Bakery',
+])
+
+/** Menú estructurado → schema.org Menu / MenuSection / MenuItem. */
+function buildMenuJsonLd(n, schemaType) {
+  if (!TYPES_WITH_MENU.has(schemaType)) return null
+
+  const sections = (n.menuSections ?? [])
+    .filter(s => s.items?.length > 0)
+    .map(s => ({
+      '@type': 'MenuSection',
+      name: s.name,
+      ...(s.description && { description: s.description }),
+      hasMenuItem: s.items.map(item => ({
+        '@type': 'MenuItem',
+        name: item.name,
+        ...(item.description && { description: item.description }),
+        offers: {
+          '@type': 'Offer',
+          price: Number(item.price ?? 0).toFixed(2),
+          priceCurrency: 'MXN',
+          availability: item.isAvailable
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+        },
+      })),
+    }))
+
+  if (!sections.length) return null
+
+  return {
+    '@type': 'Menu',
+    name: `Menú de ${n.name}`,
+    hasMenuSection: sections,
+  }
 }
 
 export function buildBreadcrumbJsonLd(items) {

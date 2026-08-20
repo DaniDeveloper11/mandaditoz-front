@@ -55,7 +55,22 @@ function handleWhatsappClick() {
 
 const activeTab = ref('informacion')
 
-const hasMenu = computed(() => !!negocio.value?.menuPdf?.url || (negocio.value?.menuImages ?? []).length > 0)
+// Menú estructurado (secciones + platillos). El menú en PDF/imágenes se
+// conserva como respaldo: la mayoría de los negocios solo tiene eso.
+const menuSections = computed(() => negocio.value?.menuSections ?? [])
+const hasStructuredMenu = computed(() => menuSections.value.some(s => s.items.length > 0))
+const hasLegacyMenu = computed(() => !!negocio.value?.menuPdf?.url || (negocio.value?.menuImages ?? []).length > 0)
+const hasMenu = computed(() => hasStructuredMenu.value || hasLegacyMenu.value)
+
+const menuItemCount = computed(() =>
+  menuSections.value.reduce((acc, s) => acc + s.items.length, 0)
+)
+const menuPreviewItems = computed(() =>
+  menuSections.value.flatMap(s => s.items).slice(0, 4)
+)
+const menuPriceFormatter = new Intl.NumberFormat('es-MX', {
+  style: 'currency', currency: 'MXN', minimumFractionDigits: 0, maximumFractionDigits: 2,
+})
 
 const tabs = computed(() => {
   const base = [
@@ -907,7 +922,30 @@ async function onReviewSaved() {
                   <h2 class="font-display font-black text-xl text-brand-text">Menú</h2>
                   <button @click="activeTab = 'menu'" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors">Ver menú →</button>
                 </div>
-                <div v-if="negocio.menuPdf?.url" class="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50">
+                <div v-if="hasStructuredMenu" class="divide-y divide-brand-border">
+                  <div
+                    v-for="item in menuPreviewItems"
+                    :key="item.id"
+                    class="flex items-baseline justify-between gap-4 py-2.5"
+                  >
+                    <span class="text-sm text-brand-text truncate" :class="item.isAvailable ? '' : 'opacity-60'">
+                      {{ item.name }}
+                    </span>
+                    <span class="text-sm font-semibold text-brand-text shrink-0">
+                      {{ menuPriceFormatter.format(item.price) }}
+                    </span>
+                  </div>
+                  <button
+                    v-if="menuItemCount > menuPreviewItems.length"
+                    type="button"
+                    @click="activeTab = 'menu'"
+                    class="pt-3 text-brand-primary text-sm font-semibold hover:underline"
+                  >
+                    Ver los {{ menuItemCount }} platillos →
+                  </button>
+                </div>
+
+                <div v-else-if="negocio.menuPdf?.url" class="flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-gray-50">
                   <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
                     <FileText class="w-6 h-6 text-red-500" />
                   </div>
@@ -973,7 +1011,7 @@ async function onReviewSaved() {
                 <div class="flex items-center justify-between mb-4 gap-4 flex-wrap">
                   <h2 class="font-display font-black text-xl text-brand-text">Menú</h2>
                   <a
-                    v-if="negocio.menuPdf?.url"
+                    v-if="!hasStructuredMenu && negocio.menuPdf?.url"
                     :href="negocio.menuPdf.url"
                     target="_blank"
                     rel="noopener"
@@ -984,8 +1022,11 @@ async function onReviewSaved() {
                   </a>
                 </div>
 
-                <!-- PDF embebido -->
-                <div v-if="negocio.menuPdf?.url" class="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
+                <!-- Menú estructurado: es el principal cuando existe -->
+                <BusinessMenuOrder v-if="hasStructuredMenu" :sections="menuSections" />
+
+                <!-- Respaldo: PDF embebido -->
+                <div v-else-if="negocio.menuPdf?.url" class="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50">
                   <iframe
                     :src="negocio.menuPdf.url"
                     class="w-full h-[720px] block border-0"
@@ -1030,6 +1071,84 @@ async function onReviewSaved() {
 
                 <div v-else class="text-center py-12 text-brand-azulgris text-sm">
                   Este negocio aún no ha subido su menú.
+                </div>
+              </div>
+
+              <!--
+                Menú en PDF/imágenes cuando ADEMÁS hay menú estructurado.
+                Se muestra completo pero en segundo plano: el de arriba manda.
+              -->
+              <div
+                v-if="hasStructuredMenu && hasLegacyMenu"
+                class="bg-white rounded-2xl p-6 shadow-sm mt-4"
+              >
+                <div class="flex items-center justify-between mb-1 gap-4 flex-wrap">
+                  <h3 class="font-display font-bold text-base text-brand-text">
+                    Menú original del negocio
+                  </h3>
+                  <a
+                    v-if="negocio.menuPdf?.url"
+                    :href="negocio.menuPdf.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="inline-flex items-center gap-1.5 text-brand-primary text-sm font-semibold hover:underline shrink-0"
+                  >
+                    <Download class="w-4 h-4" />
+                    Descargar PDF
+                  </a>
+                </div>
+                <p class="text-brand-azulgris text-xs leading-relaxed mb-4">
+                  Tal como lo subió el negocio. Puede tener precios o platillos
+                  distintos a los de arriba.
+                </p>
+
+                <!-- PDF embebido, más corto que cuando es el menú principal -->
+                <div
+                  v-if="negocio.menuPdf?.url"
+                  class="rounded-2xl overflow-hidden border border-gray-200 bg-gray-50"
+                >
+                  <iframe
+                    :src="negocio.menuPdf.url"
+                    class="w-full h-[520px] block border-0"
+                    :title="`Menú original de ${negocio.name}`"
+                    loading="lazy"
+                  />
+                  <div class="flex items-center justify-between gap-3 px-4 py-3 border-t border-gray-200 bg-white text-xs">
+                    <p class="text-brand-azulgris truncate">
+                      ¿No se muestra el menú?
+                    </p>
+                    <a
+                      :href="negocio.menuPdf.url"
+                      target="_blank"
+                      rel="noopener"
+                      class="inline-flex items-center gap-1.5 text-brand-primary font-semibold hover:underline shrink-0"
+                    >
+                      <FileText class="w-3.5 h-3.5" />
+                      Abrir en pestaña nueva
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Galería de imágenes: se muestra además del PDF si hay ambos -->
+                <div
+                  v-if="negocio.menuImages.length"
+                  class="grid grid-cols-3 sm:grid-cols-4 gap-3"
+                  :class="negocio.menuPdf?.url ? 'mt-4' : ''"
+                >
+                  <button
+                    v-for="(img, idx) in negocio.menuImages"
+                    :key="img.url"
+                    type="button"
+                    @click="openMenuLightbox(idx)"
+                    class="aspect-[3/4] rounded-xl overflow-hidden bg-brand-bg-dark focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+                  >
+                    <img
+                      :src="img.url"
+                      :alt="img.alternativeText ?? `Menú ${idx + 1}`"
+                      loading="lazy"
+                      class="w-full h-full object-cover hover:scale-[1.02] transition-transform"
+                    />
+                  </button>
                 </div>
               </div>
             </template>

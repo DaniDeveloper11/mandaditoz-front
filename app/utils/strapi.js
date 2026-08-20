@@ -250,6 +250,53 @@ export function mapPhoto(item) {
   }
 }
 
+/**
+ * Platillo del menú estructurado. El precio se normaliza a número aquí;
+ * el formateo de moneda vive en el componente.
+ * Los platillos agotados (isAvailable: false) NO se filtran: se muestran
+ * marcados, porque saber que se acabó la birria es información útil.
+ */
+export function mapMenuItem(item) {
+  if (!item) return null
+  if (item.archivedAt) return null
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    name: item.name,
+    description: item.description ?? null,
+    price: Number(item.price ?? 0),
+    photo: item.photo ? mapMedia(item.photo) : null,
+    isAvailable: item.isAvailable !== false,
+    isFeatured: !!item.isFeatured,
+    order: item.order ?? 0,
+  }
+}
+
+/**
+ * Sección del menú. Devuelve null si está archivada o inactiva.
+ * El orden se resuelve en JS: el populate anidado de Strapi no garantiza
+ * el orden de los hijos.
+ */
+export function mapMenuSection(section) {
+  if (!section) return null
+  if (section.archivedAt) return null
+  if (section.isActive === false) return null
+
+  const items = (section.items ?? [])
+    .map(mapMenuItem)
+    .filter(Boolean)
+    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es'))
+
+  return {
+    id: section.id,
+    documentId: section.documentId,
+    name: section.name,
+    description: section.description ?? null,
+    order: section.order ?? 0,
+    items,
+  }
+}
+
 export function mapNegocio(item) {
   if (!item) return null
   const hours = (item.hours ?? []).map(mapHorario).filter(Boolean)
@@ -260,6 +307,10 @@ export function mapNegocio(item) {
   const coverPhoto = item.coverPhoto ? mapMedia(item.coverPhoto) : (item.coverPhotoUrl ? { url: absolutizeUrl(item.coverPhotoUrl, base) } : null)
   const menuPdf = item.menuPdf ? mapMedia(item.menuPdf) : null
   const menuImages = (item.menuImages ?? []).map(mapMedia).filter(Boolean)
+  const menuSections = (item.menuSections ?? [])
+    .map(mapMenuSection)
+    .filter(Boolean)
+    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'es'))
 
   return {
     id: item.id,
@@ -315,6 +366,7 @@ export function mapNegocio(item) {
     coverPhoto,
     menuPdf,
     menuImages,
+    menuSections,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
   }
