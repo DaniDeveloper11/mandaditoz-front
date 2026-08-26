@@ -11,8 +11,9 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'saved'])
 
-const { createReview, updateReview } = useReviewSubmit()
+const { createReview, createGuestReview, updateReview } = useReviewSubmit()
 const { uploadFile, uploading: uploadingFile } = useUpload()
+const auth = useAuthStore()
 
 const rating = ref(0)
 const title = ref('')
@@ -22,7 +23,14 @@ const photos = ref([])
 const submitting = ref(false)
 const errorMsg = ref(null)
 
+// Modo invitado: sin cuenta pedimos nombre (publico) y email (opcional, privado).
+// `website` es honeypot — invisible para humanos, los bots lo llenan.
+const guestName = ref('')
+const guestEmail = ref('')
+const website = ref('')
+
 const isEditing = computed(() => !!props.existingReview)
+const isGuest = computed(() => !auth.isLoggedIn)
 
 watch(
   [() => props.open, () => props.existingReview],
@@ -45,6 +53,9 @@ watch(
       comment.value = ''
       visitDate.value = ''
       photos.value = []
+      guestName.value = ''
+      guestEmail.value = ''
+      website.value = ''
     }
     errorMsg.value = null
   },
@@ -70,8 +81,20 @@ function removePhoto(idx) {
 }
 
 const canSubmit = computed(() =>
-  rating.value >= 1 && rating.value <= 5 && comment.value.trim().length >= 10 && !submitting.value && !uploadingFile.value
+  rating.value >= 1 && rating.value <= 5
+  && comment.value.trim().length >= 10
+  && (!isGuest.value || guestName.value.trim().length >= 2)
+  && !submitting.value && !uploadingFile.value
 )
+
+// Un boton apagado sin explicacion se lee como roto: decimos que falta.
+const missingHint = computed(() => {
+  if (submitting.value || uploadingFile.value) return null
+  if (rating.value < 1) return 'Elige una calificación para continuar'
+  if (comment.value.trim().length < 10) return 'Escribe al menos 10 caracteres en tu comentario'
+  if (isGuest.value && guestName.value.trim().length < 2) return 'Escribe tu nombre para poder publicar'
+  return null
+})
 
 async function submit() {
   if (!canSubmit.value) return
@@ -87,6 +110,44 @@ async function submit() {
   try {
     if (isEditing.value) {
       await updateReview(props.existingReview.documentId, payload)
+    } else if (isGuest.value) {
+      const res = await createGuestReview({
+        businessDocumentId: props.business.documentId,
+        ...payload,
+        guestName: guestName.value.trim(),
+        guestEmail: guestEmail.value.trim(),
+        website: website.value,
+      })
+      submitting.value = false
+      emit('close')
+      if (res.conflict) {
+        await Swal.fire({
+          icon: 'info',
+          title: 'Ya enviaste una reseña',
+          text: 'Recibimos una reseña tuya para este negocio hace poco. Espera a que la revisemos antes de enviar otra.',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#1D5A8A',
+        })
+        return
+      }
+      if (res.rateLimited) {
+        await Swal.fire({
+          icon: 'warning',
+          title: 'Demasiados envíos',
+          text: 'Intenta de nuevo más tarde.',
+          confirmButtonText: 'Entendido',
+          confirmButtonColor: '#1D5A8A',
+        })
+        return
+      }
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Gracias por tu reseña!',
+        text: 'La revisamos antes de publicarla. Aparecerá en el negocio en cuanto la aprobemos.',
+        confirmButtonText: 'Listo',
+        confirmButtonColor: '#1D5A8A',
+      })
+      return
     } else {
       const res = await createReview({ businessDocumentId: props.business.documentId, ...payload })
       if (!res.ok && res.conflict) {
@@ -159,10 +220,54 @@ async function submit() {
                   Tu opinión sobre <span class="font-semibold text-brand-text">{{ business.name }}</span>
                 </p>
 
+                <p v-if="isGuest" class="text-xs text-brand-azulgris bg-slate-50 border border-gray-100 rounded-xl px-4 py-3 leading-relaxed">
+                  Puedes reseñar sin crear cuenta. Revisamos cada reseña antes de publicarla,
+                  así que tardará un poco en aparecer.
+                </p>
+
                 <div>
                   <label class="block text-xs font-bold tracking-widest uppercase text-gray-500 mb-2">Calificación</label>
                   <StarRatingInput v-model="rating" size="md" />
                 </div>
+
+                <!-- Sin cuenta: nombre publico + email privado opcional -->
+                <template v-if="isGuest">
+                  <div>
+                    <label class="block text-xs font-bold tracking-widest uppercase text-gray-500 mb-2">
+                      Tu nombre <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      v-model="guestName"
+                      type="text"
+                      maxlength="60"
+                      placeholder="Cómo quieres aparecer en la reseña"
+                      class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20 text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold tracking-widest uppercase text-gray-500 mb-2">
+                      Email <span class="text-brand-azulgris font-normal normal-case tracking-normal">(opcional, no se publica)</span>
+                    </label>
+                    <input
+                      v-model="guestEmail"
+                      type="email"
+                      autocomplete="email"
+                      placeholder="tucorreo@ejemplo.com"
+                      class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20 text-sm"
+                    />
+                  </div>
+
+                  <!-- honeypot: oculto para personas, cebo para bots -->
+                  <input
+                    v-model="website"
+                    type="text"
+                    tabindex="-1"
+                    autocomplete="off"
+                    aria-hidden="true"
+                    class="absolute opacity-0 pointer-events-none h-0 w-0"
+                  />
+                </template>
 
                 <div>
                   <label class="block text-xs font-bold tracking-widest uppercase text-gray-500 mb-2">
@@ -237,7 +342,10 @@ async function submit() {
                 </p>
               </div>
 
-              <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <div class="flex flex-wrap items-center justify-end gap-2 px-6 py-4 border-t border-gray-100 bg-gray-50">
+                <p v-if="missingHint" class="text-xs text-brand-azulgris mr-auto">
+                  {{ missingHint }}
+                </p>
                 <button
                   type="button"
                   @click="emit('close')"

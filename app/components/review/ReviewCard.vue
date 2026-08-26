@@ -11,14 +11,15 @@ const props = defineProps({
 
 const emit = defineEmits(['edit', 'delete', 'respond'])
 
-const authorInitial = computed(() => {
-  const name = props.review.author?.displayName ?? props.review.author?.username ?? '?'
-  return name.charAt(0).toUpperCase()
-})
-
+// Las resenas enviadas sin cuenta no traen author: el nombre viene en guestName.
 const authorName = computed(() =>
-  props.review.author?.displayName ?? props.review.author?.username ?? 'Usuario'
+  props.review.author?.displayName
+  ?? props.review.author?.username
+  ?? props.review.guestName
+  ?? 'Usuario'
 )
+
+const authorInitial = computed(() => (authorName.value.charAt(0) || '?').toUpperCase())
 
 function formatDate(iso) {
   if (!iso) return ''

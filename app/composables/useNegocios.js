@@ -66,6 +66,14 @@ export function useNegocios(filtros) {
       })
     })
 
+    // En los carruseles/listados de destacados manda la posicion manual
+    // (featuredOrder: 1 = primero). Postgres deja los NULL al final con asc,
+    // asi que los que no tienen numero caen despues, ordenados por rating.
+    const baseSort = SORT_MAP[f.orden] ?? SORT_MAP.rating
+    const sort = f.isFeatured && baseSort === SORT_MAP.rating
+      ? `featuredOrder:asc,${SORT_MAP.rating}`
+      : baseSort
+
     return {
       ...andParams,
       ...(f.colonia         && { 'filters[neighborhood][slug][$eq]': f.colonia }),
@@ -74,7 +82,7 @@ export function useNegocios(filtros) {
       ...(f.isFeatured      && { 'filters[isFeatured][$eq]': true }),
       'filters[businessStatus][$eq]': 'published',
       'filters[archivedAt][$null]': true,
-      sort: SORT_MAP[f.orden] ?? SORT_MAP.rating,
+      sort,
       'populate[category]': true,
       'populate[secondaryCategories]': true,
       'populate[city]': true,

@@ -234,6 +234,7 @@ export function mapReview(item) {
     editedAt: item.editedAt,
     createdAt: item.createdAt,
     author: mapReviewAuthor(item.author),
+    guestName: item.guestName ?? null,
     response: mapReviewResponse(item.response),
     photos: (item.photos ?? []).map(mapMedia).filter(Boolean),
   }

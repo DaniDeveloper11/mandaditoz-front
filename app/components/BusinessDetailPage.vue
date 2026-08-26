@@ -434,8 +434,11 @@ const myReview = computed(() => {
 })
 
 async function openWriteReview() {
+  // Sin cuenta tambien se puede reseñar: el modal pide nombre y la reseña
+  // entra a moderación. Solo los usuarios con cuenta tienen "mi reseña".
   if (!isLoggedIn) {
-    router.push(`/login?redirect=${route.fullPath}`)
+    editingReview.value = null
+    reviewModalOpen.value = true
     return
   }
   if (myReview.value) {

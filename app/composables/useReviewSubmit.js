@@ -35,6 +35,35 @@ export function useReviewSubmit() {
     }
   }
 
+  // Sin cuenta: pega al endpoint publico. Entra como 'pending' y no aparece
+  // en la ficha hasta que un admin la apruebe.
+  async function createGuestReview({ businessDocumentId, rating, title, comment, visitDate, photoIds, guestName, guestEmail, website }) {
+    try {
+      const res = await $fetch(`${base}/reviews/submit`, {
+        method: 'POST',
+        body: {
+          data: {
+            business: businessDocumentId,
+            rating,
+            title: title || null,
+            comment,
+            visitDate: visitDate || null,
+            photos: photoIds?.length ? photoIds : undefined,
+            guestName,
+            guestEmail: guestEmail || null,
+            website: website || '',
+          },
+        },
+      })
+      return { ok: true, pending: true, data: res }
+    } catch (err) {
+      const status = err?.response?.status ?? err?.status
+      if (status === 409) return { ok: false, conflict: true }
+      if (status === 429) return { ok: false, rateLimited: true }
+      throw err
+    }
+  }
+
   async function updateReview(documentId, { rating, title, comment, visitDate, photoIds }) {
     const res = await $fetch(`${base}/reviews/${documentId}`, {
       method: 'PUT',
@@ -69,5 +98,5 @@ export function useReviewSubmit() {
     return res?.data
   }
 
-  return { createReview, updateReview, deleteReview, respondToReview }
+  return { createReview, createGuestReview, updateReview, deleteReview, respondToReview }
 }

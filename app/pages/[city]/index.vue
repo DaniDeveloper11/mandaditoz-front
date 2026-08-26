@@ -43,7 +43,7 @@ const { data: pageData } = await useAsyncData(
           'filters[$and][0][$or][0][city][slug][$eq]': citySlug.value,
           'filters[$and][0][$or][1][visibleInAllCities][$eq]': true,
           'filters[isFeatured][$eq]': true,
-          sort: 'ratingAverage:desc',
+          sort: 'featuredOrder:asc,ratingAverage:desc',
           'populate[category]': true,
           'populate[city]': true,
           'populate[phones]': true,
