@@ -14,6 +14,7 @@ const router = useRouter()
 const { isLoggedIn } = useAuthStore()
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
 const { createBusiness, loading, error, clearError } = useNegocioCreate()
+const { refreshUser } = useAuth()
 const { publishedCount, publishedLimit, canPublishMore } = useMisNegocios()
 const cityStore = useCityStore()
 
@@ -451,6 +452,9 @@ async function handleSubmit() {
   clearError()
   try {
     const { slug } = await createBusiness(buildPayload())
+    // Si la cuenta era de comensal, el backend acaba de ascenderla a
+    // BusinessOwner. La copia en cookie trae el rol viejo: se relee.
+    await refreshUser().catch(() => {})
     if (slug) router.push(`/negocios/${slug}/estado`)
   } catch { /* error se muestra desde composable */ }
 }

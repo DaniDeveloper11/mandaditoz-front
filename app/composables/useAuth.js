@@ -14,6 +14,35 @@ export function useAuth() {
     })
   }
 
+  /**
+   * Registro exprés de comensal: nombre, WhatsApp, correo y contraseña.
+   * A diferencia de `register` (dueño de negocio), esta ruta devuelve el JWT
+   * de una vez y deja la sesión iniciada — el comensal se registra a medio
+   * pedido y mandarlo a confirmar el correo antes de seguir mata la venta.
+   */
+  async function registerCustomer({ displayName, phone, email, password }) {
+    const data = await $fetch(`${base}/auth/register-customer`, {
+      method: 'POST',
+      body: { displayName, phone, email, password },
+    })
+    store.setAuth(data.jwt, data.user)
+    return data
+  }
+
+  /**
+   * Relee el usuario del servidor. Necesario después de publicar un negocio:
+   * el backend asciende el rol a BusinessOwner y la copia en la cookie
+   * se queda con el rol viejo.
+   */
+  async function refreshUser() {
+    if (!store.token) return null
+    const me = await $fetch(`${base}/users/me`, {
+      headers: { Authorization: `Bearer ${store.token}` },
+    })
+    store.setAuth(store.token, me)
+    return me
+  }
+
   async function login({ identifier, password }) {
     const data = await $fetch(`${base}/auth/local`, {
       method: 'POST',
@@ -46,6 +75,8 @@ export function useAuth() {
     token:       store.token,
     isLoggedIn:  store.isLoggedIn,
     register,
+    registerCustomer,
+    refreshUser,
     login,
     forgotPassword,
     resetPassword,

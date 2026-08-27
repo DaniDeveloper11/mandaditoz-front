@@ -18,8 +18,8 @@
           <h1 class="font-display text-2xl font-semibold text-brand-text">
             {{ titles[mode] }}
           </h1>
-          <p v-if="mode === 'register'" class="mt-1.5 text-sm text-brand-text-soft">
-            Crea tu cuenta gratuitamente
+          <p v-if="subtitles[mode]" class="mt-1.5 text-sm text-brand-text-soft">
+            {{ subtitles[mode] }}
           </p>
         </div>
 
@@ -36,10 +36,10 @@
           </button>
           <button
             class="flex-1 rounded-md py-1.5 text-sm font-medium transition"
-            :class="mode === 'register'
+            :class="isRegister
               ? 'bg-white shadow-sm text-brand-primary'
               : 'text-brand-text-soft hover:text-brand-text'"
-            @click="mode = 'register'"
+            @click="goRegister()"
           >
             Registrarse
           </button>
@@ -53,14 +53,15 @@
         <!-- Formularios -->
         <Transition name="fade" mode="out-in">
           <AuthLoginForm v-if="mode === 'login'" @change-mode="mode = $event" />
-          <AuthRegisterForm v-else-if="mode === 'register'" @change-mode="mode = $event" />
+          <AuthRegisterCustomerForm v-else-if="mode === 'register'" @change-mode="mode = $event" />
+          <AuthRegisterForm v-else-if="mode === 'register-owner'" @change-mode="mode = $event" />
           <AuthForgotPasswordForm v-else @change-mode="mode = $event" />
         </Transition>
 
       </div>
 
       <!-- Solicitud pública -->
-      <p v-if="mode === 'register'" class="mt-5 text-center text-sm text-white/70">
+      <p v-if="mode === 'register-owner'" class="mt-5 text-center text-sm text-white/70">
         ¿No quieres crear cuenta?
         <a href="/negocios/publicar" class="font-semibold text-white underline hover:text-brand-primary transition">
           Envía tu solicitud aquí
@@ -80,19 +81,39 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 definePageMeta({ layout: false })
 
 const route = useRoute()
-const mode = ref(route.query.type === 'r' ? 'register' : 'login')
-const logoLight = '/logo-cielo-horizontal-dark.svg'
 
+// El registro se bifurca por intención:
+//   ?type=r                 → comensal (alta exprés, entra de inmediato)
+//   ?type=r&intent=negocio  → dueño de negocio (confirma correo antes de entrar)
+function initialMode() {
+  if (route.query.type !== 'r') return 'login'
+  return route.query.intent === 'negocio' ? 'register-owner' : 'register'
+}
+
+const mode = ref(initialMode())
+const isRegister = computed(() => mode.value.startsWith('register'))
+
+// La pestaña cubre los dos modos de alta: si ya estás en uno, no te saca de él.
+function goRegister() {
+  if (!isRegister.value) mode.value = 'register'
+}
+const logoLight = '/logo-cielo-horizontal-dark.svg'
 
 const titles = {
   login: 'Bienvenido de vuelta',
   register: 'Únete a Mandaditoz',
+  'register-owner': 'Publica tu negocio',
   forgot: 'Recuperar acceso',
+}
+
+const subtitles = {
+  register: 'Toma menos de un minuto',
+  'register-owner': 'Crea la cuenta con la que vas a administrarlo',
 }
 </script>
 

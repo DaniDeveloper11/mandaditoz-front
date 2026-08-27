@@ -145,6 +145,18 @@
         Inicia sesión
       </button>
     </p>
+
+    <div class="mt-5 pt-5 border-t border-brand-border text-center">
+      <p class="text-sm text-brand-text-soft">
+        ¿Solo quieres pedir en los negocios?
+      </p>
+      <button
+        class="mt-1 text-sm font-semibold text-brand-primary hover:text-brand-primary-dark transition"
+        @click="$emit('change-mode', 'register')"
+      >
+        Crear cuenta de cliente
+      </button>
+    </div>
   </div>
 </template>
 

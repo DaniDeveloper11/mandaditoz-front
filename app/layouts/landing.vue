@@ -100,7 +100,7 @@
         </template>
         <template v-else>
           <a href="/login" class="text-sm/6 font-semibold text-gray-900">Iniciar sesión</a>
-          <a href="/login?type=r" class="rounded-lg bg-brand-primary px-4 py-2 text-sm/6 font-semibold text-white shadow-sm hover:opacity-90">Registra tu negocio</a>
+          <a href="/login?type=r&amp;intent=negocio" class="rounded-lg bg-brand-primary px-4 py-2 text-sm/6 font-semibold text-white shadow-sm hover:opacity-90">Registra tu negocio</a>
         </template>
       </div>
     </nav>
@@ -216,7 +216,7 @@
               </template>
               <template v-else>
                 <a href="/login" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Iniciar sesión</a>
-                <a href="/login?type=r" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-brand-primary">Registra tu negocio</a>
+                <a href="/login?type=r&amp;intent=negocio" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-brand-primary">Registra tu negocio</a>
               </template>
             </div>
           </div>

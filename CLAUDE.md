@@ -91,6 +91,27 @@ Pages declare their layout via `definePageMeta({ layout: 'landing' })`.
 **Image handling:** `@nuxt/image` module. Static assets (logos, SVGs) are in `public/` and referenced with root-relative paths like `/logo-cielo-horizontal.svg`.
 
 
+## Autenticación y tipos de cuenta
+
+El registro se bifurca por **intención**, no por un selector de tipo de usuario:
+
+| Ruta | Formulario | Endpoint | Resultado |
+|---|---|---|---|
+| `/login?type=r` | `auth/RegisterCustomerForm.vue` | `POST /auth/register-customer` | Comensal. 4 campos, **queda con sesión iniciada** |
+| `/login?type=r&intent=negocio` | `auth/RegisterForm.vue` | `POST /auth/register-owner` | Dueño. Confirma correo antes de entrar |
+
+`app/pages/login.vue` maneja cuatro modos: `login`, `register` (comensal),
+`register-owner`, `forgot`. La pestaña "Registrarse" cubre los dos modos de alta y no
+te saca del que ya elegiste; cada formulario tiene un enlace al otro.
+
+**Los roles son niveles acumulativos**, no tipos excluyentes: `Authenticated` (comensal)
+⊂ `BusinessOwner`. Un comensal que publica un negocio es ascendido por el backend en ese
+momento; por eso `negocios/nuevo.vue` llama a `refreshUser()` después de crear — la copia
+del usuario en cookie trae el rol viejo.
+
+`useApi()` **no manda el JWT**: las lecturas públicas van como rol `Public`. Todo lo
+autenticado usa `$fetch` con `Authorization` explícito (ver `useMenuEdit`, `useNegocioCreate`).
+
 ## Reglas de Código Específicas del Proyecto
 
 ### Reactividad en Nuxt 3 / Vue 3 (JavaScript)

@@ -84,7 +84,7 @@ export function useNegocioCreate() {
         return
       }
       if (status === 403) {
-        error.value = 'Tu cuenta no tiene permiso para crear negocios. Verifica que tengas el rol BusinessOwner.'
+        error.value = 'Tu cuenta no tiene permiso para crear negocios. Cierra sesión y vuelve a entrar; si sigue igual, escríbenos.'
       } else if (status === 400) {
         error.value = err?.response?._data?.error?.message ?? 'Hay campos inválidos. Revisa el formulario.'
       } else {
