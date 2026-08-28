@@ -11,6 +11,12 @@ const store = useSearchStore()
 const cityStore = useCityStore()
 const auth = useAuthStore()
 
+// El home no tenía canonical propio y quedaba a merced del path exacto con
+// el que Google rastreara (con o sin barra final, con hash, etc.).
+useHead({
+  link: [{ rel: 'canonical', href: useRuntimeConfig().public.siteUrl }],
+})
+
 // Con sesión iniciada el dueño da de alta el negocio él mismo;
 // sin sesión va al formulario que no requiere cuenta.
 const publicarUrl = computed(() =>

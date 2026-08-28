@@ -26,6 +26,36 @@ function irACategoria(slug) {
   store.setCategoria(slug)
   router.push('/list')
 }
+
+// --- SEO: título/descripción propios (antes heredaba el default de nuxt.config) ---
+const siteUrl = useRuntimeConfig().public.siteUrl
+
+const seoTitle = computed(() =>
+  `Categorías de negocios en ${cityStore.activeCityLabel ?? 'Jalisco'} — Mandaditoz`,
+)
+const seoDescription = computed(() =>
+  `Explora todos los rubros de negocios y servicios locales en ${cityStore.activeCityLabel ?? 'Jalisco'}: restaurantes, tiendas, salud, belleza, automotriz y más. Directorio gratis.`,
+)
+
+useSeoMeta({
+  title: () => seoTitle.value,
+  description: () => seoDescription.value,
+
+  ogType: 'website',
+  ogTitle: () => seoTitle.value,
+  ogDescription: () => seoDescription.value,
+  ogImage: `${siteUrl}/og-default.jpg`,
+  ogUrl: `${siteUrl}/categorias`,
+
+  twitterCard: 'summary_large_image',
+  twitterTitle: () => seoTitle.value,
+  twitterDescription: () => seoDescription.value,
+  twitterImage: `${siteUrl}/og-default.jpg`,
+})
+
+useHead({
+  link: [{ rel: 'canonical', href: `${siteUrl}/categorias` }],
+})
 </script>
 
 <template>

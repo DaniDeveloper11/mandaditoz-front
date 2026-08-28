@@ -559,6 +559,7 @@ async function onReviewSaved() {
           v-if="negocio.coverPhoto?.url"
           :src="negocio.coverPhoto.url"
           :alt="negocio.coverPhoto.alternativeText ?? negocio.name"
+          fetchpriority="high"
           class="absolute inset-0 w-full h-full object-cover opacity-20"
         />
 
@@ -1037,7 +1038,7 @@ async function onReviewSaved() {
                     @click="activeTab = 'menu'"
                     class="rounded-xl overflow-hidden bg-brand-bg-dark focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
                   >
-                    <img :src="img.url" class="w-full h-full object-cover" :alt="`Menú ${idx + 1}`" />
+                    <img :src="img.url" loading="lazy" class="w-full h-full object-cover" :alt="`Menú ${idx + 1}`" />
                   </button>
                 </div>
               </div>
@@ -1055,7 +1056,7 @@ async function onReviewSaved() {
                     :disabled="!negocio.photos[0]?.url"
                     @click="openPhotoLightbox(0)"
                   >
-                    <img v-if="negocio.photos[0]?.url" :src="negocio.photos[0].url" :alt="negocio.photos[0].alternativeText" class="w-full h-full object-cover" />
+                    <img v-if="negocio.photos[0]?.url" :src="negocio.photos[0].url" :alt="negocio.photos[0].alternativeText" loading="lazy" class="w-full h-full object-cover" />
                     <div v-else class="w-full h-full flex items-center justify-center">
                       <ImageIcon class="w-8 h-8 text-white/20" />
                     </div>
@@ -1069,7 +1070,7 @@ async function onReviewSaved() {
                       :disabled="!negocio.photos[idx]?.url"
                       @click="openPhotoLightbox(idx)"
                     >
-                      <img v-if="negocio.photos[idx]?.url" :src="negocio.photos[idx].url" class="w-full h-full object-cover" />
+                      <img v-if="negocio.photos[idx]?.url" :src="negocio.photos[idx].url" loading="lazy" class="w-full h-full object-cover" />
                       <div v-else class="w-full h-full flex items-center justify-center">
                         <ImageIcon class="w-5 h-5 text-white/20" />
                       </div>
@@ -1150,6 +1151,7 @@ async function onReviewSaved() {
                     <img
                       :src="img.url"
                       :alt="img.alternativeText ?? `Menú ${idx + 1}`"
+                      loading="lazy"
                       class="w-full h-full object-cover hover:scale-[1.02] transition-transform"
                     />
                   </button>
