@@ -1,6 +1,6 @@
 <script setup>
 import {
-  ChevronLeft, Star, MapPin, Share2, Phone, Check, Clock, Image as ImageIcon, Map, X, FileText, Download,
+  ChevronLeft, ChevronRight, Star, MapPin, Share2, Phone, Check, Clock, Image as ImageIcon, Map, X, FileText, Download,
   Mail, Globe, CreditCard, Banknote, ArrowLeftRight,
   Link as LinkIcon, MoreHorizontal, QrCode,
 } from '@lucide/vue'
@@ -101,6 +101,20 @@ function menuNext() {
   const total = negocio.value?.menuImages?.length ?? 0
   if (!total) return
   menuLightbox.value.index = (menuLightbox.value.index + 1) % total
+}
+
+const photoLightbox = ref({ open: false, index: 0 })
+function openPhotoLightbox(i) { photoLightbox.value = { open: true, index: i } }
+function closePhotoLightbox()  { photoLightbox.value.open = false }
+function photoPrev() {
+  const total = negocio.value?.photos?.length ?? 0
+  if (!total) return
+  photoLightbox.value.index = (photoLightbox.value.index - 1 + total) % total
+}
+function photoNext() {
+  const total = negocio.value?.photos?.length ?? 0
+  if (!total) return
+  photoLightbox.value.index = (photoLightbox.value.index + 1) % total
 }
 
 const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' }
@@ -982,24 +996,41 @@ async function onReviewSaved() {
                   <h2 class="font-display font-black text-lg sm:text-xl text-brand-text">Fotos</h2>
                   <button @click="activeTab = 'fotos'" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors">Ver todas →</button>
                 </div>
-                <div class="grid grid-cols-2 gap-2 h-48 sm:h-64 md:h-72">
-                  <div class="bg-brand-bg-dark rounded-xl overflow-hidden">
+                <div class="grid grid-cols-2 gap-2 h-48 sm:h-64 md:h-72 overflow-hidden">
+                  <button
+                    type="button"
+                    class="min-h-0 min-w-0 bg-brand-bg-dark rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+                    :disabled="!negocio.photos[0]?.url"
+                    @click="openPhotoLightbox(0)"
+                  >
                     <img v-if="negocio.photos[0]?.url" :src="negocio.photos[0].url" :alt="negocio.photos[0].alternativeText" class="w-full h-full object-cover" />
                     <div v-else class="w-full h-full flex items-center justify-center">
                       <ImageIcon class="w-8 h-8 text-white/20" />
                     </div>
-                  </div>
-                  <div class="grid grid-cols-2 grid-rows-2 gap-2">
-                    <div v-for="idx in 3" :key="idx" class="bg-brand-bg-dark rounded-xl overflow-hidden">
+                  </button>
+                  <div class="grid grid-cols-2 grid-rows-2 gap-2 min-h-0 min-w-0">
+                    <button
+                      v-for="idx in 3"
+                      :key="idx"
+                      type="button"
+                      class="min-h-0 min-w-0 bg-brand-bg-dark rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+                      :disabled="!negocio.photos[idx]?.url"
+                      @click="openPhotoLightbox(idx)"
+                    >
                       <img v-if="negocio.photos[idx]?.url" :src="negocio.photos[idx].url" class="w-full h-full object-cover" />
                       <div v-else class="w-full h-full flex items-center justify-center">
                         <ImageIcon class="w-5 h-5 text-white/20" />
                       </div>
-                    </div>
-                    <div v-if="negocio.photos.length > 4" class="bg-gray-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors" @click="activeTab = 'fotos'">
+                    </button>
+                    <button
+                      v-if="negocio.photos.length > 4"
+                      type="button"
+                      class="min-h-0 min-w-0 bg-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-300 transition-colors"
+                      @click="activeTab = 'fotos'"
+                    >
                       <span class="font-bold text-brand-text text-base sm:text-lg">+{{ negocio.photos.length - 4 }}</span>
-                    </div>
-                    <div v-else class="bg-brand-bg-dark rounded-xl flex items-center justify-center">
+                    </button>
+                    <div v-else class="min-h-0 min-w-0 bg-brand-bg-dark rounded-xl flex items-center justify-center">
                       <ImageIcon class="w-5 h-5 text-white/20" />
                     </div>
                   </div>
@@ -1238,9 +1269,15 @@ async function onReviewSaved() {
               <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                 <h2 class="font-display font-black text-lg sm:text-xl text-brand-text mb-4">Fotos</h2>
                 <div v-if="negocio.photos.length" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-                  <div v-for="foto in negocio.photos" :key="foto.url" class="aspect-square rounded-xl overflow-hidden bg-brand-bg-dark">
-                    <img v-if="foto.url" :src="foto.url" :alt="foto.alternativeText" class="w-full h-full object-cover" />
-                  </div>
+                  <button
+                    v-for="(foto, idx) in negocio.photos"
+                    :key="foto.url"
+                    type="button"
+                    class="aspect-square rounded-xl overflow-hidden bg-brand-bg-dark focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
+                    @click="openPhotoLightbox(idx)"
+                  >
+                    <img v-if="foto.url" :src="foto.url" :alt="foto.alternativeText" loading="lazy" class="w-full h-full object-cover hover:scale-[1.02] transition-transform" />
+                  </button>
                 </div>
                 <div v-else class="text-center py-12 text-brand-azulgris text-sm">
                   Aún no hay fotos para este negocio.
@@ -1546,6 +1583,98 @@ async function onReviewSaved() {
                   class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-semibold transition-colors"
                 >
                   Siguiente →
+                </button>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+
+    <!-- Lightbox: Fotos del negocio -->
+    <TransitionRoot appear :show="photoLightbox.open" as="template">
+      <Dialog as="div" class="relative z-50" @close="closePhotoLightbox">
+        <TransitionChild
+          as="template"
+          enter="ease-out duration-200" enter-from="opacity-0" enter-to="opacity-100"
+          leave="ease-in duration-150" leave-from="opacity-100" leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" aria-hidden="true" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 flex items-center justify-center p-4 sm:p-8">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-200" enter-from="opacity-0 scale-95" enter-to="opacity-100 scale-100"
+            leave="ease-in duration-150" leave-from="opacity-100 scale-100" leave-to="opacity-0 scale-95"
+          >
+            <DialogPanel class="relative w-full max-w-4xl">
+              <button
+                type="button"
+                @click="closePhotoLightbox"
+                class="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-white text-brand-text flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors z-10"
+              >
+                <X class="w-5 h-5" />
+              </button>
+
+              <div class="relative">
+                <img
+                  v-if="negocio?.photos?.[photoLightbox.index]?.url"
+                  :src="negocio.photos[photoLightbox.index].url"
+                  :alt="negocio.photos[photoLightbox.index].alternativeText || `Foto ${photoLightbox.index + 1}`"
+                  class="w-full max-h-[75vh] object-contain rounded-2xl bg-white"
+                />
+                <template v-if="(negocio?.photos?.length ?? 0) > 1">
+                  <button
+                    type="button"
+                    @click="photoPrev"
+                    class="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-brand-text items-center justify-center shadow-lg hover:bg-white transition-colors"
+                    aria-label="Foto anterior"
+                  >
+                    <ChevronLeft class="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    @click="photoNext"
+                    class="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 text-brand-text items-center justify-center shadow-lg hover:bg-white transition-colors"
+                    aria-label="Foto siguiente"
+                  >
+                    <ChevronRight class="w-5 h-5" />
+                  </button>
+                </template>
+              </div>
+
+              <div v-if="(negocio?.photos?.length ?? 0) > 1" class="mt-4 flex items-center justify-center gap-3 text-white">
+                <button
+                  type="button"
+                  @click="photoPrev"
+                  class="sm:hidden px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-semibold transition-colors"
+                >
+                  ← Anterior
+                </button>
+                <span class="text-white/70 text-sm">{{ photoLightbox.index + 1 }} / {{ negocio.photos.length }}</span>
+                <button
+                  type="button"
+                  @click="photoNext"
+                  class="sm:hidden px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-semibold transition-colors"
+                >
+                  Siguiente →
+                </button>
+              </div>
+
+              <!-- Tira de miniaturas -->
+              <div v-if="(negocio?.photos?.length ?? 0) > 1" class="mt-4 flex gap-2 overflow-x-auto pb-1">
+                <button
+                  v-for="(foto, idx) in negocio.photos"
+                  :key="foto.url"
+                  type="button"
+                  @click="photoLightbox.index = idx"
+                  :class="[
+                    'shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors',
+                    idx === photoLightbox.index ? 'border-white' : 'border-transparent opacity-60 hover:opacity-100',
+                  ]"
+                >
+                  <img :src="foto.url" :alt="foto.alternativeText || `Foto ${idx + 1}`" class="w-full h-full object-cover" />
                 </button>
               </div>
             </DialogPanel>

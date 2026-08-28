@@ -13,7 +13,7 @@
           target="_blank"
           rel="noopener noreferrer"
           :title="cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial de la ciudad'"
-          class="relative inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white p-1 sm:pl-2 sm:pr-3 sm:py-1.5 text-sm font-semibold text-brand-text hover:border-brand-primary hover:text-brand-primary transition"
+          class=" hidden relative md:inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white p-1 sm:pl-2 sm:pr-3 sm:py-1.5 text-sm font-semibold text-brand-text hover:border-brand-primary hover:text-brand-primary transition"
         >
           <img
             v-if="cityStore.activeCity.bloggerAvatar?.url"
@@ -143,8 +143,9 @@
                   </DisclosureButton>
                 </DisclosurePanel>
               </Disclosure>
-              <a href="/how-to-work" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">¿Cómo funciona?</a>
+              <a href="/how-to-work" @click="mobileMenuOpen = false" class="hidden -mx-3 md:block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">¿Cómo funciona?</a>
             </div>
+        
 
             <div class="py-6">
               <p class="-mx-3 px-3 pb-2 text-xs font-semibold tracking-widest uppercase text-gray-400">Directorio</p>
@@ -179,7 +180,7 @@
               </a>
             </div>
 
-            <div class="py-6">
+            <div class="hidden py-6">
               <p class="-mx-3 px-3 pb-2 text-xs font-semibold tracking-widest uppercase text-gray-400">Proyecto</p>
               <a href="/about" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
                 <Info class="size-5 text-gray-400" aria-hidden="true" />
@@ -198,27 +199,29 @@
                 Términos
               </a>
             </div>
+                <div class="py-6 space-y-1">
+          <template v-if="isLoggedIn">
+            <p class="-mx-3 px-3 py-2 text-sm text-gray-500">
+              {{ user?.displayName || user?.username }}
+            </p>
+            <a href="/mis-negocios" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2.5 text-base/7 font-semibold text-white shadow-sm hover:opacity-90">
+              <Store class="size-5" aria-hidden="true" />
+              Mis negocios
+            </a>
+            <button
+              class="-mx-3 block w-full text-left rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
+              @click="handleLogout"
+            >
+              Cerrar sesión
+            </button>
+          </template>
+          <template v-else>
+            <a href="/login" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Iniciar sesión</a>
+            <a href="/login?type=r" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-brand-primary">Registra tu negocio</a>
+          </template>
+        </div>
 
-            <div class="py-6 space-y-1">
-              <template v-if="isLoggedIn">
-                <p class="-mx-3 px-3 py-2 text-sm text-gray-500">
-                  {{ user?.displayName || user?.username }}
-                </p>
-                <a href="/mis-negocios" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
-                  Mis negocios
-                </a>
-                <button
-                  class="-mx-3 block w-full text-left rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
-                  @click="handleLogout"
-                >
-                  Cerrar sesión
-                </button>
-              </template>
-              <template v-else>
-                <a href="/login" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">Iniciar sesión</a>
-                <a href="/login?type=r" @click="mobileMenuOpen = false" class="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-white bg-brand-primary">Registra tu negocio</a>
-              </template>
-            </div>
+         
           </div>
         </div>
       </DialogPanel>
