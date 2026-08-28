@@ -42,11 +42,110 @@ onMounted(() => {
     nextTick(focusSearchInput)
   }
   rafId = requestAnimationFrame(marqueeTick)
+  updateHeroPeriod()
+  heroInterval = setInterval(updateHeroPeriod, 5 * 60 * 1000)
 })
 
 onBeforeUnmount(() => {
   if (rafId) cancelAnimationFrame(rafId)
   if (resumeTimer) clearTimeout(resumeTimer)
+  if (heroInterval) clearInterval(heroInterval)
+})
+
+// Hero: el fondo simula la hora del día actual (calculado en cliente para
+// usar la hora local del visitante, no la del servidor).
+// El cielo cubre todo el hero; encima va un "scrim" que da contraste del
+// lado del texto. De día el cielo es claro de verdad (no oscurecido), así
+// que el texto cambia a tinta oscura en vez de blanco.
+const HERO_THEME = {
+  night: {
+    sky: 'linear-gradient(160deg, #22314a 0%, #16202f 55%, #0f1522 100%)',
+    scrim: 'linear-gradient(100deg, rgba(15,21,34,0.90) 0%, rgba(15,21,34,0.55) 42%, rgba(15,21,34,0.1) 72%, rgba(15,21,34,0) 100%)',
+    heading: 'text-white',
+    accent: 'text-brand-primary-dark',
+    tagline: 'text-brand-azulgris',
+    hint: 'text-brand-azulgris/80',
+    cityBorder: 'border-white/40 hover:border-white',
+  },
+  dawn: {
+    sky: 'linear-gradient(160deg, #4a3a5e 0%, #a8654f 55%, #d68a52 100%)',
+    scrim: 'linear-gradient(100deg, rgba(35,22,32,0.82) 0%, rgba(35,22,32,0.48) 42%, rgba(35,22,32,0.1) 72%, rgba(35,22,32,0) 100%)',
+    heading: 'text-white',
+    accent: 'text-amber-200',
+    tagline: 'text-white/70',
+    hint: 'text-white/60',
+    cityBorder: 'border-white/40 hover:border-white',
+  },
+  day: {
+    // Cielo claro de verdad — sin scrim oscuro encima, así que el texto
+    // pasa a tinta oscura para mantener el contraste
+    sky: 'linear-gradient(160deg, #eaf6ff 0%, #a9dcf7 45%, #4fa8dd 100%)',
+    scrim: 'linear-gradient(100deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.12) 45%, rgba(255,255,255,0) 75%)',
+    heading: 'text-brand-text',
+    accent: 'text-brand-primary',
+    tagline: 'text-brand-text/70',
+    hint: 'text-brand-text/60',
+    cityBorder: 'border-brand-text/30 hover:border-brand-text',
+  },
+  dusk: {
+    sky: 'linear-gradient(160deg, #4a3a5e 0%, #c96a3e 55%, #8a4a6b 100%)',
+    scrim: 'linear-gradient(100deg, rgba(30,18,28,0.82) 0%, rgba(30,18,28,0.48) 42%, rgba(30,18,28,0.1) 72%, rgba(30,18,28,0) 100%)',
+    heading: 'text-white',
+    accent: 'text-amber-200',
+    tagline: 'text-white/70',
+    hint: 'text-white/60',
+    cityBorder: 'border-white/40 hover:border-white',
+  },
+}
+const HERO_CELESTIAL = {
+  night: { top: '10%', right: '20%', size: '44px', background: 'radial-gradient(circle at 35% 35%, #fdfdf2, #d9dde8 70%)', boxShadow: '0 0 24px 6px rgba(255,255,255,0.25)' },
+  dawn: { top: '58%', right: '22%', size: '62px', background: 'radial-gradient(circle at 35% 35%, #ffe3ab, #e8873f 70%)', boxShadow: '0 0 40px 14px rgba(232,135,63,0.35)' },
+  day: { top: '12%', right: '24%', size: '50px', background: 'radial-gradient(circle at 35% 35%, #fff8d8, #ffd257 70%)', boxShadow: '0 0 36px 10px rgba(255,210,87,0.4)' },
+  dusk: { top: '55%', right: '20%', size: '58px', background: 'radial-gradient(circle at 35% 35%, #ffcf9c, #d4552f 70%)', boxShadow: '0 0 40px 14px rgba(212,85,47,0.4)' },
+}
+
+const HERO_PERIODS = ['dawn', 'day', 'dusk', 'night']
+const heroPeriod = ref('night')
+let heroInterval = null
+
+function updateHeroPeriod() {
+  // ?hero=day (o dawn/dusk/night) fuerza la franja — útil para probar/
+  // demostrar el efecto sin esperar a que sea esa hora de verdad
+  const forced = route.query.hero
+  if (typeof forced === 'string' && HERO_PERIODS.includes(forced)) {
+    heroPeriod.value = forced
+    return
+  }
+  const h = new Date().getHours()
+  heroPeriod.value = h >= 6 && h < 8 ? 'dawn'
+    : h >= 8 && h < 18 ? 'day'
+    : h >= 18 && h < 20 ? 'dusk'
+    : 'night'
+}
+
+const heroTheme = computed(() => HERO_THEME[heroPeriod.value])
+const heroBackground = computed(() => `${heroTheme.value.scrim}, ${heroTheme.value.sky}`)
+// De día el cielo es claro, así que las siluetas de los edificios se
+// intensifican un poco para que no se laven contra el fondo
+const heroCityscapeOpacity = computed(() => {
+  if (heroPeriod.value === 'day') return 0.32
+  if (heroPeriod.value === 'night') return 0.2
+  return 0.26
+})
+const heroCelestial = computed(() => HERO_CELESTIAL[heroPeriod.value])
+const heroCelestialStyle = computed(() => ({
+  top: heroCelestial.value.top,
+  right: heroCelestial.value.right,
+  width: heroCelestial.value.size,
+  height: heroCelestial.value.size,
+  background: heroCelestial.value.background,
+  boxShadow: heroCelestial.value.boxShadow,
+}))
+// De noche/atardecer/amanecer se ven encendidos; de día, apagados
+const heroLampGlow = computed(() => {
+  if (heroPeriod.value === 'day') return 0
+  if (heroPeriod.value === 'night') return 1
+  return 0.6
 })
 
 watch(() => route.hash, (h) => {
@@ -143,9 +242,22 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
   
 
     <!-- Hero -->
-    <section class="relative overflow-x-clip bg-brand-bg-dark py-12 md:py-20 px-6 md:px-12">
+    <section
+      class="relative overflow-x-clip py-12 md:py-20 px-6 md:px-12 transition-[background] duration-1000"
+      :style="{ backgroundImage: heroBackground }"
+    >
+      <!-- Sol / luna: posición y color según la hora del día -->
+      <div
+        class="pointer-events-none absolute rounded-full z-0 transition-all duration-1000"
+        :style="heroCelestialStyle"
+        aria-hidden="true"
+      />
+
       <!-- Background cityscape -->
-      <div class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 opacity-20 z-0">
+      <div
+        class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 z-0 transition-opacity duration-1000"
+        :style="{ opacity: heroCityscapeOpacity }"
+      >
         <svg viewBox="0 0 640 170" width="640" height="170" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <!-- Ground -->
           <rect x="0" y="157" width="640" height="13" fill="#C8D5E0"/>
@@ -165,8 +277,10 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
           <!-- Street lamp 1 -->
           <rect x="85" y="102" width="3" height="55" fill="#8094A8"/>
           <path d="M88,102 Q100,102 100,113 L100,122" fill="none" stroke="#8094A8" stroke-width="2.5" stroke-linecap="round"/>
+          <g :opacity="heroLampGlow">
           <ellipse cx="100" cy="124" rx="7" ry="3.5" fill="#D48B1A"/>
           <ellipse cx="100" cy="123" rx="4" ry="2" fill="#F5D070"/>
+          </g>
 
           <!-- Building 2: Tall oficina (blue) -->
           <rect x="97" y="38" width="64" height="119" fill="#1D5A8A"/>
@@ -210,8 +324,10 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
           <!-- Street lamp 2 -->
           <rect x="342" y="112" width="3" height="45" fill="#8094A8"/>
           <path d="M345,112 Q357,112 357,123 L357,131" fill="none" stroke="#8094A8" stroke-width="2.5" stroke-linecap="round"/>
+          <g :opacity="heroLampGlow">
           <ellipse cx="357" cy="133" rx="7" ry="3.5" fill="#D48B1A"/>
           <ellipse cx="357" cy="132" rx="4" ry="2" fill="#F5D070"/>
+          </g>
 
           <!-- Building 5: Abarrotes (gold) -->
           <rect x="352" y="54" width="78" height="103" fill="#D48B1A"/>
@@ -264,22 +380,22 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
 
         <!-- Left: headline -->
         <div class="flex-1 text-center md:text-left">
-          <h1 class="font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight text-white">
+          <h1 :class="['font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight transition-colors duration-1000', heroTheme.heading]">
             Todo
             <CityPickerPopover>
               <template #trigger="{ activeName }">
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1 border-b border-dashed border-white/40 hover:border-white transition text-white font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight focus:outline-none"
+                  :class="['inline-flex items-center gap-1 border-b border-dashed transition font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight focus:outline-none', heroTheme.heading, heroTheme.cityBorder]"
                 >
                   {{ activeName }}
                   <ChevronDown class="w-5 h-5 sm:w-6 sm:h-6 opacity-70" />
                 </button>
               </template>
             </CityPickerPopover><br>
-            <span class="text-brand-primary-dark">en un lugar.</span>
+            <span :class="['transition-colors duration-1000', heroTheme.accent]">en un lugar.</span>
           </h1>
-          <p class="mt-4 text-brand-azulgris text-sm tracking-wide">
+          <p :class="['mt-4 text-sm tracking-wide transition-colors duration-1000', heroTheme.tagline]">
             Negocios locales · 100% gratis
           </p>
 
@@ -292,7 +408,7 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
               Publica tu negocio gratis
               <ArrowRight class="size-4" />
             </NuxtLink>
-            <span class="text-xs text-brand-azulgris/80 text-center md:text-left">
+            <span :class="['text-xs text-center md:text-left transition-colors duration-1000', heroTheme.hint]">
               {{ publicarHint }}
             </span>
           </div>
