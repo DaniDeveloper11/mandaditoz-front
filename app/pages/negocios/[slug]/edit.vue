@@ -3,7 +3,7 @@ import {
   LayoutList, Phone, Clock, Image as ImageIcon,
   Share2, Star, X, Pencil, ChevronDown, MapPin, Globe, Info, Plus, PlusCircle, Check,
   FileText, UploadCloud, Menu as MenuIcon,
-  CreditCard, Banknote, ArrowLeftRight, Wallet, QrCode,
+  CreditCard, Banknote, ArrowLeftRight, Wallet, QrCode, UtensilsCrossed, ArrowRight,
 } from '@lucide/vue'
 import {
   Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption,
@@ -1179,6 +1179,26 @@ const stats = computed(() => [
 
           <!-- ══ Menú ══ -->
           <template v-else-if="activeSection === 'menu'">
+
+            <!-- Menú dinámico: secciones y platillos con precio y foto -->
+            <NuxtLink
+              :to="`/negocios/${slug}/menu`"
+              class="mb-6 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 rounded-2xl border border-brand-primary/20 bg-gradient-to-br from-brand-primary/5 to-white hover:border-brand-primary/40 transition-colors group"
+            >
+              <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                <div class="w-11 h-11 rounded-xl bg-white border border-gray-200 flex items-center justify-center shrink-0">
+                  <UtensilsCrossed class="w-5 h-5 text-brand-primary" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-brand-text text-sm">Menú dinámico</p>
+                  <p class="text-brand-azulgris text-xs mt-0.5">Arma tu menú por secciones, con precio y foto de cada platillo — se muestra directo en tu página, sin depender de un PDF.</p>
+                </div>
+              </div>
+              <span class="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-brand-primary text-white text-sm font-bold group-hover:opacity-90 transition-opacity shrink-0 w-full sm:w-auto">
+                Editar menú
+                <ArrowRight class="w-4 h-4" />
+              </span>
+            </NuxtLink>
 
             <!-- QR del menú -->
             <div class="mb-6 p-4 rounded-2xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">

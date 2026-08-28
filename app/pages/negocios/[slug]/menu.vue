@@ -1,10 +1,11 @@
 <script setup>
 import {
   Plus, Pencil, Trash2, ChevronUp, ChevronDown, Loader2, ArrowLeft,
-  UtensilsCrossed, ImagePlus, X, Eye, EyeOff, AlertTriangle,
+  UtensilsCrossed, ImagePlus, Camera, X, Eye, EyeOff, AlertTriangle,
 } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionRoot, TransitionChild } from '@headlessui/vue'
 import { businessUrl } from '~/utils/urls'
+import CameraCapture from '~/components/business/CameraCapture.vue'
 
 definePageMeta({ layout: 'landing', middleware: 'auth' })
 
@@ -13,6 +14,8 @@ const slug = computed(() => route.params.slug)
 
 const { negocio, pending: loadingNegocio, error: negocioError } = useNegocio(slug, { includeDrafts: true })
 const menuApi = useMenuEdit()
+const { isMobileOrTablet } = useDeviceType()
+const cameraOpen = ref(false)
 
 const sections = ref([])
 const loadingMenu = ref(true)
@@ -169,6 +172,11 @@ function onPhotoPick(event) {
 function clearPhoto() {
   itemForm.value.photoFile = null
   itemForm.value.photo = null
+}
+
+function onCameraCapture(file) {
+  itemForm.value.photoFile = file
+  itemForm.value.photo = { url: URL.createObjectURL(file) }
 }
 
 const itemFormValid = computed(() => {
@@ -388,8 +396,12 @@ useSeoMeta({ title: () => `Menú de ${negocio.value?.name ?? 'tu negocio'} · Ma
                 :key="item.documentId"
                 class="flex items-center gap-3 py-3"
               >
-                <div class="w-12 h-12 rounded-lg overflow-hidden bg-brand-bg-dark shrink-0">
+                <div
+                  class="w-12 h-12 rounded-lg overflow-hidden shrink-0 flex items-center justify-center"
+                  :class="item.photo?.url ? 'bg-brand-bg-dark' : 'bg-amber-50'"
+                >
                   <img v-if="item.photo?.url" :src="item.photo.url" :alt="item.name" class="w-full h-full object-cover" />
+                  <UtensilsCrossed v-else class="w-5 h-5 text-amber-400" />
                 </div>
 
                 <div class="flex-1 min-w-0" :class="item.isAvailable ? '' : 'opacity-50'">
@@ -478,18 +490,34 @@ useSeoMeta({ title: () => `Menú de ${negocio.value?.name ?? 'tu negocio'} · Ma
 
                 <div>
                   <label class="block text-xs font-semibold text-brand-text mb-1.5">Foto <span class="font-normal text-brand-azulgris">(opcional)</span></label>
-                  <div class="flex items-center gap-3">
-                    <div class="w-20 h-20 rounded-xl overflow-hidden bg-brand-bg-dark shrink-0 relative">
+                  <div class="flex items-center gap-3 flex-wrap">
+                    <div
+                      class="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative flex items-center justify-center"
+                      :class="itemForm.photo?.url ? 'bg-brand-bg-dark' : 'bg-amber-50'"
+                    >
                       <img v-if="itemForm.photo?.url" :src="itemForm.photo.url" alt="" class="w-full h-full object-cover" />
+                      <UtensilsCrossed v-else class="w-8 h-8 text-amber-400" />
                       <button v-if="itemForm.photo?.url" type="button" class="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center" @click="clearPhoto" aria-label="Quitar foto">
                         <X class="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <label class="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2">
-                      <ImagePlus class="w-4 h-4" />
-                      {{ itemForm.photo?.url ? 'Cambiar' : 'Subir foto' }}
-                      <input type="file" accept="image/*" class="hidden" @change="onPhotoPick" />
-                    </label>
+                    <div class="flex flex-col gap-2">
+                      <!-- Cámara in-app: solo en móvil/tablet, donde tiene sentido tomar la foto ahí mismo -->
+                      <button
+                        v-if="isMobileOrTablet"
+                        type="button"
+                        class="btn-secondary text-sm inline-flex items-center gap-2"
+                        @click="cameraOpen = true"
+                      >
+                        <Camera class="w-4 h-4" />
+                        Tomar foto
+                      </button>
+                      <label class="btn-secondary text-sm cursor-pointer inline-flex items-center gap-2">
+                        <ImagePlus class="w-4 h-4" />
+                        {{ itemForm.photo?.url ? 'Cambiar de galería' : 'Subir de galería' }}
+                        <input type="file" accept="image/*" class="hidden" @change="onPhotoPick" />
+                      </label>
+                    </div>
                   </div>
                 </div>
 
@@ -503,6 +531,13 @@ useSeoMeta({ title: () => `Menú de ${negocio.value?.name ?? 'tu negocio'} · Ma
                   {{ savingItem ? 'Guardando…' : 'Guardar' }}
                 </button>
               </div>
+
+              <!--
+                Anidada aquí a propósito (no como hermana del modal): así Headless UI
+                considera los clics dentro de la cámara como "dentro" de este DialogPanel
+                y no cierra el modal de platillo por "clic afuera" al tocar "Usar foto".
+              -->
+              <CameraCapture :open="cameraOpen" @close="cameraOpen = false" @capture="onCameraCapture" />
             </DialogPanel>
           </TransitionChild>
         </div>
