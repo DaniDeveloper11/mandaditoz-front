@@ -365,6 +365,13 @@ useHead(() => ({
 const { isLoggedIn, user, token } = useAuthStore()
 const { submitClaim} = useClaim()
 
+// Hero: mismo efecto de hora del día que el hero de index.vue (cielo,
+// sol/luna, brillo de lámparas). De día el cielo es claro como en index,
+// así que los textos/badges que dependían de tinta blanca fija cambian a
+// tinta oscura (heroOnLight) para mantener el contraste.
+const { heroPeriod, heroTheme, heroBackground, heroCityscapeOpacity, heroCelestialStyle, heroLampGlow } = useHeroTimeOfDay()
+const heroOnLight = computed(() => heroPeriod.value === 'day')
+
 const isOwner = ref(false)
 const qrOpen = ref(false)
 
@@ -542,7 +549,10 @@ async function onReviewSaved() {
       </div>
 
       <!-- Hero -->
-      <div class="relative overflow-hidden bg-brand-bg-dark px-6 md:px-12 py-8">
+      <div
+        class="relative overflow-hidden px-6 md:px-12 py-8 transition-[background] duration-1000"
+        :style="{ backgroundImage: heroBackground }"
+      >
 
         <!-- Cover photo background -->
         <img
@@ -552,8 +562,18 @@ async function onReviewSaved() {
           class="absolute inset-0 w-full h-full object-cover opacity-20"
         />
 
+        <!-- Sol / luna: posición y color según la hora del día -->
+        <div
+          class="pointer-events-none absolute rounded-full z-0 transition-all duration-1000"
+          :style="heroCelestialStyle"
+          aria-hidden="true"
+        />
+
             <!-- Background cityscape -->
-        <div class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 opacity-20 z-0">
+        <div
+          class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 z-0 transition-opacity duration-1000"
+          :style="{ opacity: heroCityscapeOpacity }"
+        >
           <svg viewBox="0 0 640 170" width="640" height="170" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <!-- Ground -->
             <rect x="0" y="157" width="640" height="13" fill="#C8D5E0"/>
@@ -573,8 +593,10 @@ async function onReviewSaved() {
             <!-- Street lamp 1 -->
             <rect x="85" y="102" width="3" height="55" fill="#8094A8"/>
             <path d="M88,102 Q100,102 100,113 L100,122" fill="none" stroke="#8094A8" stroke-width="2.5" stroke-linecap="round"/>
+            <g :opacity="heroLampGlow">
             <ellipse cx="100" cy="124" rx="7" ry="3.5" fill="#D48B1A"/>
             <ellipse cx="100" cy="123" rx="4" ry="2" fill="#F5D070"/>
+            </g>
 
             <!-- Building 2: Tall oficina (blue) -->
             <rect x="97" y="38" width="64" height="119" fill="#1D5A8A"/>
@@ -618,8 +640,10 @@ async function onReviewSaved() {
             <!-- Street lamp 2 -->
             <rect x="342" y="112" width="3" height="45" fill="#8094A8"/>
             <path d="M345,112 Q357,112 357,123 L357,131" fill="none" stroke="#8094A8" stroke-width="2.5" stroke-linecap="round"/>
+            <g :opacity="heroLampGlow">
             <ellipse cx="357" cy="133" rx="7" ry="3.5" fill="#D48B1A"/>
             <ellipse cx="357" cy="132" rx="4" ry="2" fill="#F5D070"/>
+            </g>
 
             <!-- Building 5: Abarrotes (gold) -->
             <rect x="352" y="54" width="78" height="103" fill="#D48B1A"/>
@@ -670,7 +694,13 @@ async function onReviewSaved() {
 
         <div class="relative z-10 max-w-6xl mx-auto">
 
-          <a href="/list" class="inline-flex items-center gap-1 text-white/60 text-sm hover:text-white transition-colors mb-6">
+          <a
+            href="/list"
+            :class="[
+              'inline-flex items-center gap-1 text-sm transition-colors mb-6',
+              heroOnLight ? 'text-brand-text/60 hover:text-brand-text' : 'text-white/60 hover:text-white',
+            ]"
+          >
             <ChevronLeft class="w-4 h-4" />
             Volver a resultados
           </a>
@@ -689,14 +719,20 @@ async function onReviewSaved() {
               </div>
               <div>
                 <div class="flex items-center gap-3 flex-wrap">
-                  <h1 class="font-display font-black text-3xl md:text-4xl text-white leading-tight">{{ negocio.name ?? 'Sin nombre' }}</h1>
-                  <span v-if="negocio.isVerified" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 bg-white/10 text-white text-xs font-medium">
+                  <h1 :class="['font-display font-black text-3xl md:text-4xl leading-tight transition-colors duration-1000', heroTheme.heading]">{{ negocio.name ?? 'Sin nombre' }}</h1>
+                  <span
+                    v-if="negocio.isVerified"
+                    :class="[
+                      'inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-medium',
+                      heroOnLight ? 'border-brand-text/20 bg-black/5 text-brand-text' : 'border-white/20 bg-white/10 text-white',
+                    ]"
+                  >
                     <Check class="w-3 h-3" />
                     Verificado
                   </span>
                 </div>
 
-                <p v-if="negocio.shortDescription" class="text-white/80 text-sm mt-2 leading-snug max-w-xl">
+                <p v-if="negocio.shortDescription" :class="['text-sm mt-2 leading-snug max-w-xl transition-colors duration-1000', heroTheme.tagline]">
                   {{ negocio.shortDescription }}
                 </p>
 
@@ -712,13 +748,19 @@ async function onReviewSaved() {
                   <span
                     v-for="cat in negocio.secondaryCategories"
                     :key="cat.id ?? cat.slug"
-                    class="text-xs font-medium px-2.5 py-0.5 rounded-full bg-white/10 text-white/80 border border-white/10"
+                    :class="[
+                      'text-xs font-medium px-2.5 py-0.5 rounded-full border',
+                      heroOnLight ? 'bg-black/5 text-brand-text/70 border-black/10' : 'bg-white/10 text-white/80 border-white/10',
+                    ]"
                   >
                     {{ cat.name }}
                   </span>
                   <span
                     v-if="priceLabel"
-                    class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-emerald-300"
+                    :class="[
+                      'text-xs font-bold px-2.5 py-0.5 rounded-full',
+                      heroOnLight ? 'bg-black/5 text-emerald-700' : 'bg-white/10 text-emerald-300',
+                    ]"
                     :title="`Nivel de precio: ${priceLabel}`"
                   >
                     {{ priceLabel }}
@@ -745,14 +787,19 @@ async function onReviewSaved() {
                       <Star
                         v-for="i in 5"
                         :key="i"
-                        :class="['w-4 h-4', i <= Math.round(negocio.ratingAverage ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-600 fill-gray-600']"
+                        :class="[
+                          'w-4 h-4',
+                          i <= Math.round(negocio.ratingAverage ?? 0)
+                            ? 'text-amber-400 fill-amber-400'
+                            : heroOnLight ? 'text-gray-300 fill-gray-300' : 'text-gray-600 fill-gray-600',
+                        ]"
                       />
                     </div>
                     <span class="text-amber-400 font-black text-2xl leading-none ml-1">{{ (negocio.ratingAverage ?? 0).toFixed(1) }}</span>
-                    <span class="text-white/50 text-sm">{{ negocio.ratingCount ?? 0 }} reseñas</span>
+                    <span :class="['text-sm transition-colors duration-1000', heroOnLight ? 'text-brand-text/50' : 'text-white/50']">{{ negocio.ratingCount ?? 0 }} reseñas</span>
                   </button>
-                  <span class="text-white/20 select-none">|</span>
-                  <div class="flex items-center gap-1.5 text-white/60 text-sm">
+                  <span :class="['select-none transition-colors duration-1000', heroOnLight ? 'text-brand-text/20' : 'text-white/20']">|</span>
+                  <div :class="['flex items-center gap-1.5 text-sm transition-colors duration-1000', heroTheme.hint]">
                     <MapPin class="w-4 h-4 shrink-0" />
                     <span>{{ fullAddress || 'Dirección no disponible' }}</span>
                   </div>
@@ -765,7 +812,12 @@ async function onReviewSaved() {
                 <PopoverButton
                   ref="shareBtnEl"
                   @click="positionSharePanel"
-                  class="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-semibold hover:bg-white/20 transition-colors focus:outline-none"
+                  :class="[
+                    'flex items-center gap-2 px-5 py-2.5 rounded-xl border text-sm font-semibold transition-colors focus:outline-none',
+                    heroOnLight
+                      ? 'border-brand-text/20 bg-black/5 text-brand-text hover:bg-black/10'
+                      : 'border-white/20 bg-white/10 text-white hover:bg-white/20',
+                  ]"
                 >
                   <Check v-if="shareCopied" class="w-4 h-4" />
                   <Share2 v-else class="w-4 h-4" />
