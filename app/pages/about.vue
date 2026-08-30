@@ -82,7 +82,7 @@ const promesas = [
           <!-- CTAs -->
           <div class="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
             <NuxtLink
-              to="/list"
+              to="/"
               class="inline-flex items-center justify-center bg-brand-primary hover:bg-brand-bg-dark text-white font-semibold text-sm px-7 py-4 rounded-xl transition-colors shadow-sm"
             >
               Explorar el directorio
