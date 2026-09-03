@@ -59,6 +59,18 @@ const { data: pageData } = await useAsyncData(
   },
 )
 
+// Un municipio que no existe tiene que responder 404, no una página vacía con
+// 200: para Google un soft-404 es una página válida y sin contenido, y este
+// patrón se traga CUALQUIER ruta de un solo segmento (/paginainventada).
+// `jalisco` es el slug reservado de los negocios sin ciudad, no un municipio.
+if (citySlug.value !== FALLBACK_CITY_SLUG && !pageData.value?.city) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Municipio no encontrado',
+    fatal: true,
+  })
+}
+
 const cityData = computed(() => pageData.value?.city ?? null)
 const cityName = computed(() => cityData.value?.name ?? (citySlug.value === FALLBACK_CITY_SLUG ? 'Jalisco' : citySlug.value))
 const categorias = computed(() => pageData.value?.categorias ?? [])

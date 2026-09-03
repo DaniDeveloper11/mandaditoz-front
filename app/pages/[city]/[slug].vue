@@ -24,7 +24,7 @@ const slug = computed(() => String(route.params.slug ?? '').toLowerCase())
 const { data: dispatchData } = await useAsyncData(
   computed(() => `dispatch|${citySlug.value}|${slug.value}`),
   async () => {
-    const [catRes, cityRes] = await Promise.all([
+    const [catRes, cityRes, bizRes] = await Promise.all([
       $fetch(`${apiBase}/categories`, {
         query: {
           'filters[slug][$eq]': slug.value,
@@ -40,10 +40,24 @@ const { data: dispatchData } = await useAsyncData(
             },
           }).catch(() => null)
         : Promise.resolve(null),
+      // Solo para saber si el negocio existe y poder devolver 404 desde el
+      // servidor. BusinessDetailPage vuelve a pedirlo con todo el populate;
+      // esta consulta pide un único campo y va en paralelo, así que no agrega
+      // latencia. `undefined` = la API falló: en ese caso no se asume 404.
+      $fetch(`${apiBase}/businesses`, {
+        query: {
+          'filters[slug][$eq]': slug.value,
+          'filters[businessStatus][$eq]': 'published',
+          'filters[archivedAt][$null]': true,
+          'fields[0]': 'slug',
+          'pagination[pageSize]': 1,
+        },
+      }).catch(() => undefined),
     ])
     return {
       category: catRes?.data?.[0] ?? null,
       city: cityRes?.data?.[0] ?? null,
+      businessExists: bizRes === undefined ? undefined : !!bizRes?.data?.[0],
     }
   },
 )
@@ -51,6 +65,25 @@ const { data: dispatchData } = await useAsyncData(
 const category = computed(() => dispatchData.value?.category ?? null)
 const city = computed(() => dispatchData.value?.city ?? null)
 const isCategoryPage = computed(() => !!category.value)
+
+// Soft-404: hasta ahora una URL inventada renderizaba "no encontrado" con
+// status 200, y Google lo lee como página válida y vacía. Se corrige aquí, en
+// el dispatcher, porque es el único punto donde el fetch ya está resuelto
+// durante el render del servidor.
+//
+// Si la consulta de negocio falló (`undefined`), NO se hace 404: una caída de
+// Strapi convertiría el catálogo entero en páginas inexistentes para Google.
+if (
+  !isCategoryPage.value &&
+  (dispatchData.value?.businessExists === false ||
+    (citySlug.value !== FALLBACK_CITY_SLUG && !city.value))
+) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Página no encontrada',
+    fatal: true,
+  })
+}
 </script>
 
 <template>
