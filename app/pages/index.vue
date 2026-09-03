@@ -11,6 +11,12 @@ const store = useSearchStore()
 const cityStore = useCityStore()
 const auth = useAuthStore()
 
+// El home no tenía canonical propio y quedaba a merced del path exacto con
+// el que Google rastreara (con o sin barra final, con hash, etc.).
+useHead({
+  link: [{ rel: 'canonical', href: useRuntimeConfig().public.siteUrl }],
+})
+
 // Con sesión iniciada el dueño da de alta el negocio él mismo;
 // sin sesión va al formulario que no requiere cuenta.
 const publicarUrl = computed(() =>
@@ -48,6 +54,10 @@ onBeforeUnmount(() => {
   if (rafId) cancelAnimationFrame(rafId)
   if (resumeTimer) clearTimeout(resumeTimer)
 })
+
+// Hero: el fondo simula la hora del día actual. Compartido con el hero del
+// detalle de negocio vía useHeroTimeOfDay — mismo efecto en ambos.
+const { heroTheme, heroBackground, heroCityscapeOpacity, heroCelestialStyle, heroLampGlow } = useHeroTimeOfDay()
 
 watch(() => route.hash, (h) => {
   if (h === '#buscador') nextTick(focusSearchInput)
@@ -143,9 +153,22 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
   
 
     <!-- Hero -->
-    <section class="relative overflow-x-clip bg-brand-bg-dark py-12 md:py-20 px-6 md:px-12">
+    <section
+      class="relative overflow-x-clip py-12 md:py-20 px-6 md:px-12 transition-[background] duration-1000"
+      :style="{ backgroundImage: heroBackground }"
+    >
+      <!-- Sol / luna: posición y color según la hora del día -->
+      <div
+        class="pointer-events-none absolute rounded-full z-0 transition-all duration-1000"
+        :style="heroCelestialStyle"
+        aria-hidden="true"
+      />
+
       <!-- Background cityscape -->
-      <div class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 opacity-20 z-0">
+      <div
+        class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 md:left-auto md:right-0 md:translate-x-0 z-0 transition-opacity duration-1000"
+        :style="{ opacity: heroCityscapeOpacity }"
+      >
         <svg viewBox="0 0 640 170" width="640" height="170" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <!-- Ground -->
           <rect x="0" y="157" width="640" height="13" fill="#C8D5E0"/>
@@ -165,8 +188,10 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
           <!-- Street lamp 1 -->
           <rect x="85" y="102" width="3" height="55" fill="#8094A8"/>
           <path d="M88,102 Q100,102 100,113 L100,122" fill="none" stroke="#8094A8" stroke-width="2.5" stroke-linecap="round"/>
+          <g :opacity="heroLampGlow">
           <ellipse cx="100" cy="124" rx="7" ry="3.5" fill="#D48B1A"/>
           <ellipse cx="100" cy="123" rx="4" ry="2" fill="#F5D070"/>
+          </g>
 
           <!-- Building 2: Tall oficina (blue) -->
           <rect x="97" y="38" width="64" height="119" fill="#1D5A8A"/>
@@ -210,8 +235,10 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
           <!-- Street lamp 2 -->
           <rect x="342" y="112" width="3" height="45" fill="#8094A8"/>
           <path d="M345,112 Q357,112 357,123 L357,131" fill="none" stroke="#8094A8" stroke-width="2.5" stroke-linecap="round"/>
+          <g :opacity="heroLampGlow">
           <ellipse cx="357" cy="133" rx="7" ry="3.5" fill="#D48B1A"/>
           <ellipse cx="357" cy="132" rx="4" ry="2" fill="#F5D070"/>
+          </g>
 
           <!-- Building 5: Abarrotes (gold) -->
           <rect x="352" y="54" width="78" height="103" fill="#D48B1A"/>
@@ -264,22 +291,22 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
 
         <!-- Left: headline -->
         <div class="flex-1 text-center md:text-left">
-          <h1 class="font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight text-white">
+          <h1 :class="['font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight transition-colors duration-1000', heroTheme.heading]">
             Todo
             <CityPickerPopover>
               <template #trigger="{ activeName }">
                 <button
                   type="button"
-                  class="inline-flex items-center gap-1 border-b border-dashed border-white/40 hover:border-white transition text-white font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight focus:outline-none"
+                  :class="['inline-flex items-center gap-1 border-b border-dashed transition font-display font-black text-4xl sm:text-5xl md:text-6xl leading-tight focus:outline-none', heroTheme.heading, heroTheme.cityBorder]"
                 >
                   {{ activeName }}
                   <ChevronDown class="w-5 h-5 sm:w-6 sm:h-6 opacity-70" />
                 </button>
               </template>
             </CityPickerPopover><br>
-            <span class="text-brand-primary-dark">en un lugar.</span>
+            <span :class="['transition-colors duration-1000', heroTheme.accent]">en un lugar.</span>
           </h1>
-          <p class="mt-4 text-brand-azulgris text-sm tracking-wide">
+          <p :class="['mt-4 text-sm tracking-wide transition-colors duration-1000', heroTheme.tagline]">
             Negocios locales · 100% gratis
           </p>
 
@@ -292,7 +319,7 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
               Publica tu negocio gratis
               <ArrowRight class="size-4" />
             </NuxtLink>
-            <span class="text-xs text-brand-azulgris/80 text-center md:text-left">
+            <span :class="['text-xs text-center md:text-left transition-colors duration-1000', heroTheme.hint]">
               {{ publicarHint }}
             </span>
           </div>
