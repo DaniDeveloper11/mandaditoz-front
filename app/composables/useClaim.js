@@ -3,7 +3,6 @@ export function useClaim() {
   const { token } = useAuthStore()
 
   async function submitClaim({ businessDocumentId, claimantName, claimantRole, claimantPhone, notes }) {
-    console.log("token dentro de submitClaim",token)
     if (!token) throw new Error('No autenticado')
 
     return $fetch(`${config.public.apiBase}/claims`, {
