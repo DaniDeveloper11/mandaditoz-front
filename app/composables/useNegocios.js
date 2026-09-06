@@ -52,6 +52,24 @@ export function useNegocios(filtros) {
       })
     }
 
+    if (f.isFeatured) {
+      // Destacado = la decision permanente del admin (isFeatured) O una
+      // promocion con fecha aun vigente (featuredUntil). Son independientes:
+      // el flag manda aunque la fecha ya haya pasado, y una fecha futura
+      // destaca aunque el flag este apagado.
+      //
+      // El "ahora" se calcula aqui dentro: `new Date()` no es una dependencia
+      // reactiva, asi que el computed no se re-evalua solo y useFetch nunca
+      // entra en bucle. Va como STRING: un Date pasaria por el flatten de
+      // abajo como objeto y el filtro se perderia en silencio.
+      andGroups.push({
+        '$or': [
+          { isFeatured:    { '$eq': true } },
+          { featuredUntil: { '$gt': new Date().toISOString() } },
+        ],
+      })
+    }
+
     const andParams = {}
     andGroups.forEach((group, i) => {
       group['$or'].forEach((cond, j) => {
@@ -79,7 +97,6 @@ export function useNegocios(filtros) {
       ...(f.colonia         && { 'filters[neighborhood][slug][$eq]': f.colonia }),
       ...(f.priceLevel      && { 'filters[priceLevel][$eq]': f.priceLevel }),
       ...(f.soloVerificados && { 'filters[isVerified][$eq]': true }),
-      ...(f.isFeatured      && { 'filters[isFeatured][$eq]': true }),
       'filters[businessStatus][$eq]': 'published',
       'filters[archivedAt][$null]': true,
       sort,

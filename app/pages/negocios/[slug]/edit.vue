@@ -131,7 +131,6 @@ const form = reactive({
   // Estado y visibilidad
   visibility: {
     isPublished: true,
-    isFeatured: false,
     visibleInAllCities: false,
   },
 })
@@ -210,7 +209,6 @@ watch(negocio, (val) => {
   logoError.value = ''
 
   form.visibility.isPublished        = val.businessStatus !== 'draft'
-  form.visibility.isFeatured         = val.isFeatured ?? false
   form.visibility.visibleInAllCities = val.visibleInAllCities ?? false
 
   form.photos = (val.photos ?? []).map((p, i) => ({
@@ -593,7 +591,6 @@ function buildPayload() {
       toDelete: deletedHourIds.value.slice(),
     },
     socialLinks,
-    isFeatured:         form.visibility.isFeatured,
     visibleInAllCities: form.visibility.visibleInAllCities,
     businessStatus:     form.visibility.isPublished ? 'published' : 'draft',
     logo: {
@@ -1513,34 +1510,6 @@ const stats = computed(() => [
                 </button>
               </div>
 
-              <!-- Destacado -->
-              <div class="flex items-start justify-between gap-4 sm:gap-6 p-4 sm:p-5 rounded-2xl border border-gray-200">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2 mb-1">
-                    <Star class="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <p class="font-semibold text-brand-text text-sm">Negocio destacado</p>
-                  </div>
-                  <p class="text-brand-azulgris text-xs leading-relaxed">
-                    Los negocios destacados aparecen en la portada del directorio y en los primeros resultados de búsqueda.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  @click="form.visibility.isFeatured = !form.visibility.isFeatured"
-                  :class="[
-                    'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none mt-0.5',
-                    form.visibility.isFeatured ? 'bg-brand-bg-dark' : 'bg-gray-200',
-                  ]"
-                >
-                  <span
-                    :class="[
-                      'inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform',
-                      form.visibility.isFeatured ? 'translate-x-6' : 'translate-x-1',
-                    ]"
-                  />
-                </button>
-              </div>
-
               <!-- Visible en todos los municipios -->
               <div class="flex items-start justify-between gap-4 sm:gap-6 p-4 sm:p-5 rounded-2xl border border-gray-200">
                 <div class="min-w-0">
@@ -1573,7 +1542,7 @@ const stats = computed(() => [
               <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200">
                 <Info class="w-4 h-4 text-brand-azulgris shrink-0 mt-0.5" />
                 <p class="text-brand-azulgris text-xs leading-relaxed">
-                  Los cambios de visibilidad se aplican de inmediato al guardar. El estado "Destacado" puede requerir aprobación del administrador.
+                  Los cambios de visibilidad se aplican de inmediato al guardar.
                 </p>
               </div>
 

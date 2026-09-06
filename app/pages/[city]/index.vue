@@ -16,6 +16,10 @@ const citySlug = computed(() => String(route.params.city ?? '').toLowerCase())
 const { data: pageData } = await useAsyncData(
   computed(() => `city-home|${citySlug.value}`),
   async () => {
+    // Ver useNegocios.js: destacado = isFeatured (permanente, del admin) O
+    // featuredUntil todavia vigente. Se calcula dentro del handler para que
+    // cada ejecucion tome la hora del request.
+    const ahora = new Date().toISOString()
     const [cityRes, catsRes, featRes] = await Promise.all([
       citySlug.value !== FALLBACK_CITY_SLUG
         ? $fetch(`${apiBase}/cities`, {
@@ -42,7 +46,8 @@ const { data: pageData } = await useAsyncData(
           'filters[archivedAt][$null]': true,
           'filters[$and][0][$or][0][city][slug][$eq]': citySlug.value,
           'filters[$and][0][$or][1][visibleInAllCities][$eq]': true,
-          'filters[isFeatured][$eq]': true,
+          'filters[$and][1][$or][0][isFeatured][$eq]': true,
+          'filters[$and][1][$or][1][featuredUntil][$gt]': ahora,
           sort: 'featuredOrder:asc,ratingAverage:desc',
           'populate[category]': true,
           'populate[city]': true,
