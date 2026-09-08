@@ -34,6 +34,27 @@ export function businessUrl(negocio) {
   return `/${citySegmentFor(negocio)}/${negocio.slug}`
 }
 
+/**
+ * Valida un destino de navegación interno antes de mandarlo a navigateTo.
+ *
+ * Solo se acepta una ruta del propio sitio: sin esto,
+ * /login?redirect=https://sitio.malo saca al usuario fuera de Mandaditoz desde
+ * un enlace que parece nuestro, que es como funciona el phishing por open
+ * redirect. Se rechaza `//host` y `/\host` porque los navegadores las tratan
+ * como absolutas aunque empiecen con barra.
+ *
+ * Gemela de safeRedirectPath en backend/src/utils/redirect.js: el valor viaja
+ * por el body del registro y luego de vuelta en el `?to=` del 302, así que se
+ * valida en las dos puntas.
+ */
+export function safeRedirectPath(value) {
+  const path = String(value ?? '').trim()
+  if (!path.startsWith('/')) return null
+  if (path.startsWith('//') || path.startsWith('/\\')) return null
+  if (path.length > 255) return null
+  return path
+}
+
 export function businessEditUrl(negocio) {
   if (!negocio?.slug) return '/'
   return `/negocios/${negocio.slug}/edit`

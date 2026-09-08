@@ -84,6 +84,7 @@
 import { ref, reactive } from 'vue'
 import { Mail, Lock, Eye, EyeOff } from '@lucide/vue'
 import Swal from 'sweetalert2'
+import { safeRedirectPath } from '~/utils/urls'
 
 defineEmits(['change-mode'])
 
@@ -103,7 +104,9 @@ async function handleSubmit() {
   try {
     await login({ identifier: form.email, password: form.password })
     Swal.close()
-    navigateTo(route.query.redirect ?? '/')
+    // Se valida el destino: sin esto, /login?redirect=https://sitio.malo saca al
+    // usuario del sitio desde un enlace que parece nuestro.
+    navigateTo(safeRedirectPath(route.query.redirect) ?? '/')
   } catch (e) {
     const msg = e?.data?.error?.message ?? 'Correo o contraseña incorrectos.'
     Swal.fire({

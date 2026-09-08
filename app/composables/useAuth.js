@@ -3,10 +3,14 @@ export function useAuth() {
   const base   = config.public.apiBase
   const store  = useAuthStore()
 
-  async function register({ username, email, password, displayName, phone }) {
+  async function register({ username, email, password, displayName, phone, redirect }) {
     const body = { username, email, password }
     if (displayName) body.displayName = displayName
     if (phone)       body.phone       = phone
+    // El dueño queda con confirmed:false y su siguiente paso es el correo. El
+    // backend guarda este destino en el usuario para devolvérnoslo en el `?to=`
+    // cuando confirme: es el único sitio donde sobrevive a ese viaje.
+    if (redirect)    body.redirect    = redirect
 
     return await $fetch(`${base}/auth/register-owner`, {
       method: 'POST',

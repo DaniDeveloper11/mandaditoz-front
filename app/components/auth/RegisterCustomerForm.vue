@@ -127,6 +127,7 @@
 import { ref, reactive } from 'vue'
 import { User, Phone, Mail, Lock, Eye, EyeOff } from '@lucide/vue'
 import Swal from 'sweetalert2'
+import { safeRedirectPath } from '~/utils/urls'
 
 defineEmits(['change-mode'])
 
@@ -168,8 +169,9 @@ async function handleSubmit() {
     })
 
     Swal.close()
-    // Ya quedó con sesión iniciada: se le devuelve justo a donde iba.
-    navigateTo(route.query.redirect ?? '/')
+    // Ya quedó con sesión iniciada: se le devuelve justo a donde iba. El
+    // destino se valida para que no pueda apuntar fuera del sitio.
+    navigateTo(safeRedirectPath(route.query.redirect) ?? '/')
   } catch (e) {
     const msg = e?.data?.error?.message ?? 'No se pudo crear la cuenta. Intenta de nuevo.'
     Swal.fire({

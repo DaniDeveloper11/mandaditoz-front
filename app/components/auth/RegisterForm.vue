@@ -164,6 +164,7 @@
 import { ref, reactive, computed } from 'vue'
 import { AtSign, User, Mail, Phone, Lock, Eye, EyeOff } from '@lucide/vue'
 import Swal from 'sweetalert2'
+import { safeRedirectPath } from '~/utils/urls'
 
 defineEmits(['change-mode'])
 
@@ -187,6 +188,8 @@ const passwordMismatch = computed(() =>
 async function handleSubmit() {
   if (passwordMismatch.value) return
 
+  const destino = safeRedirectPath(route.query.redirect)
+
   Swal.fire({
     title: 'Creando cuenta…',
     allowOutsideClick: false,
@@ -200,6 +203,10 @@ async function handleSubmit() {
       password:    form.password,
       displayName: form.displayName || undefined,
       phone:       form.phone       || undefined,
+      // Viaja al backend para que lo guarde en el usuario: al confirmar el
+      // correo, el 302 de Strapi lo devuelve y /cuenta/confirmada puede rearmar
+      // el enlace a login. En la URL no sobrevive ese viaje.
+      redirect:    destino || undefined,
     })
 
     await Swal.fire({
@@ -210,7 +217,7 @@ async function handleSubmit() {
       confirmButtonColor: '#1D5A8A',
     })
 
-    navigateTo({ path: '/login', query: route.query.redirect ? { redirect: route.query.redirect } : {} })
+    navigateTo({ path: '/login', query: destino ? { redirect: destino } : {} })
   } catch (e) {
     const msg = e?.data?.error?.message ?? 'Error al crear la cuenta. Intenta de nuevo.'
     Swal.fire({
