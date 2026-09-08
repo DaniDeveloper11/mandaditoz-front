@@ -12,7 +12,7 @@ export const FALLBACK_CITY_SLUG = 'jalisco'
 export const RESERVED_TOP_LEVEL_PATHS = new Set([
   'about', 'categorias', 'contacto', 'cuenta', 'how-to-work',
   'list', 'login', 'mis-negocios', 'negocios', 'privacidad',
-  'reset-password', 'terminos', FALLBACK_CITY_SLUG,
+  'reclamar', 'reset-password', 'terminos', FALLBACK_CITY_SLUG,
 ])
 
 /**
