@@ -653,6 +653,59 @@ const stats = computed(() => [
   { value: statsCounts.value.phone_click,    label: 'Clics en teléfono', color: 'text-amber-500' },
   { value: statsCounts.value.whatsapp_click, label: 'Clics en WhatsApp', color: 'text-brand-text' },
 ])
+
+// Lo mínimo que hace útil una ficha para quien la está viendo. Se calcula sobre
+// `form` y no sobre `negocio` para que la barra avance mientras el dueño escribe,
+// aunque todavía no haya guardado.
+const checklist = computed(() => [
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    hint: 'Es por donde más te van a contactar.',
+    section: 'contacto',
+    done: !!form.whatsapp.trim() || !!form.phone.trim(),
+  },
+  {
+    id: 'horario',
+    label: 'Horario',
+    hint: 'Para que sepan cuándo estás disponible.',
+    section: 'horario',
+    done: form.hours.some(h => !h.isClosed),
+  },
+  {
+    id: 'descripcion',
+    label: 'Descripción',
+    hint: 'Cuenta en dos líneas qué haces y a dónde llegas.',
+    section: 'informacion',
+    done: form.description.trim().length >= 40,
+  },
+  {
+    id: 'logo',
+    label: 'Logo',
+    hint: 'Tu ficha se ve más confiable con tu logo o tu foto.',
+    section: 'informacion',
+    done: !!form.logo.url && !form.logo.removed,
+  },
+  {
+    id: 'fotos',
+    label: 'Fotos',
+    hint: 'Una foto de tu negocio, tu moto o tu producto.',
+    section: 'fotos',
+    done: form.photos.length > 0,
+  },
+  {
+    id: 'pago',
+    label: 'Formas de pago',
+    hint: 'Efectivo, transferencia o tarjeta.',
+    section: 'pago',
+    done: form.paymentMethods.length > 0,
+  },
+])
+
+function irASeccion(id) {
+  activeSection.value = id
+  if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <template>
@@ -677,6 +730,9 @@ const stats = computed(() => [
         <X class="w-4 h-4" />
       </button>
     </div>
+
+    <!-- Qué le falta a la ficha -->
+    <BusinessChecklist :items="checklist" @ir="irASeccion" />
 
     <div class="flex flex-col lg:flex-row gap-6 lg:gap-8 lg:items-start">
 
