@@ -1,4 +1,5 @@
 import { mapNegocio } from '~/utils/strapi'
+import { condicionesAbiertoAhora } from '~/utils/horario'
 
 const SORT_MAP = {
   rating:    'ratingAverage:desc',
@@ -15,7 +16,7 @@ export function useNegocios(filtros) {
   const key = computed(() => {
     const f = toValue(filtros)
     const ciudad = f.ciudad ?? cityStore.activeCitySlug
-    return `negocios|cat:${f.categoria ?? ''}|q:${f.query ?? ''}|city:${ciudad ?? ''}|nb:${f.colonia ?? ''}|price:${f.priceLevel ?? ''}|feat:${!!f.isFeatured}|ver:${!!f.soloVerificados}|ord:${f.orden}|p:${f.pagina}`
+    return `negocios|cat:${f.categoria ?? ''}|q:${f.query ?? ''}|city:${ciudad ?? ''}|nb:${f.colonia ?? ''}|price:${f.priceLevel ?? ''}|feat:${!!f.isFeatured}|ver:${!!f.soloVerificados}|abiertos:${!!f.abiertosAhora}|ord:${f.orden}|p:${f.pagina}`
   })
 
   const query = computed(() => {
@@ -68,6 +69,16 @@ export function useNegocios(filtros) {
           { featuredUntil: { '$gt': new Date().toISOString() } },
         ],
       })
+    }
+
+    if (f.abiertosAhora) {
+      // Abierto ahora = alguna franja de `hours` cubre este instante. Igual que
+      // arriba con featuredUntil, el "ahora" se calcula aqui dentro y no es una
+      // dependencia reactiva: el computed no se re-evalua solo, asi que la lista
+      // queda congelada en la hora en que se cargo la pagina en vez de refetchear
+      // en bucle. Las excepciones por feriado no entran en el filtro; de eso se
+      // encarga la badge Abierto/Cerrado de cada tarjeta.
+      andGroups.push({ '$or': condicionesAbiertoAhora() })
     }
 
     const andParams = {}

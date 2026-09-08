@@ -36,6 +36,22 @@ function buscar() {
   router.push('/list')
 }
 
+// El store de búsqueda sobrevive a la navegación: sin limpiarlo, la lista de
+// abiertos llegaría cruzada con la última búsqueda o categoría del usuario.
+// El query param va igual que en el store para que la URL se pueda compartir.
+const abiertosUrl = computed(() => ({
+  path: '/list',
+  query: {
+    abiertos: '1',
+    ...(cityStore.activeCitySlug ? { ciudad: cityStore.activeCitySlug } : {}),
+  },
+}))
+
+function verAbiertos() {
+  store.reset()
+  store.setAbiertos(true)
+}
+
 function focusSearchInput() {
   const el = searchInput.value
   if (!el) return
@@ -354,6 +370,22 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
               Buscar
             </button>
           </form>
+
+          <!-- Atajo: quién está abierto en este momento -->
+          <div class="mt-3 flex justify-center md:justify-start">
+            <NuxtLink
+              :to="abiertosUrl"
+              @click="verAbiertos"
+              class="inline-flex items-center gap-2 rounded-full bg-white/90 hover:bg-white text-brand-text font-semibold text-sm px-4 py-2 shadow-md backdrop-blur-sm active:scale-95 transition-all duration-150"
+            >
+              <span class="relative flex h-2 w-2">
+                <span class="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+                <span class="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              Ver negocios abiertos ahorita
+              <ArrowRight class="size-4 text-brand-primary" />
+            </NuxtLink>
+          </div>
         </div>
 
       </div>

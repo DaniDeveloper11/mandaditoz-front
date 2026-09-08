@@ -35,6 +35,9 @@ const { categorias } = useCategorias({ limit: 100, allDepths: true })
   if (q.destacados === '1' || q.destacados === 'true') {
     store.filtros.isFeatured = true
   }
+  if (q.abiertos === '1' || q.abiertos === 'true') {
+    store.filtros.abiertosAhora = true
+  }
   if (typeof q.ciudad === 'string' && q.ciudad !== cityStore.activeCitySlug) {
     cityStore.setActiveCity(q.ciudad)
   }
@@ -50,6 +53,7 @@ watch(
     pagina: store.filtros.pagina,
     verificados: store.filtros.soloVerificados,
     destacados: store.filtros.isFeatured,
+    abiertos: store.filtros.abiertosAhora,
   }),
   (v) => {
     const query = {}
@@ -61,6 +65,7 @@ watch(
     if (v.pagina && v.pagina > 1) query.pagina = String(v.pagina)
     if (v.verificados) query.verificados = '1'
     if (v.destacados) query.destacados = '1'
+    if (v.abiertos) query.abiertos = '1'
     router.replace({ query })
   },
 )
@@ -118,6 +123,9 @@ const seoTitle = computed(() => {
   if (store.filtros.categoria) {
     return `${categoriaLabel.value} en ${cityLabel} — Mandaditoz`
   }
+  if (store.filtros.abiertosAhora) {
+    return `Negocios abiertos ahorita en ${cityLabel} — Mandaditoz`
+  }
   return `Directorio de negocios en ${cityLabel} — Mandaditoz`
 })
 
@@ -129,6 +137,9 @@ const seoDescription = computed(() => {
   if (store.filtros.categoria) {
     return `Explora los mejores ${categoriaLabel.value.toLowerCase()} en ${cityLabel}. Horarios, contacto y ubicación.`
   }
+  if (store.filtros.abiertosAhora) {
+    return `Negocios y servicios de ${cityLabel} que están abiertos en este momento, con horarios, contacto y ubicación.`
+  }
   return `Descubre negocios y servicios locales en ${cityLabel}. Directorio gratis para toda la comunidad.`
 })
 
@@ -137,6 +148,7 @@ const seoUrl = computed(() => {
   if (store.filtros.query) qs.set('q', store.filtros.query)
   if (store.filtros.categoria) qs.set('categoria', store.filtros.categoria)
   if (cityStore.activeCitySlug) qs.set('ciudad', cityStore.activeCitySlug)
+  if (store.filtros.abiertosAhora) qs.set('abiertos', '1')
   const query = qs.toString()
   return `${siteUrl}/list${query ? `?${query}` : ''}`
 })
@@ -178,6 +190,7 @@ useSeoMeta({
             <template v-else-if="store.filtros.categoria">
               {{ categoriaLabel }}
             </template>
+            <template v-else-if="store.filtros.abiertosAhora">Abiertos ahorita</template>
             <template v-else>Directorio de negocios</template>
           </h1>
           <p class="text-brand-azulgris text-sm mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
@@ -298,6 +311,16 @@ useSeoMeta({
               aria-label="Alternar solo destacados"
             >
               <span :class="['absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200', store.filtros.isFeatured ? 'translate-x-4' : 'translate-x-0']" />
+            </button>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="text-sm text-brand-text font-medium">Abiertos ahorita</span>
+            <button
+              @click="store.toggleAbiertos()"
+              :class="['relative w-10 h-6 rounded-full transition-colors duration-200 focus:outline-none', store.filtros.abiertosAhora ? 'bg-emerald-500' : 'bg-gray-300']"
+              aria-label="Alternar solo abiertos ahorita"
+            >
+              <span :class="['absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200', store.filtros.abiertosAhora ? 'translate-x-4' : 'translate-x-0']" />
             </button>
           </div>
           <div class="flex items-center gap-2.5">
