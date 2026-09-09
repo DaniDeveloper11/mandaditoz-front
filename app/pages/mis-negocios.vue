@@ -199,6 +199,11 @@ useSeoMeta({ title: 'Mis negocios | Mandaditoz' })
           <div class="flex-1 text-sm">
             <p class="font-semibold text-amber-800">Has alcanzado el límite de {{ publishedLimit }} negocios publicados.</p>
             <p class="text-amber-700 mt-0.5">Podrás publicar uno nuevo cuando cambies otro a borrador o lo archives. Puedes seguir creando negocios en modo borrador sin límite.</p>
+            <p class="text-amber-700 mt-1.5">
+              ¿Manejas más negocios y necesitas publicarlos todos?
+              <NuxtLink to="/contacto" class="font-semibold underline underline-offset-2 hover:text-amber-900">Escríbenos</NuxtLink>
+              y ampliamos tu cupo.
+            </p>
           </div>
         </div>
 
