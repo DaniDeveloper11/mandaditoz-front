@@ -355,8 +355,10 @@ function extractSocialHandle(raw, domainPrefix) {
 
 // ── Fotos helpers ──
 const MAX_PHOTOS = 10
-const MAX_PHOTO_SIZE = 5 * 1024 * 1024
-const MAX_LOGO_SIZE = 2 * 1024 * 1024
+const MAX_PHOTO_MB = 20
+const MAX_LOGO_MB = 10
+const MAX_PHOTO_SIZE = MAX_PHOTO_MB * 1024 * 1024
+const MAX_LOGO_SIZE = MAX_LOGO_MB * 1024 * 1024
 const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp']
 const fileInputRef = ref(null)
 const logoInputRef = ref(null)
@@ -375,7 +377,7 @@ function onLogoSelected(e) {
     return
   }
   if (file.size > MAX_LOGO_SIZE) {
-    logoError.value = 'El logo supera los 2 MB'
+    logoError.value = `El logo supera los ${MAX_LOGO_MB} MB`
     return
   }
   if (form.logo.url?.startsWith('blob:')) URL.revokeObjectURL(form.logo.url)
@@ -408,7 +410,7 @@ function onFilesSelected(e) {
       return
     }
     if (file.size > MAX_PHOTO_SIZE) {
-      photoError.value = `${file.name} supera los 5 MB`
+      photoError.value = `${file.name} supera los ${MAX_PHOTO_MB} MB`
       return
     }
     form.photos.push({
@@ -433,8 +435,10 @@ function removePhoto(index) {
 
 // ── Menú helpers ──
 const MAX_MENU_IMAGES = 12
-const MAX_MENU_PDF_SIZE  = 15 * 1024 * 1024
-const MAX_MENU_IMAGE_SIZE = 5 * 1024 * 1024
+const MAX_MENU_PDF_MB    = 50
+const MAX_MENU_IMAGE_MB  = 20
+const MAX_MENU_PDF_SIZE  = MAX_MENU_PDF_MB * 1024 * 1024
+const MAX_MENU_IMAGE_SIZE = MAX_MENU_IMAGE_MB * 1024 * 1024
 const menuPdfInputRef = ref(null)
 const menuImagesInputRef = ref(null)
 
@@ -451,7 +455,7 @@ function onMenuPdfSelected(e) {
     return
   }
   if (file.size > MAX_MENU_PDF_SIZE) {
-    menuError.value = 'El PDF supera los 15 MB'
+    menuError.value = `El PDF supera los ${MAX_MENU_PDF_MB} MB`
     return
   }
   if (form.menu.pdf?.url?.startsWith('blob:')) URL.revokeObjectURL(form.menu.pdf.url)
@@ -479,7 +483,7 @@ function onMenuImagesSelected(e) {
       return
     }
     if (file.size > MAX_MENU_IMAGE_SIZE) {
-      menuError.value = `${file.name} supera los 5 MB`
+      menuError.value = `${file.name} supera los ${MAX_MENU_IMAGE_MB} MB`
       return
     }
     form.menu.images.push({
@@ -831,7 +835,7 @@ function irASeccion(id) {
                 <p v-if="logoError" class="text-red-600 text-xs mt-1.5">{{ logoError }}</p>
                 <p v-else-if="form.logo.isNew" class="text-brand-azulgris text-xs mt-1.5">Logo nuevo. Se subirá al guardar.</p>
                 <p v-else-if="form.logo.removed" class="text-brand-azulgris text-xs mt-1.5">Logo eliminado. Se aplicará al guardar.</p>
-                <p v-else class="text-gray-400 text-xs mt-1.5">JPG, PNG o WebP. Máx. 2 MB.</p>
+                <p v-else class="text-gray-400 text-xs mt-1.5">JPG, PNG o WebP. Máx. {{ MAX_LOGO_MB }} MB.</p>
               </div>
             </div>
 
@@ -1224,7 +1228,7 @@ function irASeccion(id) {
               </button>
               <p v-if="photoError" class="text-red-600 text-xs">{{ photoError }}</p>
               <p class="text-gray-400 text-xs">
-                Sube hasta {{ MAX_PHOTOS }} fotos. Formatos: JPG, PNG, WebP. Máximo 5 MB por foto.
+                Sube hasta {{ MAX_PHOTOS }} fotos. Formatos: JPG, PNG, WebP. Máximo {{ MAX_PHOTO_MB }} MB por foto.
               </p>
             </div>
 
@@ -1351,7 +1355,7 @@ function irASeccion(id) {
               >
                 <UploadCloud class="w-7 h-7" />
                 <span class="text-sm font-semibold">Subir menú en PDF</span>
-                <span class="text-xs">Máx. 15 MB</span>
+                <span class="text-xs">Máx. {{ MAX_MENU_PDF_MB }} MB</span>
               </button>
 
               <input
@@ -1403,7 +1407,7 @@ function irASeccion(id) {
               >
                 <UploadCloud class="w-7 h-7" />
                 <span class="text-sm font-semibold">Subir imágenes del menú</span>
-                <span class="text-xs">JPG, PNG o WebP · Máx. 5 MB por imagen</span>
+                <span class="text-xs">JPG, PNG o WebP · Máx. {{ MAX_MENU_IMAGE_MB }} MB por imagen</span>
               </button>
 
               <input
