@@ -315,6 +315,45 @@ function toggleDayClosed(day) {
   }
 }
 
+/**
+ * Un día es 24 h cuando su única franja está marcada así. Se guarda como una
+ * sola fila con `is24Hours`, que es lo que leen el badge de "abierto ahora",
+ * el filtro del listado y el JSON-LD.
+ */
+function isDay24h(day) {
+  const slots = hoursByDay.value[day]
+  return slots.length === 1 && !!slots[0].is24Hours
+}
+
+function toggleDay24h(day) {
+  const slots = hoursByDay.value[day]
+  if (isDay24h(day)) {
+    slots[0].is24Hours = false
+    slots[0].openTime = '09:00'
+    slots[0].closeTime = '18:00'
+    return
+  }
+  // Colapsa el día a una sola franja: varias franjas y 24 h se contradicen.
+  while (hoursByDay.value[day].length > 1) removeSlot(day, 1)
+  const slot = hoursByDay.value[day][0]
+  if (!slot) {
+    form.hours.push({
+      documentId: null,
+      dayOfWeek: day,
+      openTime: '00:00',
+      closeTime: '00:00',
+      isClosed: false,
+      is24Hours: true,
+      sortOrder: 0,
+    })
+    return
+  }
+  slot.isClosed = false
+  slot.is24Hours = true
+  slot.openTime = '00:00'
+  slot.closeTime = '00:00'
+}
+
 function addSlot(day) {
   const slots = hoursByDay.value[day]
   const lastClose = slots[slots.length - 1]?.closeTime ?? '14:00'
@@ -1076,7 +1115,7 @@ function irASeccion(id) {
                 class="col-span-2 sm:col-span-1 sm:col-start-2 sm:row-start-1 space-y-2"
               >
                 <div
-                  v-for="(slot, idx) in hoursByDay[day]"
+                  v-for="(slot, idx) in isDay24h(day) ? [] : hoursByDay[day]"
                   :key="slot.documentId ?? `new-${day}-${idx}`"
                   class="grid grid-cols-[1fr_20px_1fr_32px] sm:grid-cols-[1fr_24px_1fr_32px] gap-2 sm:gap-3 items-center"
                 >
@@ -1102,14 +1141,31 @@ function irASeccion(id) {
                   </button>
                   <span v-else />
                 </div>
-                <button
-                  type="button"
-                  @click="addSlot(day)"
-                  class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-primary hover:underline"
-                >
-                  <Plus class="w-3.5 h-3.5" />
-                  Agregar franja
-                </button>
+                <p
+                  v-if="isDay24h(day)"
+                  class="text-sm font-semibold text-emerald-600 py-2.5"
+                >Abierto las 24 horas</p>
+
+                <div class="flex items-center gap-4 flex-wrap">
+                  <button
+                    v-if="!isDay24h(day)"
+                    type="button"
+                    @click="addSlot(day)"
+                    class="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-primary hover:underline"
+                  >
+                    <Plus class="w-3.5 h-3.5" />
+                    Agregar franja
+                  </button>
+                  <label class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      :checked="isDay24h(day)"
+                      @change="toggleDay24h(day)"
+                      class="w-3.5 h-3.5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/30"
+                    />
+                    Abierto 24 h
+                  </label>
+                </div>
               </div>
               <div
                 v-else

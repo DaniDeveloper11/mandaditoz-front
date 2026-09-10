@@ -430,10 +430,12 @@ function buildPayload() {
       ? form.menuImages.map(f => f.id)
       : null,
     businessStatus: form.isPublished ? 'published' : 'draft',
+    // Un día de 24 h se guarda con las horas en 00:00 para no dejar el rango
+    // viejo contradiciendo a la bandera.
     hours: form.hours.map(h => ({
       dayOfWeek: h.dayOfWeek,
-      openTime:  h.openTime,
-      closeTime: h.closeTime,
+      openTime:  h.is24Hours ? '00:00' : h.openTime,
+      closeTime: h.is24Hours ? '00:00' : h.closeTime,
       isClosed:  h.isClosed,
       is24Hours: h.is24Hours,
     })),
@@ -933,7 +935,7 @@ async function handleSubmit() {
                 <div class="min-w-0">
                   <p class="font-semibold text-sm text-brand-text">{{ DAY_LABELS[row.dayOfWeek] }}</p>
                   <p class="text-[11px] mt-0.5" :class="row.isClosed ? 'text-gray-400' : 'text-emerald-600 font-semibold'">
-                    {{ row.isClosed ? 'Cerrado' : 'Abierto' }}
+                    {{ row.isClosed ? 'Cerrado' : (row.is24Hours ? 'Abierto 24 horas' : 'Abierto') }}
                   </p>
                 </div>
                 <button
@@ -953,33 +955,53 @@ async function handleSubmit() {
                   />
                 </button>
               </div>
-              <div v-if="!row.isClosed" class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                <input v-model="row.openTime" type="time" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
-                <span class="text-gray-400 text-sm select-none">–</span>
-                <input v-model="row.closeTime" type="time" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+              <div v-if="!row.isClosed" class="space-y-2.5">
+                <div v-if="!row.is24Hours" class="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                  <input v-model="row.openTime" type="time" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                  <span class="text-gray-400 text-sm select-none">–</span>
+                  <input v-model="row.closeTime" type="time" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                </div>
+                <label class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 cursor-pointer select-none">
+                  <input
+                    v-model="row.is24Hours"
+                    type="checkbox"
+                    class="w-3.5 h-3.5 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/30"
+                  />
+                  Abierto 24 h
+                </label>
               </div>
             </div>
           </div>
 
           <!-- Desktop: fila por día -->
           <div class="hidden md:block">
-            <div class="grid grid-cols-[110px_1fr_20px_1fr_64px] gap-3 items-center pb-3 mb-1 border-b border-gray-100">
+            <div class="grid grid-cols-[110px_1fr_20px_1fr_56px_64px] gap-3 items-center pb-3 mb-1 border-b border-gray-100">
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Día</span>
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Apertura</span>
               <span />
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400">Cierre</span>
+              <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400 text-center">24 h</span>
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400 text-right">Abierto</span>
             </div>
 
             <div
               v-for="row in form.hours"
               :key="`d-${row.dayOfWeek}`"
-              class="grid grid-cols-[110px_1fr_20px_1fr_64px] gap-3 items-center py-3 border-b border-gray-50 last:border-0"
+              class="grid grid-cols-[110px_1fr_20px_1fr_56px_64px] gap-3 items-center py-3 border-b border-gray-50 last:border-0"
             >
               <span class="font-semibold text-sm text-brand-text">{{ DAY_LABELS[row.dayOfWeek] }}</span>
-              <input v-model="row.openTime" type="time" :disabled="row.isClosed" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50" />
+              <input v-model="row.openTime" type="time" :disabled="row.isClosed || row.is24Hours" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50" />
               <span class="text-gray-400 text-center text-sm select-none">–</span>
-              <input v-model="row.closeTime" type="time" :disabled="row.isClosed" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50" />
+              <input v-model="row.closeTime" type="time" :disabled="row.isClosed || row.is24Hours" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50" />
+              <div class="flex justify-center">
+                <input
+                  v-model="row.is24Hours"
+                  type="checkbox"
+                  :disabled="row.isClosed"
+                  class="w-4 h-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary/30 disabled:opacity-40"
+                  :aria-label="`${DAY_LABELS[row.dayOfWeek]}: abierto 24 horas`"
+                />
+              </div>
               <div class="flex justify-end">
                 <button
                   type="button"
