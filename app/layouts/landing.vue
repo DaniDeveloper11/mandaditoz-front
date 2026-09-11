@@ -1,19 +1,19 @@
 <template>
   <header class="relative isolate z-40 bg-white ">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between gap-2 p-4 sm:p-6 lg:px-8" aria-label="Global">
-      <div class="flex lg:flex-1 items-center gap-2 sm:gap-3 min-w-0">
+    <nav class="mx-auto flex max-w-7xl lg:max-w-[100rem] items-center justify-between gap-2 lg:gap-x-4 xl:gap-x-8 p-4 sm:p-6 lg:px-4 xl:px-8 2xl:px-10" aria-label="Global">
+      <div class="flex lg:flex-initial items-center gap-2 sm:gap-3 min-w-0">
         <a href="/" class="-m-1.5 p-1.5 shrink-0">
           <span class="sr-only">Mandaditoz</span>
-          <img class="h-10 lg:h-14 w-auto" :src="logoLight" alt="Mandaditoz" />
+          <img class="h-10 lg:h-11 xl:h-14 w-auto" :src="logoLight" alt="Mandaditoz" />
         </a>
-        <LayoutCitySwitcher />
+        <div class="lg:shrink-0"><LayoutCitySwitcher /></div>
         <a
           v-if="cityStore.activeCity?.blogUrl"
           :href="cityStore.activeCity.blogUrl"
           target="_blank"
           rel="noopener noreferrer"
           :title="cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial de la ciudad'"
-          class=" hidden relative md:inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white p-1 sm:pl-2 sm:pr-3 sm:py-1.5 text-sm font-semibold text-brand-text hover:border-brand-primary hover:text-brand-primary transition"
+          class=" hidden relative md:inline-flex lg:hidden xl:inline-flex items-center justify-center gap-1.5 rounded-full border border-gray-200 bg-white min-w-0 p-1 sm:pl-2 sm:pr-3 sm:py-1.5 xl:p-1.5 2xl:pl-2 2xl:pr-3 2xl:py-1.5 text-sm font-semibold text-brand-text hover:border-brand-primary hover:text-brand-primary transition"
         >
           <img
             v-if="cityStore.activeCity.bloggerAvatar?.url"
@@ -22,7 +22,7 @@
             class="size-7 sm:size-5 rounded-full object-cover ring-1 ring-gray-200"
           />
           <BookOpen v-else class="size-5 sm:size-3.5 text-brand-primary" />
-          <span class="hidden sm:inline truncate max-w-[10rem]">
+          <span class="hidden sm:inline xl:hidden 2xl:inline truncate max-w-[10rem]">
             {{ cityStore.activeCity.bloggerName ? `${cityStore.activeCity.bloggerName}` : 'Blog oficial' }}
           </span>
           <span class="absolute -top-0.5 -right-0.5 flex size-2.5">
@@ -37,9 +37,9 @@
           <Menu class="size-6" aria-hidden="true" />
         </button>
       </div>
-      <PopoverGroup class="hidden lg:flex lg:gap-x-12">
+      <PopoverGroup class="hidden lg:flex lg:shrink-0 lg:items-center lg:gap-x-5 xl:gap-x-8 2xl:gap-x-12">
         <Popover>
-          <PopoverButton class="text-sm/6 font-semibold text-gray-900">
+          <PopoverButton class="text-sm/6 font-semibold text-gray-900 whitespace-nowrap">
             Categorías
           </PopoverButton>
 
@@ -80,28 +80,28 @@
           </transition>
         </Popover>
 
-        <a :href="eventsUrl(cityStore.activeCitySlug)" class="text-sm/6 font-semibold text-gray-900 hover:text-brand-primary transition">Eventos</a>
-        <a href="/about" class="text-sm/6 font-semibold text-gray-900">Nosotros</a> 
-        <a href="/how-to-work" class="text-sm/6 font-semibold text-gray-900">¿Cómo funciona?</a>
+        <a :href="eventsUrl(cityStore.activeCitySlug)" class="text-sm/6 font-semibold text-gray-900 whitespace-nowrap hover:text-brand-primary transition">Eventos</a>
+        <a href="/about" class="hidden xl:block text-sm/6 font-semibold text-gray-900 whitespace-nowrap">Nosotros</a>
+        <a href="/how-to-work" class="text-sm/6 font-semibold text-gray-900 whitespace-nowrap">¿Cómo funciona?</a>
       </PopoverGroup>
-      <div class="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-x-4">
+      <div class="hidden lg:flex lg:flex-initial lg:shrink-0 lg:justify-end lg:items-center lg:gap-x-3 xl:gap-x-4">
         <template v-if="isLoggedIn">
-          <a href="/mis-negocios" class="text-sm/6 font-semibold text-gray-900 hover:text-brand-primary transition">
+          <a href="/mis-negocios" class="text-sm/6 font-semibold text-gray-900 whitespace-nowrap hover:text-brand-primary transition">
             Mis negocios
           </a>
-          <span class="text-sm/6 text-gray-600">
+          <span class="hidden 2xl:inline max-w-[12rem] truncate text-sm/6 text-gray-600 whitespace-nowrap">
             Hola, <span class="font-semibold text-gray-900">{{ user?.displayName || user?.username }}</span>
           </span>
           <button
-            class="text-sm/6 font-semibold text-gray-900 hover:text-brand-primary transition"
+            class="text-sm/6 font-semibold text-gray-900 whitespace-nowrap hover:text-brand-primary transition"
             @click="handleLogout"
           >
             Cerrar sesión
           </button>
         </template>
         <template v-else>
-          <a href="/login" class="text-sm/6 font-semibold text-gray-900">Iniciar sesión</a>
-          <a href="/login?type=r&amp;intent=negocio" class="rounded-lg bg-brand-primary px-4 py-2 text-sm/6 font-semibold text-white shadow-sm hover:opacity-90">Registra tu negocio</a>
+          <a href="/login" class="text-sm/6 font-semibold text-gray-900 whitespace-nowrap">Iniciar sesión</a>
+          <a href="/login?type=r&amp;intent=negocio" class="rounded-lg bg-brand-primary px-3 xl:px-4 py-2 text-sm/6 font-semibold text-white shadow-sm whitespace-nowrap hover:opacity-90">Registra tu negocio</a>
         </template>
       </div>
     </nav>
