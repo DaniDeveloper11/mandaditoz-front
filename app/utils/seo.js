@@ -1,8 +1,11 @@
 /**
- * Builders de JSON-LD (schema.org) para páginas de negocio.
- * Se inyecta vía useHead({ script: [...] }) para que Google muestre rich results
- * (estrellas, horario, dirección) en los resultados de búsqueda.
+ * Builders de JSON-LD (schema.org) para páginas de negocio y para la cartelera
+ * del municipio. Se inyecta vía useHead({ script: [...] }) para que Google
+ * muestre rich results (estrellas, horario, dirección, fecha) en los resultados
+ * de búsqueda.
  */
+import { isoConOffset } from '~/utils/fechas'
+import { businessUrl } from '~/utils/urls'
 
 const DAY_TO_SCHEMA = {
   mon: 'Monday',
@@ -225,6 +228,110 @@ function buildMenuJsonLd(n, schemaType) {
     name: `Menú de ${n.name}`,
     hasMenuSection: sections,
   }
+}
+
+// -----------------------------------------------------------------------------
+// Cartelera del municipio (city-post)
+// -----------------------------------------------------------------------------
+
+/**
+ * Intenta sacar un precio numérico del texto libre de `priceText`.
+ * Devuelve string (schema.org lo quiere así) o null si no es interpretable.
+ */
+function parsePrecioEvento(texto) {
+  if (!texto) return null
+  const t = String(texto).trim()
+  if (/(libre|gratis|gratuit[ao]|sin costo|sin cover)/i.test(t)) return '0'
+  const m = t.match(/\d+(?:[.,]\d{1,2})?/)
+  if (!m) return null
+  const n = Number(m[0].replace(',', '.'))
+  return Number.isFinite(n) ? String(n) : null
+}
+
+/**
+ * JSON-LD de schema.org para un evento de la cartelera.
+ *
+ * Devuelve null cuando `kind` es 'aviso': un corte de agua no es un evento, y
+ * marcarlo como `Event` para robar rich results es justo lo que las políticas de
+ * datos estructurados de Google clasifican como spam. Un aviso lleva solo el
+ * breadcrumb.
+ *
+ * `location` es obligatorio para que Google muestre el rich result, así que se
+ * resuelve en cascada —lugar declarado → negocio sede → el municipio— y siempre
+ * sale un Place.
+ */
+export function buildEventJsonLd(post, { siteUrl, pageUrl }) {
+  if (!post) return null
+  if (post.kind === 'aviso') return null
+  if (!post.startAt) return null
+
+  const sede = post.businesses?.[0] ?? null
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    '@id': pageUrl,
+    name: post.title,
+    url: pageUrl,
+    startDate: isoConOffset(post.startAt, { soloFecha: post.allDay }),
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    eventStatus: 'https://schema.org/EventScheduled',
+  }
+
+  if (post.endAt) {
+    jsonLd.endDate = isoConOffset(post.endAt, { soloFecha: post.allDay })
+  }
+
+  const desc = post.summary || post.description
+  if (desc) jsonLd.description = desc
+
+  const images = [post.coverImage?.url, ...(post.gallery ?? []).map(g => g?.url)].filter(Boolean)
+  if (images.length) jsonLd.image = images
+
+  // Lugar: lo que declaró el municipio, o el negocio sede, o el municipio mismo.
+  const lugarNombre = post.venueName || sede?.name || post.city?.name
+  const place = { '@type': 'Place', name: lugarNombre || 'Jalisco' }
+
+  const streetAddress = post.venueAddress
+  place.address = {
+    '@type': 'PostalAddress',
+    ...(streetAddress && { streetAddress }),
+    ...(post.city?.name && { addressLocality: post.city.name }),
+    addressRegion: 'Jalisco',
+    addressCountry: 'MX',
+  }
+
+  if (post.geo?.lat != null && post.geo?.lng != null) {
+    place.geo = {
+      '@type': 'GeoCoordinates',
+      latitude: post.geo.lat,
+      longitude: post.geo.lng,
+    }
+  }
+  jsonLd.location = place
+
+  const organizador = post.organizerName || sede?.name
+  if (organizador) {
+    jsonLd.organizer = {
+      '@type': 'Organization',
+      name: organizador,
+      ...(sede?.slug && !post.organizerName && { url: `${siteUrl}${businessUrl(sede)}` }),
+    }
+  }
+
+  // Solo si el precio es interpretable. "Cooperación voluntaria" no se convierte
+  // en un número inventado: se omite `offers` y ya.
+  const price = parsePrecioEvento(post.priceText)
+  if (price != null || post.ticketUrl) {
+    jsonLd.offers = {
+      '@type': 'Offer',
+      availability: 'https://schema.org/InStock',
+      url: post.ticketUrl || pageUrl,
+      ...(price != null && { price, priceCurrency: 'MXN' }),
+    }
+  }
+
+  return jsonLd
 }
 
 export function buildBreadcrumbJsonLd(items) {

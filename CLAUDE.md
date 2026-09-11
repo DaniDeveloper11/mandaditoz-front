@@ -112,6 +112,60 @@ del usuario en cookie trae el rol viejo.
 `useApi()` **no manda el JWT**: las lecturas públicas van como rol `Public`. Todo lo
 autenticado usa `$fetch` con `Authorization` explícito (ver `useMenuEdit`, `useNegocioCreate`).
 
+## Cartelera del municipio (eventos y avisos)
+
+Cara pública del content-type `city-post` del backend. La captura es **solo del panel
+admin**: aquí no hay formularios ni endpoints de escritura.
+
+| Ruta | Archivo |
+|---|---|
+| `/[city]/eventos` (+ `?pasados=1`) | `pages/[city]/eventos/index.vue` |
+| `/[city]/eventos/[slug]` | `pages/[city]/eventos/[slug].vue` |
+
+Piezas: `composables/useEventos.js` (listado + `queryEventos()` reutilizable),
+`utils/fechas.js` (formateo), `utils/eventos.js` (etiquetas), `mapCityPost()` en
+`utils/strapi.js`, `buildEventJsonLd()` en `utils/seo.js`, y los componentes
+`event/EventCard.vue` (tarjeta del grid) y `event/EventHero.vue` (bloque protagonista).
+
+**El hero es el primer resultado cuando trae `isFeatured`**, sin una segunda consulta: el
+sort del composable (`isFeatured:desc,featuredOrder:asc,startAt:asc`) ya pone al frente al
+destacado con el `featuredOrder` más bajo. Solo aparece en la página 1 de la vista vigente,
+y se saca del grid para que no salga dos veces. Si el municipio no fijó nada, no hay hero.
+`EventHero` esconde cada bloque cuyo campo venga vacío — no rellenar el diseño con texto
+inventado: todo lo que muestra sale de un campo real de `city-post`.
+
+**`eventos` es un slug reservado.** Nuxt prioriza el segmento estático, así que
+`/[city]/eventos` le gana al dispatcher `pages/[city]/[slug].vue` y un negocio o categoría
+con ese slug exacto sería inalcanzable. `RESERVED_CITY_SUB_PATHS` (`utils/urls.js`) existe
+para que el sitemap no emita esa URL; agregar ahí cualquier subruta estática nueva de
+`/[city]/`.
+
+**Las fechas se formatean con `timeZone` explícito**, nunca con el reloj del proceso: esto
+corre en SSR, donde el servidor va en UTC. `noche-de-mariachi` se guarda como
+`2026-09-22T02:00:00.000Z` y en Jalisco es el **21** a las 20:00. Misma razón que
+`utils/horario.js`. Por eso tampoco hay "Hoy"/"Mañana": dependerían del instante del render
+y podrían no coincidir al hidratar.
+
+**`postStatus` no se manda en las queries.** El controller del backend lo fuerza a
+`published` pisando lo que venga del cliente.
+
+**`businesses` se mapea ligero** (`mapNegocioLigero`), no con `mapNegocio()`: el populate
+viene acotado con `fields`, así que `mapNegocio` devolvería un objeto con casi todo en
+`null`. Y siempre acotar `populate[businesses][fields]` — sin eso Strapi devuelve el negocio
+completo por cada evento de la lista.
+
+**Un `kind: 'aviso'` no lleva JSON-LD de `Event`** (`buildEventJsonLd` devuelve `null`):
+marcar un corte de agua como evento es spam de datos estructurados para Google.
+
+**La canónica de un evento no depende del municipio desde el que se abre.** `eventUrl(post)`
+sin override da la canónica (los regionales caen a `/jalisco/...`); con override los enlaces
+visibles se quedan dentro de la cartelera que el visitante está viendo. Los datos
+estructurados usan siempre la canónica.
+
+**Las páginas validan el municipio de la URL y lanzan 404** si no existe — incluida la ficha,
+donde un evento regional haría que `/municipioinventado/eventos/[slug]` respondiera 200. Un
+soft-404 (200 con página vacía) es, para Google, una página válida y sin contenido.
+
 ## Reglas de Código Específicas del Proyecto
 
 ### Reactividad en Nuxt 3 / Vue 3 (JavaScript)

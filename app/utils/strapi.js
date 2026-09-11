@@ -301,6 +301,85 @@ export function mapMenuSection(section, { includeInactive = false } = {}) {
   }
 }
 
+/**
+ * Negocio ligado a un evento de la cartelera.
+ *
+ * A propósito NO se usa mapNegocio(): el populate de city-post viene acotado con
+ * `fields` (sin horarios, sin fotos, sin reseñas), así que mapNegocio devolvería
+ * un objeto con casi todo en null y aparentaría tener datos que nadie pidió.
+ * Estos cuatro campos son justo los que necesita businessUrl().
+ */
+function mapNegocioLigero(item) {
+  if (!item) return null
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    name: item.name,
+    slug: item.slug,
+    city: item.city ? mapCity(item.city) : null,
+    visibleInAllCities: !!item.visibleInAllCities,
+  }
+}
+
+function mapSeo(item) {
+  if (!item) return null
+  return {
+    metaTitle: item.metaTitle ?? null,
+    metaDescription: item.metaDescription ?? null,
+    keywords: item.keywords ?? null,
+    canonicalUrl: item.canonicalUrl ?? null,
+    ogImage: item.ogImage ? mapMedia(item.ogImage) : null,
+  }
+}
+
+/**
+ * Evento o aviso de la cartelera del municipio (content-type `city-post`).
+ *
+ * Ojo con el nombre: `business-event` en el backend es analítica de tráfico y no
+ * tiene nada que ver con esto.
+ *
+ * La API solo devuelve posts con postStatus = 'published' (lo fuerza el
+ * controller), así que aquí no hay que filtrar por estado.
+ */
+export function mapCityPost(item) {
+  if (!item) return null
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    title: item.title,
+    slug: item.slug,
+    kind: item.kind ?? 'evento',
+    eventCategory: item.eventCategory ?? null,
+    summary: item.summary ?? null,
+    description: item.description ?? null,
+    // Strapi manda `null`, no `[]`, cuando una media múltiple está vacía.
+    coverImage: item.coverImage ? mapMedia(item.coverImage) : null,
+    gallery: (item.gallery ?? []).map(mapMedia).filter(Boolean),
+    startAt: item.startAt,
+    // El lifecycle del backend garantiza que nunca es nulo: toda la UI filtra
+    // la vigencia con una sola condición (endAt >= now).
+    endAt: item.endAt,
+    allDay: !!item.allDay,
+    venueName: item.venueName ?? null,
+    venueAddress: item.venueAddress ?? null,
+    geo: item.geo ?? null,
+    mapEmbedUrl: item.mapEmbedUrl ?? null,
+    businesses: (item.businesses ?? []).map(mapNegocioLigero).filter(Boolean),
+    organizerName: item.organizerName ?? null,
+    contactPhone: item.contactPhone ?? null,
+    externalUrl: item.externalUrl ?? null,
+    ticketUrl: item.ticketUrl ?? null,
+    priceText: item.priceText ?? null,
+    city: item.city ? mapCity(item.city) : null,
+    visibleInAllCities: !!item.visibleInAllCities,
+    isFeatured: !!item.isFeatured,
+    featuredOrder: item.featuredOrder ?? null,
+    seo: mapSeo(item.seo),
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
+}
+
 export function mapNegocio(item) {
   if (!item) return null
   const hours = (item.hours ?? []).map(mapHorario).filter(Boolean)

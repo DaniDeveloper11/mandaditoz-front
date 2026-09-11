@@ -16,6 +16,18 @@ export const RESERVED_TOP_LEVEL_PATHS = new Set([
 ])
 
 /**
+ * Segmentos que /[city]/<esto> reserva para rutas estáticas.
+ *
+ * Nuxt prioriza el segmento estático sobre el dinámico, así que /[city]/eventos
+ * gana sobre /[city]/[slug].vue — y eso deja INALCANZABLE cualquier categoría o
+ * negocio cuyo slug sea exactamente uno de estos. Hoy no existe ninguno.
+ *
+ * Lo consume el sitemap (server/api/__sitemap__/urls.js): sin ese filtro le
+ * mandaríamos a Google una URL que en realidad renderiza la cartelera.
+ */
+export const RESERVED_CITY_SUB_PATHS = new Set(['eventos'])
+
+/**
  * Devuelve el segmento de ciudad que debe aparecer en la URL de un negocio.
  * Los negocios sin city o con visibleInAllCities caen al slug reservado.
  */
@@ -32,6 +44,27 @@ export function citySegmentFor(negocio) {
 export function businessUrl(negocio) {
   if (!negocio?.slug) return '/'
   return `/${citySegmentFor(negocio)}/${negocio.slug}`
+}
+
+/**
+ * URL de un evento de la cartelera: /[city]/eventos/[slug]
+ *
+ * SIN `citySlugOverride` devuelve la URL CANÓNICA — reusa citySegmentFor, que ya
+ * manda los regionales (visibleInAllCities) al slug reservado `jalisco`. Es la
+ * que va en el <link rel="canonical"> y en el sitemap, para que un evento
+ * regional visible en tres carteleras no cuente como contenido triplicado.
+ *
+ * CON override mantiene al visitante dentro del municipio que está viendo:
+ * desde /san-juanito-de-escobedo/eventos los enlaces no lo sacan de ahí.
+ */
+export function eventUrl(post, citySlugOverride) {
+  if (!post?.slug) return '/'
+  return `/${citySlugOverride ?? citySegmentFor(post)}/eventos/${post.slug}`
+}
+
+/** Cartelera de un municipio. */
+export function eventsUrl(citySlug) {
+  return `/${citySlug || FALLBACK_CITY_SLUG}/eventos`
 }
 
 /**

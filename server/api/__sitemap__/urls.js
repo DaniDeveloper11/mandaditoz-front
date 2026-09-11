@@ -3,12 +3,21 @@
  *   - /[city]                        (una por ciudad activa)
  *   - /[city]/[categoria]            (por combinación con al menos 1 negocio)
  *   - /[city]/[business-slug]        (todos los negocios publicados)
+ *   - /[city]/eventos                (cartelera, una por ciudad activa)
+ *   - /[city]/eventos/[slug]         (eventos y avisos publicados)
  *
  * Se consume desde nuxt.config.ts:
  *   sitemap: { sources: ['/api/__sitemap__/urls'] }
  */
 
+// Redeclarados en vez de importados desde app/utils/urls.js, siguiendo lo que ya
+// hacía este archivo: el directorio server/ resuelve sus imports aparte.
 const FALLBACK_CITY_SLUG = 'jalisco'
+
+// Espejo de RESERVED_CITY_SUB_PATHS en app/utils/urls.js. Un negocio o categoría
+// con uno de estos slugs es inalcanzable —la ruta estática le gana al dispatcher
+// [city]/[slug].vue—, así que mandar su URL a Google apuntaría a la cartelera.
+const RESERVED_CITY_SUB_PATHS = new Set(['eventos'])
 
 async function fetchAllPages(apiBase, endpoint, extraQuery = {}) {
   const out = []
@@ -65,13 +74,25 @@ export default defineEventHandler(async () => {
         'fields[0]': 'slug',
       })
       for (const cat of cats) {
-        if (cat?.slug) {
+        if (cat?.slug && !RESERVED_CITY_SUB_PATHS.has(cat.slug)) {
           urls.push({
             loc: `/${c.slug}/${cat.slug}`,
             changefreq: 'weekly',
             priority: 0.85,
           })
         }
+      }
+    }
+
+    // Cartelera del municipio. Va aunque esté vacía: es una landing estable y la
+    // página responde 404 sola si el municipio no existe.
+    for (const c of cities) {
+      if (c?.slug) {
+        urls.push({
+          loc: `/${c.slug}/eventos`,
+          changefreq: 'daily',
+          priority: 0.8,
+        })
       }
     }
 
@@ -84,7 +105,7 @@ export default defineEventHandler(async () => {
       'populate[city][fields][0]': 'slug',
     })
     for (const b of businesses) {
-      if (!b?.slug) continue
+      if (!b?.slug || RESERVED_CITY_SUB_PATHS.has(b.slug)) continue
       const citySlug = b.visibleInAllCities
         ? FALLBACK_CITY_SLUG
         : (b.city?.slug || FALLBACK_CITY_SLUG)
@@ -93,6 +114,29 @@ export default defineEventHandler(async () => {
         lastmod: b.updatedAt ?? undefined,
         changefreq: 'weekly',
         priority: 0.8,
+      })
+    }
+
+    // Fichas de eventos y avisos. La API solo devuelve los publicados (el
+    // controller de city-post fuerza postStatus), así que no hay que filtrarlos.
+    // Se emite UNA sola URL por evento —la canónica— aunque un evento regional
+    // sea visible en la cartelera de varios municipios.
+    const posts = await fetchAllPages(apiBase, '/city-posts', {
+      'fields[0]': 'slug',
+      'fields[1]': 'updatedAt',
+      'fields[2]': 'visibleInAllCities',
+      'populate[city][fields][0]': 'slug',
+    })
+    for (const p of posts) {
+      if (!p?.slug) continue
+      const citySlug = p.visibleInAllCities
+        ? FALLBACK_CITY_SLUG
+        : (p.city?.slug || FALLBACK_CITY_SLUG)
+      urls.push({
+        loc: `/${citySlug}/eventos/${p.slug}`,
+        lastmod: p.updatedAt ?? undefined,
+        changefreq: 'weekly',
+        priority: 0.7,
       })
     }
   } catch (err) {
