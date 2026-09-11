@@ -80,6 +80,7 @@
           </transition>
         </Popover>
 
+        <a :href="eventsUrl(cityStore.activeCitySlug)" class="text-sm/6 font-semibold text-gray-900 hover:text-brand-primary transition">Eventos</a>
         <a href="/about" class="text-sm/6 font-semibold text-gray-900">Nosotros</a> 
         <a href="/how-to-work" class="text-sm/6 font-semibold text-gray-900">¿Cómo funciona?</a>
       </PopoverGroup>
@@ -156,6 +157,10 @@
               <a href="/categorias" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
                 <LayoutGrid class="size-5 text-gray-400" aria-hidden="true" />
                 Todas las categorías
+              </a>
+              <a :href="eventsUrl(cityStore.activeCitySlug)" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <CalendarDays class="size-5 text-gray-400" aria-hidden="true" />
+                Eventos y avisos
               </a>
               <a href="/negocios/publicar" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
                 <Store class="size-5 text-gray-400" aria-hidden="true" />
@@ -252,7 +257,7 @@
             <li><a href="/#buscador" class="text-white/70 text-sm hover:text-white transition-colors">Buscar negocio</a></li>
             <li><a href="/categorias" class="text-white/70 text-sm hover:text-white transition-colors">Categorías</a></li>
             <!-- <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Mapa interactivo</a></li> -->
-            <li><a href="#" class="text-white/70 text-sm hover:text-white transition-colors">Novedades</a></li>
+            <li><a :href="eventsUrl(cityStore.activeCitySlug)" class="text-white/70 text-sm hover:text-white transition-colors">Eventos y avisos</a></li>
           </ul>
         </div>
 
@@ -299,8 +304,9 @@ import {
   Disclosure, DisclosureButton, DisclosurePanel,
   Popover, PopoverButton, PopoverGroup, PopoverPanel,
 } from '@headlessui/vue'
-import { Menu, X, ChevronDown, Search, LayoutGrid, Store, Info, Mail, Shield, FileText, BookOpen } from '@lucide/vue'
+import { Menu, X, ChevronDown, Search, LayoutGrid, Store, Info, Mail, Shield, FileText, BookOpen, CalendarDays } from '@lucide/vue'
 import { getCategoriaConfig, getLucideIcon } from '~/utils/categorias'
+import { eventsUrl } from '~/utils/urls'
 
 const { isLoggedIn, user, logout } = useAuthStore()
 const { categorias } = useCategorias()

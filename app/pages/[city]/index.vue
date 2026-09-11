@@ -192,6 +192,16 @@ useHead(() => ({
       </div>
     </div>
 
+    <!-- Cartelera del municipio: lo único de esta página que cambia solo cada
+         semana, y por eso la razón para volver. No pinta nada si el municipio
+         todavía no publica eventos. -->
+    <EventBand
+      :city-slug="citySlug"
+      :titulo="`Qué pasa en ${cityName}`"
+      subtitulo="Fiestas, ferias y avisos del municipio"
+      fondo="bg-white border-t border-gray-100"
+    />
+
     <!-- Destacados -->
     <div v-if="destacados.length" class="bg-white px-6 md:px-12 py-10 border-t border-gray-100">
       <div class="max-w-6xl mx-auto">
@@ -247,5 +257,8 @@ useHead(() => ({
       </div>
     </div>
 
-  </div>
+  
+    <!-- Cartel del evento destacado, una sola vez por cartel. -->
+    <EventPosterModal :city-slug="citySlug" />
+</div>
 </template>

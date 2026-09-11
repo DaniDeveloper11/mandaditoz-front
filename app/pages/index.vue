@@ -575,6 +575,26 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
       </div>
     </section>
 
+    <!-- Cartelera del municipio activo (el del CitySwitcher), encabezada por el
+         evento que el municipio fijó. Va DEBAJO de los negocios destacados: el
+         sitio es un directorio de negocios y eso manda en la home; la cartelera
+         es la razón para volver, no la portada.
+
+         El título NO nombra al municipio a propósito: cityStore.activeCityName
+         sale de la lista de ciudades, que solo se carga en onMounted, así que en
+         SSR siempre devuelve el default (Etzatlán) aunque la cookie diga otra
+         cosa. El slug sí es correcto desde el primer render, así que los datos y
+         el enlace apuntan bien; lo único que mentiría es la etiqueta. La home
+         del municipio sí lo nombra porque ahí la ciudad viene del fetch propio. -->
+    <EventBand
+      :city-slug="cityStore.activeCitySlug"
+      titulo="Qué pasa en tu municipio"
+      subtitulo="Fiestas patronales, ferias y avisos del municipio"
+      fondo="bg-slate-50 border-t border-gray-100"
+      con-destacado
+      compacto
+    />
+
     <!-- Categories grid -->
     <section class="bg-slate-100 py-12 px-6 md:px-12">
       <div class="max-w-6xl mx-auto">
@@ -804,4 +824,8 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
     </section>
 
   
+  <!-- Cartel del evento destacado, una sola vez por cartel. Se monta siempre;
+       él decide si hay algo que mostrar. -->
+  <EventPosterModal :city-slug="cityStore.activeCitySlug" />
+
 </template>

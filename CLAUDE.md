@@ -162,6 +162,43 @@ sin override da la canónica (los regionales caen a `/jalisco/...`); con overrid
 visibles se quedan dentro de la cartelera que el visitante está viendo. Los datos
 estructurados usan siempre la canónica.
 
+**Puntos de entrada** (Fase 3): enlace "Eventos" en navbar, menú móvil y footer de
+`layouts/landing.vue` — todos apuntan a `eventsUrl(cityStore.activeCitySlug)`, o sea al
+municipio del CitySwitcher; banda `EventBand` en `pages/index.vue` y `pages/[city]/index.vue`;
+y `EventBusinessBlock` en la ficha de negocio. **Los tres se esconden solos si no hay
+eventos** — una sección con título y cero tarjetas se lee como que el sitio está roto, y un
+municipio recién abierto no tiene cartelera todavía.
+
+**Los eventos de un negocio se consultan al revés**: `useEventosDeNegocio(slug)` filtra
+`/api/city-posts?filters[businesses][slug][$eq]=…` en vez de popular desde el negocio, porque
+`business.events` es `private: true` en el backend — ese populate esquivaría el controller que
+fuerza `postStatus=published`.
+
+**`EventBand` tiene dos modos**, por prop: `con-destacado` lo encabeza con `EventHero`, y
+`compacto` baja las tarjetas a `EventMiniCard` (una línea, ~70px, sin portada ni resumen).
+La home global usa los dos: el destacado manda y el resto no debe empujar a los negocios
+fuera de la pantalla. `/[city]/eventos` y la home del municipio usan `EventCard` completo.
+
+**`EventPosterModal`** muestra el cartel del destacado a pantalla completa, una sola vez.
+Va montado en `pages/index.vue` y `pages/[city]/index.vue`. Tres cosas que no conviene
+deshacer sin querer:
+- Todo ocurre en `onMounted` con `$fetch`, **no** `useFetch`: el modal no debe existir en el
+  HTML del servidor, que es el que cachea Cloudflare.
+- La marca de visto es `localStorage['evento:modal:visto']`, una **lista de `documentId`**, no
+  un booleano — con un booleano, el cartel del año siguiente no lo vería nadie. Se marca al
+  abrir, no al cerrar.
+- Se salta el cargado completo si `cityStore.isOnboarded` es falso, para no encimarse con el
+  `CityPickerModal` de bienvenida que abre `layouts/landing.vue` en la primera visita.
+
+⚠️ **Cuidado al nombrar componentes bajo `components/event/`.** Nuxt solo quita el prefijo de
+carpeta cuando el primer segmento PascalCase del archivo coincide *exacto* con el directorio:
+`EventCard.vue` → `<EventCard>`, pero `EventsBand.vue` (plural) se registra como
+`<EventEventsBand>`. Un componente que no existe **no rompe el build ni lanza error**:
+simplemente no pinta nada. Si un bloque nuevo no aparece, revisar `.nuxt/components.d.ts`.
+Por lo mismo, **nunca `<component :is="'EventCard'">` con un string**: el auto-import se
+resuelve en compilación y un `:is` dinámico no se transforma. Usar `v-if`/`v-else` con las
+etiquetas escritas, o importar el componente y pasar la referencia.
+
 **Las páginas validan el municipio de la URL y lanzan 404** si no existe — incluida la ficha,
 donde un evento regional haría que `/municipioinventado/eventos/[slug]` respondiera 200. Un
 soft-404 (200 con página vacía) es, para Google, una página válida y sin contenido.

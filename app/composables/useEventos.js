@@ -89,3 +89,40 @@ export function useEventos(filtros) {
 
   return { eventos, paginacion, pending, error, refresh }
 }
+
+/**
+ * Eventos vigentes en los que participa un negocio.
+ *
+ * Va al revés de lo que parecería natural: NO se populan desde el negocio
+ * (`/api/businesses?populate=events`), porque `business.events` es
+ * `private: true` en el backend a propósito — ese populate esquivaría el
+ * controller de city-post, que es el único que fuerza `postStatus=published`, y
+ * filtraría los borradores del municipio. Se consulta la cartelera filtrando por
+ * el negocio, que sí pasa por el controller.
+ */
+export function useEventosDeNegocio(slug, { limite = 3 } = {}) {
+  const config = useRuntimeConfig()
+  const base = config.public.apiBase
+
+  const key = computed(() => `eventos-negocio|${toValue(slug) ?? ''}|n:${limite}`)
+
+  const query = computed(() => ({
+    'filters[businesses][slug][$eq]': toValue(slug) ?? '',
+    'filters[endAt][$gte]': new Date().toISOString(),
+    sort: 'startAt:asc',
+    ...POPULATE,
+    'pagination[pageSize]': limite,
+  }))
+
+  const { data, pending, error } = useFetch(`${base}/city-posts`, {
+    key,
+    query,
+    headers: { 'Content-Type': 'application/json' },
+    // Sin slug no hay nada que preguntar.
+    immediate: !!toValue(slug),
+  })
+
+  const eventos = computed(() => (data.value?.data ?? []).map(mapCityPost).filter(Boolean))
+
+  return { eventos, pending, error }
+}

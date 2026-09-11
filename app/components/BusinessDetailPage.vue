@@ -1090,6 +1090,11 @@ async function onReviewSaved() {
                 </div>
               </div>
 
+              <!-- Cartelera: eventos del municipio en los que participa este
+                   negocio. Se consulta al reves (filtrando city-posts por el
+                   negocio) porque business.events es private en el backend. -->
+              <EventBusinessBlock :negocio="negocio" />
+
             </template>
 
             <!-- Menú tab -->

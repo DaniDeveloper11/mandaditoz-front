@@ -53,6 +53,19 @@ const organiza = computed(() => {
   return null
 })
 
+// Un evento regional (visibleInAllCities) sale en la cartelera de cualquier
+// municipio, así que el destacado de /etzatlan/eventos puede ser de San Juanito.
+// Llamarlo "del municipio" ahí sería mentira; se dice de dónde es.
+const esDeOtroMunicipio = computed(() => {
+  const propio = props.evento.city?.slug
+  return !!(props.citySlug && propio && propio !== props.citySlug)
+})
+const etiquetaFijado = computed(() =>
+  esDeOtroMunicipio.value
+    ? `Destacado en la región · ${props.evento.city?.name}`
+    : 'Publicación destacada del municipio',
+)
+
 const href = computed(() => eventUrl(props.evento, props.citySlug ?? undefined))
 const ctaLabel = computed(() => (esAviso.value ? 'Ver el aviso completo' : 'Ver programa completo'))
 </script>
@@ -62,7 +75,7 @@ const ctaLabel = computed(() => (esAviso.value ? 'Ver el aviso completo' : 'Ver 
     <header class="flex items-center justify-between gap-3 px-5 py-2.5 bg-slate-50 border-b border-gray-100">
       <span class="inline-flex items-center gap-2 text-xs font-semibold text-brand-text">
         <Pin class="w-3.5 h-3.5 text-brand-primary" />
-        Publicación destacada del municipio
+        {{ etiquetaFijado }}
       </span>
       <span class="text-[11px] font-semibold uppercase tracking-wider text-brand-azulgris shrink-0">
         {{ kindConfig.label }}
