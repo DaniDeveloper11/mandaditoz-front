@@ -11,6 +11,17 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
   },
   plugins: {
+    // Solo se compila el proveedor de Google: los demás SDK del plugin (Facebook,
+    // Twitter…) engordan el APK y disparan falsos positivos en los escáneres de
+    // privacidad de Play Store por clases que nunca se usan.
+    SocialLogin: {
+      providers: {
+        google: true,
+        facebook: false,
+        apple: false,
+        twitter: false,
+      },
+    },
     SplashScreen: {
       launchShowDuration: 1500,
       backgroundColor: '#FFFFFF',

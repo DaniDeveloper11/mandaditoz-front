@@ -112,6 +112,42 @@ del usuario en cookie trae el rol viejo.
 `useApi()` **no manda el JWT**: las lecturas públicas van como rol `Public`. Todo lo
 autenticado usa `$fetch` con `Authorization` explícito (ver `useMenuEdit`, `useNegocioCreate`).
 
+### Continuar con Google
+
+`auth/GoogleButton.vue` (`<AuthGoogleButton>`) va arriba de los **tres** formularios: login,
+alta de comensal y alta de dueño. La lógica vive en `composables/useGoogleAuth.js`.
+
+Dos formas de conseguir el `id_token`, una sola de canjearlo:
+
+| Dónde | Cómo se obtiene el token | Qué botón se ve |
+|---|---|---|
+| Web | Google Identity Services (`accounts.google.com/gsi/client`) | el oficial de Google, dentro de un iframe |
+| App Android | `@capgo/capacitor-social-login` (Credential Manager) | uno propio con `.btn-secondary` |
+| Ambos | `POST /auth/google` → `{ jwt, user }` → `authStore.setAuth()` | — |
+
+- **En la app no se puede usar el script web**: Google bloquea OAuth dentro de un WebView. Por
+  eso `enAppNativa()` (vía `Capacitor.isNativePlatform()`) decide qué botón pintar, y el plugin
+  nativo pide el token con el **mismo client id web** para que el backend valide los dos igual.
+- **`NUXT_PUBLIC_GOOGLE_CLIENT_ID` vacío = no se pinta nada** y solo queda el alta por correo.
+  Lo mismo si el script de Google no carga (bloqueador de rastreadores): se esconde la sección
+  entera, porque un separador "o con tu correo" sin nada arriba se lee como página rota.
+- `npm run build:mobile` **no** repite esa variable en su línea de comandos, a diferencia de
+  `NUXT_PUBLIC_API_BASE`: Nuxt carga `frontend/.env` antes de evaluar `nuxt.config`, así que de
+  ahí sale también el valor que se compila dentro del APK. Si el botón no aparece en la app,
+  revisar ese `.env` antes que cualquier otra cosa.
+- Se usa `renderButton` y **no** `prompt()` (One Tap): la burbuja de One Tap se suprime sola
+  cuando el usuario la cierra un par de veces, y un botón que a veces no hace nada es peor que
+  no tener botón.
+- El destino post-login pasa por `safeRedirectPath(route.query.redirect)`, igual que en
+  `LoginForm`: sin eso, `/login?redirect=https://sitio.malo` saca al usuario del sitio.
+
+Alta de credenciales en Google Cloud (orígenes autorizados, SHA-1 de Android, variables):
+`backend/docs/google-login.md`.
+
+**Entrar con Google no da el rol `BusinessOwner`**, ni siquiera desde la pestaña de negocio:
+la cuenta nace `Authenticated` y el backend la asciende cuando publica su primer negocio —
+el mismo camino que el alta por correo de comensal.
+
 ## Cartelera del municipio (eventos y avisos)
 
 Cara pública del content-type `city-post` del backend. La captura es **solo del panel

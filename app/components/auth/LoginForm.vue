@@ -1,5 +1,7 @@
 <template>
   <div>
+  <AuthGoogleButton class="mb-6" texto="signin_with" />
+
   <form class="space-y-5" @submit.prevent="handleSubmit">
     <div>
       <label for="email" class="block text-sm font-medium text-brand-text mb-1.5">

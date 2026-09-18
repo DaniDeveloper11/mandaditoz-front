@@ -1,5 +1,7 @@
 <template>
   <div>
+    <AuthGoogleButton class="mb-6" texto="signup_with" />
+
     <form class="space-y-4" @submit.prevent="handleSubmit">
 
       <!-- Username -->

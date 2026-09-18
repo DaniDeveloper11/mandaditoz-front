@@ -21,6 +21,9 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE ?? 'http://localhost:1337/api',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL ?? 'https://mandaditoz.com',
       clarityId: process.env.NUXT_PUBLIC_CLARITY_ID ?? '',
+      // Client ID "Aplicación web" de Google Cloud. Vacío = sin botón de Google:
+      // el formulario de correo sigue funcionando solo.
+      googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID ?? '',
     },
   },
 
