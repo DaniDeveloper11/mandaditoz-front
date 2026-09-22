@@ -204,7 +204,11 @@ function positionSharePanel() {
   }
 }
 
-const shareUrl = computed(() => (import.meta.client ? window.location.href : ''))
+// Se comparte la URL canónica pública (la misma del og:url), no
+// window.location.href: dentro del WebView de Android eso es
+// https://localhost/... por el androidScheme de Capacitor, y el link
+// compartido llegaba roto a WhatsApp/Facebook.
+const shareUrl = computed(() => seoUrl.value)
 
 const shareOptions = computed(() => {
   const url = shareUrl.value
