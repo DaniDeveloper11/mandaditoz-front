@@ -9,13 +9,12 @@ const router = useRouter()
 const route = useRoute()
 const store = useSearchStore()
 const cityStore = useCityStore()
-const { negocios, paginacion, pending } = useNegocios(computed(() => store.filtros))
-const { categorias } = useCategorias({ limit: 100, allDepths: true })
-
 // --- Sincronización URL ↔ store ------------------------------------------
 // Los query params sobre /list permiten compartir URLs. Al abrir la página
 // se aplican al store (y `ciudad` cambia la ciudad activa global); cuando
 // el usuario cambia filtros, la URL se reescribe con router.replace.
+// Va ANTES de useNegocios: useFetch arranca la petición al llamarse, y en SSR
+// el cambio posterior del store ya no entra en el HTML (salía sin la búsqueda).
 {
   const q = route.query
   if (typeof q.q === 'string') store.filtros.query = q.q
@@ -42,6 +41,9 @@ const { categorias } = useCategorias({ limit: 100, allDepths: true })
     cityStore.setActiveCity(q.ciudad)
   }
 }
+
+const { negocios, paginacion, pending } = useNegocios(computed(() => store.filtros))
+const { categorias } = useCategorias({ limit: 100, allDepths: true })
 
 watch(
   () => ({

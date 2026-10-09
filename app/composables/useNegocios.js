@@ -40,18 +40,10 @@ export function useNegocios(filtros) {
         ],
       })
     }
-    if (f.query) {
-      andGroups.push({
-        '$or': [
-          { name:                { '$containsi': f.query } },
-          { category:            { name: { '$containsi': f.query } } },
-          { category:            { parent: { name: { '$containsi': f.query } } } },
-          { secondaryCategories: { name: { '$containsi': f.query } } },
-          { secondaryCategories: { parent: { name: { '$containsi': f.query } } } },
-          { tags:                { name: { '$containsi': f.query } } },
-        ],
-      })
-    }
+    // La busqueda de texto la resuelve el backend con `q` (sin acentos, por
+    // palabras, en nombre, descripcion, categorias, etiquetas, colonia y menu).
+    // Ver backend/src/utils/business-search.js.
+    const q = f.query?.trim()
 
     if (f.isFeatured) {
       // Destacado = la decision permanente del admin (isFeatured) O una
@@ -105,7 +97,8 @@ export function useNegocios(filtros) {
 
     return {
       ...andParams,
-      ...(f.colonia         && { 'filters[neighborhood][slug][$eq]': f.colonia }),
+      ...(q                 && { q }),
+      ...(f.colonia        && { 'filters[neighborhood][slug][$eq]': f.colonia }),
       ...(f.priceLevel      && { 'filters[priceLevel][$eq]': f.priceLevel }),
       ...(f.soloVerificados && { 'filters[isVerified][$eq]': true }),
       'filters[businessStatus][$eq]': 'published',
