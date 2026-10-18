@@ -90,7 +90,7 @@ Pages declare their layout via `definePageMeta({ layout: 'landing' })`.
 - `@headlessui/vue` — accessible primitives (Popover, Dialog, Disclosure, etc.)
 - `@lucide/vue` — all icons across the entire app
 
-**Image handling:** `@nuxt/image` module. Static assets (logos, SVGs) are in `public/` and referenced with root-relative paths like `/logo-cielo-horizontal.svg`.
+**Image handling:** `@nuxt/image` module. Static assets (logos, SVGs, `og-default.jpg`, `robots.txt`) are in **`app/public/`** and referenced with root-relative paths like `/logo-cielo-horizontal.svg`. ⚠️ With `srcDir: 'app/'`, Nuxt 3 serves `app/public/`, **not** the root `public/` — a file dropped in `public/` returns 404 (it falls through to the `[city]` route as "Municipio no encontrado"). The root `public/` only keeps `imagenes-negocios/` (194 MB of seed images used by `backend/scripts/upload-imagenes.js`), which must stay out of the build and the APK.
 
 
 ## Autenticación y tipos de cuenta
