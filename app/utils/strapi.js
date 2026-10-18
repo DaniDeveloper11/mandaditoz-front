@@ -380,6 +380,22 @@ export function mapCityPost(item) {
   }
 }
 
+// Parte de los negocios importados por scraping trae entidades HTML literales
+// ("7:30&#8239;p. m.", "&#8211;"). Vue escapa el texto, así que salían tal cual
+// en la ficha, en los meta tags y en el JSON-LD.
+const NAMED_ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
+
+function decodeEntities(text) {
+  if (typeof text !== 'string' || !text.includes('&')) return text
+  return text.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (m, code) => {
+    if (code[0] === '#') {
+      const n = code[1] === 'x' || code[1] === 'X' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10)
+      return Number.isFinite(n) && n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : m
+    }
+    return NAMED_ENTITIES[code.toLowerCase()] ?? m
+  })
+}
+
 export function mapNegocio(item) {
   if (!item) return null
   const hours = (item.hours ?? []).map(mapHorario).filter(Boolean)
@@ -400,15 +416,15 @@ export function mapNegocio(item) {
   return {
     id: item.id,
     documentId: item.documentId,
-    name: item.name,
+    name: decodeEntities(item.name),
     slug: item.slug,
-    description: item.description,
-    shortDescription: item.shortDescription,
+    description: decodeEntities(item.description),
+    shortDescription: decodeEntities(item.shortDescription),
     address: formatAddress(item.address),
     addressRaw: item.address,
     geo: item.geo ?? null,
     mapEmbedUrl: item.mapEmbedUrl,
-    hoursText: item.hoursText,
+    hoursText: decodeEntities(item.hoursText),
     phones: (item.phones ?? []).map(p => ({
       id: p.id,
       number: p.number,

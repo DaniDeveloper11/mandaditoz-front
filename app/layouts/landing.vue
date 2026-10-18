@@ -320,7 +320,7 @@ function irACategoria(slug) {
 }
 
 const logoLight = '/logo-cielo-horizontal.svg'
-const logoDark = 'logo-cielo-horizontal-dark.svg'
+const logoDark = '/logo-cielo-horizontal-dark.svg'
 const mobileMenuOpen = ref(false)
 const showWelcome = ref(false)
 

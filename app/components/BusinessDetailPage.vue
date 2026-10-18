@@ -11,6 +11,7 @@ import {
 import Swal from 'sweetalert2'
 import { buildBusinessJsonLd, buildBreadcrumbJsonLd, serializeJsonLd } from '~/utils/seo'
 import { citySegmentFor, businessUrl } from '~/utils/urls'
+import { momentoLocal } from '~/utils/horario'
 
 definePageMeta({ layout: 'landing' })
 
@@ -53,6 +54,20 @@ function handleWhatsappClick() {
   if (negocio.value?.documentId) trackBusinessEvent(negocio.value.documentId, 'whatsapp_click')
 }
 
+const primaryPhone = computed(() => {
+  const phones = negocio.value?.phones ?? []
+  return phones.find(p => p.isPrimary) ?? phones[0] ?? null
+})
+
+// wa.me exige el número internacional sin "+". Los teléfonos capturados a 10
+// dígitos son de México: sin el 52 el enlace abre un chat con nadie.
+const whatsappUrl = computed(() => {
+  const phone = (negocio.value?.phones ?? []).find(p => p.hasWhatsapp)
+  if (!phone?.number) return ''
+  const digits = phone.number.replace(/\D/g, '')
+  return `https://wa.me/${digits.length === 10 ? `52${digits}` : digits}`
+})
+
 const activeTab = ref('informacion')
 
 // Menú estructurado (secciones + platillos). El menú en PDF/imágenes se
@@ -72,14 +87,25 @@ const menuPriceFormatter = new Intl.NumberFormat('es-MX', {
   style: 'currency', currency: 'MXN', minimumFractionDigits: 0, maximumFractionDigits: 2,
 })
 
+// Casi ningún negocio tiene fotos todavía: una pestaña o un bloque que solo
+// muestra recuadros vacíos se lee como ficha rota, así que se esconden.
+const hasPhotos = computed(() => (negocio.value?.photos ?? []).some(p => p?.url))
+
 const tabs = computed(() => {
   const base = [
     { id: 'informacion', label: 'Información' },
     { id: 'resenas',     label: 'Reseñas' },
-    { id: 'fotos',       label: 'Fotos' },
   ]
   if (hasMenu.value) base.splice(1, 0, { id: 'menu', label: 'Menú' })
+  if (hasPhotos.value) base.push({ id: 'fotos', label: 'Fotos' })
   return base
+})
+
+const hasReviews = computed(() => (negocio.value?.ratingCount ?? 0) > 0)
+
+const hasAbout = computed(() => {
+  const n = negocio.value
+  return !!(n?.description || n?.tags?.length || n?.amenities?.length || n?.paymentMethods?.length)
 })
 
 watch(tabs, (list) => {
@@ -119,8 +145,9 @@ function photoNext() {
 
 const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' }
 const DAY_ORDER  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
-const DAY_KEYS   = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-const todayKey   = DAY_KEYS[new Date().getDay()]
+// Día de hoy en Jalisco, no el del reloj del proceso: en SSR el servidor va
+// en UTC y desde las 18:00 locales resaltaba el día siguiente.
+const todayKey   = momentoLocal().day
 
 const sortedHours = computed(() =>
   [...(negocio.value?.hours ?? [])].sort((a, b) => {
@@ -417,7 +444,7 @@ function handleClaim() {
     router.push(`/login?redirect=${route.fullPath}`)
     return
   }
-  claimForm.value = { nombre: user.value?.username ?? '', rol: 'owner', telefono: '', mensaje: '' }
+  claimForm.value = { nombre: user?.username ?? '', rol: 'owner', telefono: '', mensaje: '' }
   claimSent.value = false
   claimError.value = null
   showClaimModal.value = true
@@ -510,7 +537,7 @@ function openRespond(review) {
 
 async function onReviewSaved() {
   await refreshReviews()
-  await refresh?.()
+  await refreshNegocio?.()
 }
 </script>
 
@@ -784,6 +811,7 @@ async function onReviewSaved() {
 
                 <div class="flex items-center gap-3 mt-3 flex-wrap">
                   <button
+                    v-if="hasReviews"
                     type="button"
                     @click="activeTab = 'resenas'"
                     class="flex items-center gap-1.5 hover:opacity-90 transition-opacity"
@@ -801,12 +829,27 @@ async function onReviewSaved() {
                       />
                     </div>
                     <span class="text-amber-400 font-black text-2xl leading-none ml-1">{{ (negocio.ratingAverage ?? 0).toFixed(1) }}</span>
-                    <span :class="['text-sm transition-colors duration-1000', heroOnLight ? 'text-brand-text/50' : 'text-white/50']">{{ negocio.ratingCount ?? 0 }} reseñas</span>
+                    <span :class="['text-sm transition-colors duration-1000', heroOnLight ? 'text-brand-text/50' : 'text-white/50']">{{ negocio.ratingCount }} {{ negocio.ratingCount === 1 ? 'reseña' : 'reseñas' }}</span>
                   </button>
-                  <span :class="['select-none transition-colors duration-1000', heroOnLight ? 'text-brand-text/20' : 'text-white/20']">|</span>
-                  <div :class="['flex items-center gap-1.5 text-sm transition-colors duration-1000', heroTheme.hint]">
+                  <button
+                    v-else-if="!isOwner"
+                    type="button"
+                    @click="activeTab = 'resenas'; openWriteReview()"
+                    :class="[
+                      'inline-flex items-center gap-1.5 text-sm font-medium transition-colors duration-1000 hover:underline',
+                      heroOnLight ? 'text-brand-text/70' : 'text-white/70',
+                    ]"
+                  >
+                    <Star class="w-4 h-4" />
+                    Sin reseñas aún · Escribe la primera
+                  </button>
+                  <span
+                    v-if="fullAddress && (hasReviews || !isOwner)"
+                    :class="['hidden sm:inline select-none transition-colors duration-1000', heroOnLight ? 'text-brand-text/20' : 'text-white/20']"
+                  >|</span>
+                  <div v-if="fullAddress" :class="['flex items-center gap-1.5 text-sm transition-colors duration-1000', heroTheme.hint]">
                     <MapPin class="w-4 h-4 shrink-0" />
-                    <span>{{ fullAddress || 'Dirección no disponible' }}</span>
+                    <span>{{ fullAddress }}</span>
                   </div>
                 </div>
               </div>
@@ -900,10 +943,10 @@ async function onReviewSaved() {
                 </Teleport>
               </Popover>
               <a
-                v-if="negocio.phones.length"
-                :href="`tel:${negocio.phones[0].number}`"
+                v-if="primaryPhone"
+                :href="`tel:${primaryPhone.number}`"
                 @click="handlePhoneClick"
-                class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors"
+                class="hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold transition-colors"
               >
                 <Phone class="w-4 h-4" />
                 Llamar
@@ -943,10 +986,10 @@ async function onReviewSaved() {
             <template v-if="activeTab === 'informacion'">
 
               <!-- Sobre el negocio -->
-              <div class="bg-white rounded-2xl p-6 shadow-sm">
+              <div v-if="hasAbout" class="bg-white rounded-2xl p-6 shadow-sm">
                 <h2 class="font-display font-black text-xl text-brand-text mb-3">Sobre el negocio</h2>
-                <p class="text-brand-text text-sm leading-relaxed">{{ negocio.description ?? 'Sin descripción disponible.' }}</p>
-                <div v-if="negocio.tags.length" class="flex flex-wrap gap-2 mt-4">
+                <p v-if="negocio.description" class="text-brand-text text-sm leading-relaxed whitespace-pre-line">{{ negocio.description }}</p>
+                <div v-if="negocio.tags.length" :class="['flex flex-wrap gap-2', negocio.description ? 'mt-4' : '']">
                   <span
                     v-for="tag in negocio.tags"
                     :key="tag.id ?? tag.slug"
@@ -1048,7 +1091,7 @@ async function onReviewSaved() {
               </div>
 
               <!-- Fotos -->
-              <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+              <div v-if="hasPhotos" class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                 <div class="flex items-center justify-between mb-4">
                   <h2 class="font-display font-black text-lg sm:text-xl text-brand-text">Fotos</h2>
                   <button @click="activeTab = 'fotos'" class="text-brand-azulgris text-sm font-medium hover:text-brand-text transition-colors">Ver todas →</button>
@@ -1485,8 +1528,8 @@ async function onReviewSaved() {
                   Llamar ahora
                 </a>
                 <a
-                  v-if="negocio.phones.some(p => p.hasWhatsapp)"
-                  :href="`https://wa.me/${negocio.phones.find(p => p.hasWhatsapp)?.number.replace(/\D/g, '') ?? ''}`"
+                  v-if="whatsappUrl"
+                  :href="whatsappUrl"
                   target="_blank"
                   rel="noopener"
                   @click="handleWhatsappClick"
@@ -1541,6 +1584,49 @@ async function onReviewSaved() {
           </div>
         </div>
       </div>
+
+      <!-- Barra de acciones en celular: en pantallas chicas la tarjeta de
+           contacto queda debajo de todo el contenido, y llamar es casi
+           siempre lo que viene a hacer quien abre la ficha. -->
+      <template v-if="primaryPhone || whatsappUrl || hasLocation">
+        <div class="h-20 bg-slate-100 lg:hidden" aria-hidden="true" />
+        <div class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div class="flex gap-2 max-w-xl mx-auto">
+            <a
+              v-if="primaryPhone"
+              :href="`tel:${primaryPhone.number}`"
+              @click="handlePhoneClick"
+              class="flex-1 flex items-center justify-center gap-2 bg-brand-bg-dark text-white text-sm font-semibold py-3 rounded-xl active:opacity-90"
+            >
+              <Phone class="w-4 h-4" />
+              Llamar
+            </a>
+            <a
+              v-if="whatsappUrl"
+              :href="whatsappUrl"
+              target="_blank"
+              rel="noopener"
+              @click="handleWhatsappClick"
+              class="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white text-sm font-semibold py-3 rounded-xl active:bg-green-600"
+            >
+              WhatsApp
+            </a>
+            <button
+              v-if="hasLocation"
+              type="button"
+              @click="openMap"
+              :class="[
+                'flex items-center justify-center gap-2 border border-gray-200 text-brand-text text-sm font-semibold py-3 rounded-xl active:bg-gray-50',
+                primaryPhone || whatsappUrl ? 'px-4' : 'flex-1',
+              ]"
+              aria-label="Ver en el mapa"
+            >
+              <Map class="w-4 h-4" />
+              <span v-if="!(primaryPhone && whatsappUrl)">Mapa</span>
+            </button>
+          </div>
+        </div>
+      </template>
 
     </template>
 
