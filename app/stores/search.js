@@ -18,14 +18,44 @@ const DEFAULT_FILTROS = {
 export const useSearchStore = defineStore('search', () => {
   const filtros = ref({ ...DEFAULT_FILTROS })
 
+  // Con texto, el orden natural es por relevancia; sin texto, "relevancia" no
+  // significa nada y se vuelve al default. Solo se toca el orden si el usuario
+  // no eligió otro a mano.
+  function ajustarOrden() {
+    const hayTexto = !!filtros.value.query?.trim()
+    if (hayTexto && filtros.value.orden === DEFAULT_FILTROS.orden) {
+      filtros.value.orden = 'relevancia'
+    } else if (!hayTexto && filtros.value.orden === 'relevancia') {
+      filtros.value.orden = DEFAULT_FILTROS.orden
+    }
+  }
+
+  // Refinar dentro de /list: conserva categoría y demás filtros.
   function setQuery(q) {
     filtros.value.query = q
     filtros.value.pagina = 1
+    ajustarOrden()
   }
 
   function setCategoria(slug) {
     filtros.value.categoria = slug
     filtros.value.pagina = 1
+  }
+
+  // Búsqueda nueva desde fuera de /list (buscador del home): el store
+  // sobrevive a la navegación, y sin esto la categoría de la visita anterior
+  // filtraba la búsqueda nueva sin que se viera por qué.
+  function nuevaBusqueda(q) {
+    filtros.value.categoria = null
+    setQuery(q)
+  }
+
+  // Entrar a una categoría desde un menú o el home: misma razón, al revés —
+  // la búsqueda anterior se quedaba pegada a la categoría.
+  function verCategoria(slug) {
+    filtros.value.query = ''
+    setCategoria(slug)
+    ajustarOrden()
   }
 
   function setCiudad(slug) {
@@ -86,6 +116,8 @@ export const useSearchStore = defineStore('search', () => {
     filtros,
     setQuery,
     setCategoria,
+    nuevaBusqueda,
+    verCategoria,
     setCiudad,
     setColonia,
     setPriceLevel,

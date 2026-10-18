@@ -1,5 +1,5 @@
 <script setup>
-import { MapPin, Phone, Star, BadgeCheck, ChevronLeft, ChevronRight, ChevronDown, Check } from '@lucide/vue'
+import { MapPin, Phone, Star, BadgeCheck, ChevronLeft, ChevronRight, ChevronDown, Check, Search, X } from '@lucide/vue'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { businessUrl } from '~/utils/urls'
 
@@ -17,7 +17,9 @@ const cityStore = useCityStore()
 // el cambio posterior del store ya no entra en el HTML (salía sin la búsqueda).
 {
   const q = route.query
-  if (typeof q.q === 'string') store.filtros.query = q.q
+  // setQuery y no asignación directa: así una búsqueda compartida sin
+  // `orden` también abre ordenada por relevancia.
+  if (typeof q.q === 'string') store.setQuery(q.q)
   if (typeof q.categoria === 'string') store.filtros.categoria = q.categoria
   if (typeof q.orden === 'string') store.filtros.orden = q.orden
   if (typeof q.porPagina === 'string') {
@@ -89,16 +91,41 @@ const totalResultados = computed(() => paginacion.value?.total ?? 0)
 const paginaActual = computed(() => store.filtros.pagina)
 const totalPaginas = computed(() => paginacion.value?.pageCount ?? 1)
 
-const ORDEN_OPTIONS = [
+// "Relevancia" solo tiene sentido con texto: sin búsqueda el backend la ignora.
+const ORDEN_OPTIONS = computed(() => [
+  ...(store.filtros.query ? [{ value: 'relevancia', label: 'Más relevantes' }] : []),
   { value: 'rating',    label: 'Mejor valorados' },
   { value: 'nombre',    label: 'Nombre A-Z' },
   { value: 'recientes', label: 'Más recientes' },
-]
+])
+
+// --- Buscador dentro de /list ------------------------------------------------
+// El texto vive en un ref local y llega al store con debounce: cada cambio del
+// store dispara un fetch y un router.replace, y no vale uno por tecla. Enter
+// aplica al instante.
+const texto = ref(store.filtros.query)
+
+function aplicarTexto() {
+  const v = texto.value.trim()
+  if (v !== store.filtros.query) store.setQuery(v)
+}
+
+watchDebounced(texto, aplicarTexto, { debounce: 400 })
+
+// Si el store cambia por fuera (otra búsqueda, verCategoria), el input lo sigue.
+watch(() => store.filtros.query, (q) => {
+  if (q !== texto.value.trim()) texto.value = q
+})
+
+function limpiarTexto() {
+  texto.value = ''
+  aplicarTexto()
+}
 
 const POR_PAGINA_OPTIONS = [6, 12, 24]
 
 const ordenLabel = computed(() =>
-  ORDEN_OPTIONS.find(o => o.value === store.filtros.orden)?.label ?? 'Ordenar'
+  ORDEN_OPTIONS.value.find(o => o.value === store.filtros.orden)?.label ?? 'Ordenar'
 )
 
 const categoriaLabel = computed(() => {
@@ -215,6 +242,28 @@ useSeoMeta({
           </p>
         </div>
       </div>
+
+      <!-- Buscador -->
+      <form role="search" class="relative mb-4 max-w-xl" @submit.prevent="aplicarTexto">
+        <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <input
+          v-model="texto"
+          type="search"
+          enterkeyhint="search"
+          aria-label="Buscar negocios"
+          placeholder="Buscar negocio, platillo o servicio…"
+          class="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-10 py-2.5 text-sm text-brand-text placeholder:text-gray-400 shadow-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary [&::-webkit-search-cancel-button]:hidden"
+        >
+        <button
+          v-if="texto"
+          type="button"
+          aria-label="Borrar búsqueda"
+          class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-brand-text hover:bg-gray-100 transition-colors"
+          @click="limpiarTexto"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      </form>
 
       <!-- Filters -->
       <div class="flex flex-wrap items-center justify-between gap-3 mb-6">

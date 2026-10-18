@@ -32,7 +32,7 @@ const searchQuery = ref('')
 const searchInput = ref(null)
 
 function buscar() {
-  store.setQuery(searchQuery.value)
+  store.nuevaBusqueda(searchQuery.value)
   router.push('/list')
 }
 
@@ -609,7 +609,7 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
             v-for="cat in categoriasGrid"
             :key="cat.slug"
             :href="`/list`"
-            @click.prevent="store.setCategoria(cat.slug); router.push('/list')"
+            @click.prevent="store.verCategoria(cat.slug); router.push('/list')"
             class="bg-white rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
           >
             <div
@@ -658,7 +658,7 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
             <button
               v-for="cat in categoriasCarrusel"
               :key="cat.slug"
-              @click="store.setCategoria(cat.slug); router.push('/list')"
+              @click="store.verCategoria(cat.slug); router.push('/list')"
               class="px-4 py-1.5 rounded-full border border-white/20 text-white text-sm hover:bg-white/10 transition-colors"
             >
               {{ cat.name }}

@@ -315,7 +315,7 @@ const searchStore = useSearchStore()
 const router = useRouter()
 
 function irACategoria(slug) {
-  searchStore.setCategoria(slug)
+  searchStore.verCategoria(slug)
   router.push('/list')
 }
 

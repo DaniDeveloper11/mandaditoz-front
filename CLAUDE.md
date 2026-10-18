@@ -74,7 +74,9 @@ Pages declare their layout via `definePageMeta({ layout: 'landing' })`.
 - `useNegocios.js`, `useNegocio.js`, `useCategorias.js` — domain composables built on top of `useApi`.
 - `utils/strapi.js` — mapper functions that flatten Strapi's `{ data: [{ id, attributes }] }` envelope into plain objects.
 
-**State management:** `stores/search.js` (Pinia) holds search filters. Pages read from the store; the `SearchBar` writes to it. Filters persist when navigating from list → detail → back.
+**State management:** `stores/search.js` (Pinia) holds search filters. Filters persist when navigating from list → detail → back. Because they persist, entry points from outside `/list` must use `nuevaBusqueda(q)` (home search: clears the category) or `verCategoria(slug)` (menus/home: clears the text) — never `setQuery`/`setCategoria`, which are for refining inside `/list` and would leave the previous search stuck. With text, the sort switches to `relevancia` (`sort=relevance`, resolved by the backend controller) unless the user picked another one.
+
+**Search on `/list`:** the input keeps a local ref and reaches the store via `watchDebounced` (400 ms; Enter applies immediately). Text search is `q`, resolved by the backend without accents — see `backend/CLAUDE.md` → "Búsqueda de negocios".
 
 **Styling:**
 - Tailwind v3 via `@nuxtjs/tailwindcss`

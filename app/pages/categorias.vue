@@ -23,7 +23,7 @@ const categoriasFiltradas = computed(() => {
 })
 
 function irACategoria(slug) {
-  store.setCategoria(slug)
+  store.verCategoria(slug)
   router.push('/list')
 }
 

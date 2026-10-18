@@ -2,6 +2,9 @@ import { mapNegocio } from '~/utils/strapi'
 import { condicionesAbiertoAhora } from '~/utils/horario'
 
 const SORT_MAP = {
+  // `relevance` lo entiende el controller del backend, no Strapi: con `q`
+  // ordena por la puntuacion de la busqueda (ver utils/business-search.js).
+  relevancia: 'relevance',
   rating:    'ratingAverage:desc',
   nombre:    'name:asc',
   recientes: 'createdAt:desc',
