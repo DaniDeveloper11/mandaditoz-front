@@ -36,6 +36,9 @@ export default defineNuxtConfig({
     sources: ['/api/__sitemap__/urls'],
     exclude: [
       '/negocios/**',
+      // Búsqueda con filtros: duplica /[city] y /[city]/[categoria], que son
+      // las versiones indexables. La página lleva noindex.
+      '/list',
       '/login',
       '/reset-password',
       '/mis-negocios',

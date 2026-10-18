@@ -134,25 +134,20 @@ function scroll(dir) {
           </div>
 
           <!-- Description -->
-          <p class="text-brand-text text-xs leading-relaxed mb-3 line-clamp-2">
-            {{ biz.shortDescription ?? biz.description ?? 'Sin descripción disponible.' }}
+          <p v-if="biz.shortDescription || biz.description" class="text-brand-text text-xs leading-relaxed mb-3 line-clamp-2">
+            {{ biz.shortDescription || biz.description }}
           </p>
 
-          <!-- Rating -->
-          <div class="flex items-center gap-1 mb-2">
-            <div class="flex gap-0.5">
-              <Star
-                v-for="i in 5"
-                :key="i"
-                :class="['w-3 h-3', i <= Math.round(biz.ratingAverage ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
-              />
-            </div>
-            <span class="text-xs font-semibold text-brand-text ml-0.5">{{ (biz.ratingAverage ?? 0).toFixed(1) }}</span>
-            <span class="text-xs text-brand-azulgris">({{ biz.ratingCount ?? 0 }})</span>
+          <!-- Rating: una estrella y el número, solo con reseñas. Cinco SVG por
+               tarjeta × 8 tarjetas × ~30 carruseles eran ~600 KB de la home. -->
+          <div v-if="biz.ratingCount" class="flex items-center gap-1 mb-2">
+            <Star class="w-3 h-3 text-amber-400 fill-amber-400" />
+            <span class="text-xs font-semibold text-brand-text">{{ (biz.ratingAverage ?? 0).toFixed(1) }}</span>
+            <span class="text-xs text-brand-azulgris">({{ biz.ratingCount }})</span>
           </div>
 
           <!-- Address -->
-          <p class="text-xs text-brand-azulgris truncate">{{ biz.address ?? 'Dirección no disponible' }}</p>
+          <p v-if="biz.address" class="text-xs text-brand-azulgris truncate">{{ biz.address }}</p>
 
         </div>
       </a>

@@ -2,7 +2,7 @@
 import { MapPin, Phone, Star, BadgeCheck, ChevronLeft, ChevronRight, ChevronDown } from '@lucide/vue'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { getCategoriaConfig } from '~/utils/categorias'
-import { businessUrl } from '~/utils/urls'
+import { businessUrl, FALLBACK_CITY_SLUG } from '~/utils/urls'
 import { buildBreadcrumbJsonLd, serializeJsonLd } from '~/utils/seo'
 
 const props = defineProps({
@@ -85,16 +85,22 @@ function setSort(key) {
 // SEO --------------------------------------------------------------
 const pageUrl = computed(() => `${siteUrl}/${props.citySlug}/${props.categorySlug}`)
 
+// En /jalisco/[categoria] el "municipio" es el estado: sin esto salía
+// "Alitas en jalisco, Jalisco".
+const lugar = computed(() =>
+  props.citySlug === FALLBACK_CITY_SLUG ? 'Jalisco' : `${cityName.value}, Jalisco`,
+)
+
 const seoTitle = computed(() =>
-  `${categoryName.value} en ${cityName.value}, Jalisco | Mandaditoz`,
+  `${categoryName.value} en ${lugar.value} | Mandaditoz`,
 )
 
 const seoDescription = computed(() => {
   const n = totalCount.value
   if (n > 0) {
-    return `Encuentra ${n} ${categoryName.value.toLowerCase()} en ${cityName.value}, Jalisco. Direcciones, teléfonos, horarios y reseñas.`
+    return `Encuentra ${n} ${categoryName.value.toLowerCase()} en ${lugar.value}. Direcciones, teléfonos, horarios y reseñas.`
   }
-  return `Directorio de ${categoryName.value.toLowerCase()} en ${cityName.value}, Jalisco. Encuentra el negocio que necesitas.`
+  return `Directorio de ${categoryName.value.toLowerCase()} en ${lugar.value}. Encuentra el negocio que necesitas.`
 })
 
 useSeoMeta({
@@ -264,15 +270,11 @@ useHead(() => ({
 
             <div class="flex items-center justify-between mt-auto">
               <div class="flex items-center gap-1">
-                <div class="flex gap-0.5">
-                  <Star
-                    v-for="i in 5"
-                    :key="i"
-                    :class="['w-3.5 h-3.5', i <= Math.round(biz.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
-                  />
-                </div>
-                <span class="text-sm font-semibold text-brand-text ml-1">{{ biz.ratingAverage.toFixed(1) }}</span>
-                <span class="text-xs text-brand-azulgris">({{ biz.ratingCount }})</span>
+                <template v-if="biz.ratingCount">
+                  <Star class="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  <span class="text-sm font-semibold text-brand-text">{{ biz.ratingAverage.toFixed(1) }}</span>
+                  <span class="text-xs text-brand-azulgris">({{ biz.ratingCount }})</span>
+                </template>
               </div>
             </div>
           </a>

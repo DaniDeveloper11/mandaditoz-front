@@ -185,6 +185,10 @@ const seoUrl = computed(() => {
 useSeoMeta({
   title: () => seoTitle.value,
   description: () => seoDescription.value,
+  // Resultados de búsqueda y filtros: cada combinación de q/categoría/orden
+  // sería una URL distinta con el mismo contenido que /[city] y
+  // /[city]/[categoria]. Que Google siga los enlaces pero no la indexe.
+  robots: 'noindex, follow',
 
   ogType: 'website',
   ogTitle: () => seoTitle.value,
@@ -448,15 +452,11 @@ useSeoMeta({
           <!-- Rating + status -->
           <div class="flex items-center justify-between mt-auto">
             <div class="flex items-center gap-1">
-              <div class="flex gap-0.5">
-                <Star
-                  v-for="i in 5"
-                  :key="i"
-                  :class="['w-3.5 h-3.5', i <= Math.round(biz.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
-                />
-              </div>
-              <span class="text-sm font-semibold text-brand-text ml-1">{{ biz.ratingAverage.toFixed(1) }}</span>
-              <span class="text-xs text-brand-azulgris">({{ biz.ratingCount }} reseñas)</span>
+              <template v-if="biz.ratingCount">
+                <Star class="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span class="text-sm font-semibold text-brand-text">{{ biz.ratingAverage.toFixed(1) }}</span>
+                <span class="text-xs text-brand-azulgris">({{ biz.ratingCount }})</span>
+              </template>
             </div>
             <span
               v-if="biz.isOpen !== null"

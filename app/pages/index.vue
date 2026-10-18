@@ -152,9 +152,15 @@ function marqueeTick(ts) {
   rafId = requestAnimationFrame(marqueeTick)
 }
 
+// La lista se duplica para que el marquee dé la vuelta sin salto, pero solo
+// en el navegador: en el HTML del servidor la copia solo duplicaba ~70
+// tarjetas que nadie ve sin JavaScript y que Google descarga igual.
+const marqueeReady = ref(false)
+onMounted(() => { marqueeReady.value = true })
+
 const featuredLoop = computed(() => {
   const arr = featured.value || []
-  return arr.length > 0 ? [...arr, ...arr] : []
+  return arr.length > 0 && marqueeReady.value ? [...arr, ...arr] : arr
 })
 
 // 6 categorías para el grid "¿Qué estás buscando?"
@@ -533,30 +539,26 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
               </div>
 
               <!-- Description -->
-              <p class="text-brand-text text-sm leading-relaxed mb-4">{{ biz.shortDescription ?? biz.description ?? 'Sin descripción disponible.' }}</p>
+              <p v-if="biz.shortDescription || biz.description" class="text-brand-text text-sm leading-relaxed mb-4 line-clamp-3">{{ biz.shortDescription || biz.description }}</p>
 
-              <!-- Rating -->
-              <div class="flex items-center gap-1.5 mb-3">
-                <div class="flex gap-0.5">
-                  <Star
-                    v-for="i in 5"
-                    :key="i"
-                    :class="['w-4 h-4', i <= Math.round(biz.ratingAverage ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
-                  />
-                </div>
+              <!-- Rating: una estrella y el número. Cinco SVG por tarjeta, casi
+                   siempre grises en "0.0 (0 reseñas)", eran la mitad del HTML
+                   de la home. -->
+              <div v-if="biz.ratingCount" class="flex items-center gap-1.5 mb-3">
+                <Star class="w-4 h-4 text-amber-400 fill-amber-400" />
                 <span class="text-sm font-semibold text-brand-text">{{ (biz.ratingAverage ?? 0).toFixed(1) }}</span>
-                <span class="text-sm text-brand-azulgris">({{ biz.ratingCount ?? 0 }} reseñas)</span>
+                <span class="text-sm text-brand-azulgris">({{ biz.ratingCount }} {{ biz.ratingCount === 1 ? 'reseña' : 'reseñas' }})</span>
               </div>
 
               <!-- Details -->
               <div class="space-y-2 mb-5">
-                <div class="flex items-center gap-2 text-sm text-brand-azulgris">
+                <div v-if="biz.address" class="flex items-center gap-2 text-sm text-brand-azulgris">
                   <MapPin class="w-4 h-4 shrink-0" />
-                  <span>{{ biz.address || 'Dirección no disponible' }}</span>
+                  <span>{{ biz.address }}</span>
                 </div>
-                <div class="flex items-center gap-2 text-sm text-brand-azulgris">
+                <div v-if="biz.phones[0]" class="flex items-center gap-2 text-sm text-brand-azulgris">
                   <Phone class="w-4 h-4 shrink-0" />
-                  <span>{{ biz.phones[0]?.number ?? 'Teléfono no disponible' }}</span>
+                  <span>{{ biz.phones[0].number }}</span>
                   <span v-if="biz.phones.length > 1" class="text-xs opacity-60">+{{ biz.phones.length - 1 }} más</span>
                 </div>
               </div>

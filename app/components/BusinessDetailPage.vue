@@ -317,17 +317,48 @@ const fullAddress = computed(() => {
 const cityStore = useCityStore()
 const siteUrl = useRuntimeConfig().public.siteUrl
 
+// Muchos nombres importados por scraping terminan en punto ("Punto Parrilla.").
+// En la ficha se respeta tal cual; en título y descripción dejaba "Parrilla. —"
+// y "Parrilla.:". Solo se quita un punto suelto al final, no el de "Hnos.".
+const nombreSeo = computed(() => {
+  const nombre = (negocio.value?.name ?? '').trim()
+  return /[^.\s]{4,}\.$/.test(nombre) ? nombre.slice(0, -1) : nombre
+})
+
 const seoTitle = computed(() => {
   if (!negocio.value) return 'Cargando...'
   const cityLabel = negocio.value.city?.name
     ? `${negocio.value.city.name}, Jalisco`
     : cityStore.activeCityLabel
-  return `${negocio.value.name} — ${cityLabel} | Mandaditoz`
+  return `${nombreSeo.value} — ${cityLabel} | Mandaditoz`
 })
 
-const seoDescription = computed(() =>
-  negocio.value?.shortDescription ?? negocio.value?.description ?? 'Encuentra este negocio en Mandaditoz.'
-)
+// Sin descripción propia se arma una con lo que sí hay (categoría, colonia,
+// municipio, contacto): la frase fija de antes se repetía en cientos de fichas
+// y Google la trata como contenido duplicado.
+const seoDescription = computed(() => {
+  const n = negocio.value
+  if (!n) return 'Encuentra este negocio en Mandaditoz.'
+  const propia = (n.shortDescription || n.description || '').replace(/\s+/g, ' ').trim()
+  if (propia.length >= 50) return recortar(propia, 160)
+
+  const lugar = [n.neighborhood?.name, n.city?.name && !n.visibleInAllCities ? n.city.name : null]
+    .filter(Boolean).join(', ')
+  const que = n.category?.name ? `${n.category.name} en ${lugar || 'Jalisco'}` : `Negocio en ${lugar || 'Jalisco'}`
+  const datos = [
+    n.phones?.length && 'teléfono',
+    n.hours?.length && 'horario',
+    fullAddress.value && 'cómo llegar',
+  ].filter(Boolean)
+  const cola = datos.length ? ` Consulta ${datos.join(', ').replace(/, ([^,]*)$/, ' y $1')}.` : ''
+  return recortar(`${nombreSeo.value}: ${que}.${propia ? ` ${propia}.` : ''}${cola}`, 160)
+})
+
+function recortar(texto, max) {
+  if (texto.length <= max) return texto
+  const corte = texto.slice(0, max - 1)
+  return `${corte.slice(0, corte.lastIndexOf(' ')).replace(/[.,;:]$/, '')}…`
+}
 
 const seoImage = computed(() =>
   negocio.value?.coverPhoto?.url

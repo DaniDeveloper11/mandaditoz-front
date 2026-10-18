@@ -95,9 +95,12 @@ const destacados = computed(() => (pageData.value?.destacados ?? []).map(item =>
 
 // SEO --------------------------------------------------------------
 const pageUrl = computed(() => `${siteUrl}/${citySlug.value}`)
-const seoTitle = computed(() => `Negocios en ${cityName.value}, Jalisco | Mandaditoz`)
+// En /jalisco (negocios regionales) el municipio ya es el estado: sin esto el
+// título decía "Negocios en Jalisco, Jalisco".
+const lugar = computed(() => citySlug.value === FALLBACK_CITY_SLUG ? 'Jalisco' : `${cityName.value}, Jalisco`)
+const seoTitle = computed(() => `Negocios en ${lugar.value} | Mandaditoz`)
 const seoDescription = computed(() =>
-  `Directorio completo de negocios en ${cityName.value}, Jalisco. Restaurantes, tiendas, farmacias, servicios y más. Encuentra teléfonos, horarios y ubicaciones.`,
+  `Directorio completo de negocios en ${lugar.value}. Restaurantes, tiendas, farmacias, servicios y más. Encuentra teléfonos, horarios y ubicaciones.`,
 )
 
 useSeoMeta({
@@ -242,15 +245,11 @@ useHead(() => ({
               {{ biz.shortDescription }}
             </p>
             <div class="flex items-center gap-1 mt-auto">
-              <div class="flex gap-0.5">
-                <Star
-                  v-for="i in 5"
-                  :key="i"
-                  :class="['w-3.5 h-3.5', i <= Math.round(biz.ratingAverage) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']"
-                />
-              </div>
-              <span class="text-sm font-semibold text-brand-text ml-1">{{ biz.ratingAverage.toFixed(1) }}</span>
-              <span class="text-xs text-brand-azulgris">({{ biz.ratingCount }})</span>
+              <template v-if="biz.ratingCount">
+                <Star class="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <span class="text-sm font-semibold text-brand-text">{{ biz.ratingAverage.toFixed(1) }}</span>
+                <span class="text-xs text-brand-azulgris">({{ biz.ratingCount }})</span>
+              </template>
             </div>
           </a>
         </div>

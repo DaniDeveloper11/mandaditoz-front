@@ -1,0 +1,29 @@
+# Buscadores: sí. Entrenamiento de IA: no — el directorio es de los negocios
+# de la región, no material para modelos. Replica lo que antes servía el
+# robots.txt administrado de Cloudflare, que dejó de servirse.
+Content-Signal: search=yes, ai-train=no, use=reference
+
+User-Agent: *
+Disallow: /login
+Disallow: /reset-password
+Disallow: /mis-negocios
+Disallow: /cuenta/
+Disallow: /negocios/nuevo
+Disallow: /negocios/publicar
+Disallow: /negocios/*/edit
+Disallow: /negocios/*/estado
+Disallow: /negocios/*/menu
+Disallow: /reclamar/
+
+User-Agent: Amazonbot
+User-Agent: Applebot-Extended
+User-Agent: Bytespider
+User-Agent: CCBot
+User-Agent: ClaudeBot
+User-Agent: GPTBot
+User-Agent: Google-Extended
+User-Agent: meta-externalagent
+User-Agent: CloudflareBrowserRenderingCrawler
+Disallow: /
+
+Sitemap: https://mandaditoz.com/sitemap.xml
