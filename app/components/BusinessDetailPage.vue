@@ -1391,6 +1391,10 @@ async function onReviewSaved() {
               </div>
             </template>
 
+            <!-- Misma categoría y municipio. Fuera de las pestañas: es la salida
+                 para quien no encontró aquí lo que buscaba. -->
+            <BusinessSimilares :negocio="negocio" />
+
           </div>
 
           <!-- Sidebar -->
