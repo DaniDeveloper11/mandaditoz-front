@@ -1605,8 +1605,10 @@ async function onReviewSaved() {
               </button>
             </div>
 
-            <!-- Claim card -->
-            <div v-if="!isOwner" class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+            <!-- Claim card: solo si nadie lo ha reclamado. Con dueño, invitar a
+                 "reclamarlo" solo genera solicitudes que el admin tiene que
+                 rechazar. -->
+            <div v-if="!isOwner && negocio.ownershipStatus !== 'claimed'" class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
               <p class="font-semibold text-brand-text text-sm mb-1">¿Es tu negocio?</p>
               <p class="text-brand-azulgris text-xs leading-relaxed mb-3">
                 Reclamarlo te permite actualizar los datos, responder reseñas y acceder a estadísticas.
