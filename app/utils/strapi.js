@@ -380,6 +380,53 @@ export function mapCityPost(item) {
   }
 }
 
+/**
+ * Voz del municipio (content-type `creator`): influencers, fotógrafos,
+ * cronistas, podcasts y medios locales de la región.
+ *
+ * La API solo devuelve fichas con creatorStatus = 'published' (lo fuerza el
+ * controller), así que aquí no hay que filtrar por estado.
+ *
+ * `socialLinks` se mapea igual que en mapNegocio —es el mismo componente
+ * business.social-link del backend— para que un mismo enlace no tenga dos
+ * formas según de dónde venga.
+ */
+export function mapCreator(item) {
+  if (!item) return null
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    name: item.name,
+    slug: item.slug,
+    handle: item.handle ?? null,
+    creatorType: item.creatorType ?? 'otro',
+    tagline: item.tagline ?? null,
+    bio: item.bio ?? null,
+    avatar: item.avatar ? mapMedia(item.avatar) : null,
+    coverImage: item.coverImage ? mapMedia(item.coverImage) : null,
+    // Strapi manda `null`, no `[]`, cuando una media múltiple está vacía.
+    gallery: (item.gallery ?? []).map(mapMedia).filter(Boolean),
+    socialLinks: (item.socialLinks ?? []).map(s => ({
+      id: s.id,
+      platform: s.platform,
+      url: s.url,
+    })),
+    website: item.website ?? null,
+    contactEmail: item.contactEmail ?? null,
+    contactPhone: item.contactPhone ?? null,
+    audienceText: item.audienceText ?? null,
+    coversTopics: item.coversTopics ?? null,
+    regionName: item.regionName ?? null,
+    city: item.city ? mapCity(item.city) : null,
+    visibleInAllCities: !!item.visibleInAllCities,
+    isFeatured: !!item.isFeatured,
+    featuredOrder: item.featuredOrder ?? null,
+    seo: mapSeo(item.seo),
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }
+}
+
 export function mapNegocio(item) {
   if (!item) return null
   const hours = (item.hours ?? []).map(mapHorario).filter(Boolean)

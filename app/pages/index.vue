@@ -595,6 +595,21 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
       compacto
     />
 
+    <!-- Voces del municipio activo. Va pegada a la cartelera porque son lo
+         mismo desde la home: contenido que cambia solo y da razón para volver,
+         frente al directorio de negocios, que es lo estable.
+
+         El título tampoco nombra al municipio, por el mismo motivo que el de
+         arriba: activeCityName solo es correcto después de onMounted y en SSR
+         mentiría. Igual que EventBand, no pinta nada si todavía no hay voces
+         publicadas en ese municipio. -->
+    <CreatorBand
+      :city-slug="cityStore.activeCitySlug"
+      titulo="Voces de tu municipio y la región"
+      subtitulo="Influencers, fotógrafos, cronistas y medios locales que cuentan lo que pasa aquí"
+      fondo="bg-white border-t border-gray-100"
+    />
+
     <!-- Categories grid -->
     <section class="bg-slate-100 py-12 px-6 md:px-12">
       <div class="max-w-6xl mx-auto">

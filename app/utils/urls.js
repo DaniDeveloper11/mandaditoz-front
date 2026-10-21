@@ -25,7 +25,7 @@ export const RESERVED_TOP_LEVEL_PATHS = new Set([
  * Lo consume el sitemap (server/api/__sitemap__/urls.js): sin ese filtro le
  * mandaríamos a Google una URL que en realidad renderiza la cartelera.
  */
-export const RESERVED_CITY_SUB_PATHS = new Set(['eventos'])
+export const RESERVED_CITY_SUB_PATHS = new Set(['eventos', 'voces'])
 
 /**
  * Devuelve el segmento de ciudad que debe aparecer en la URL de un negocio.
@@ -65,6 +65,24 @@ export function eventUrl(post, citySlugOverride) {
 /** Cartelera de un municipio. */
 export function eventsUrl(citySlug) {
   return `/${citySlug || FALLBACK_CITY_SLUG}/eventos`
+}
+
+/**
+ * URL de una voz del municipio: /[city]/voces/[slug]
+ *
+ * Misma mecánica que eventUrl y por la misma razón: SIN `citySlugOverride`
+ * devuelve la canónica (los regionales caen al slug reservado `jalisco`), que es
+ * la que va en el <link rel="canonical"> y en el sitemap; CON override el
+ * visitante no se sale del municipio que está viendo.
+ */
+export function creatorUrl(creador, citySlugOverride) {
+  if (!creador?.slug) return '/'
+  return `/${citySlugOverride ?? citySegmentFor(creador)}/voces/${creador.slug}`
+}
+
+/** Directorio de voces de un municipio. */
+export function creatorsUrl(citySlug) {
+  return `/${citySlug || FALLBACK_CITY_SLUG}/voces`
 }
 
 /**

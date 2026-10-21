@@ -239,6 +239,61 @@ etiquetas escritas, o importar el componente y pasar la referencia.
 donde un evento regional haría que `/municipioinventado/eventos/[slug]` respondiera 200. Un
 soft-404 (200 con página vacía) es, para Google, una página válida y sin contenido.
 
+## Voces del municipio (creadores)
+
+Cara pública del content-type `creator` del backend: influencers, fotógrafos, cronistas,
+podcasts y medios locales de la región. Como la cartelera, la captura es **solo del panel
+admin**: aquí no hay formularios ni endpoints de escritura.
+
+| Ruta | Archivo |
+|---|---|
+| `/[city]/voces` (+ `?tipo=`, `?p=`) | `pages/[city]/voces/index.vue` |
+| `/[city]/voces/[slug]` | `pages/[city]/voces/[slug].vue` |
+
+Piezas: `composables/useCreadores.js` (listado + `queryCreadores()` reutilizable),
+`utils/creadores.js` (etiquetas, iconos, orden de redes, parseo de temas), `mapCreator()`
+en `utils/strapi.js`, y los componentes `creator/CreatorCard.vue`, `creator/CreatorBand.vue`
+y `creator/CreatorSocialLinks.vue`.
+
+**Puntos de entrada**: enlace "Voces" en navbar, menú móvil y footer de `layouts/landing.vue`
+—todos a `creatorsUrl(cityStore.activeCitySlug)`, o sea al municipio del CitySwitcher—, y la
+banda `CreatorBand` en `pages/index.vue` y `pages/[city]/index.vue`, justo debajo de
+`EventBand` en las dos. En la home global el título dice "tu municipio" y NO lo nombra, por
+lo mismo que el de la cartelera: `activeCityName` solo es correcto después de `onMounted` y
+en SSR devolvería siempre el default. La del municipio sí lo nombra, porque ahí la ciudad
+viene de su propio fetch.
+
+**Es deliberadamente un calco de la cartelera.** Slug reservado en
+`RESERVED_CITY_SUB_PATHS`, canónica sin override (`creatorUrl(c)`) contra enlaces con
+override para no sacar al visitante del municipio, 404 en municipio inexistente y en voz de
+otro municipio, `creatorStatus` que no se manda porque el controller lo pisa, y banda que se
+esconde sola si no hay nadie. Todo lo que aplica a `eventos` aplica igual aquí; lo que sigue
+es solo lo que se sale de ese molde.
+
+**No hay vigencia ni archivo.** Una voz no caduca: no existe `?pasados=1`. El filtro que sí
+hay es por tipo (`?tipo=fotografo`), y un valor inventado **se ignora** en vez de devolver
+una lista vacía que parece un error. Cambiar de filtro siempre vuelve a la página 1.
+
+**Solo se ofrecen los chips de tipo que tienen a alguien**, y sus números salen de UNA
+consulta con `fields[0]=creatorType`, no de diez peticiones `soloConteo` — once requests en
+SSR para pintar unos chips no se pagan solos. El tope es `CONTEO_MAX = 100`: si algún
+municipio lo superara, el peor caso es un número corto en un chip, no un fallo.
+
+**`CreatorSocialLinks` tiene prop `enlazar`.** `CreatorCard` lo usa con `false`, y no es
+opcional: la tarjeta entera ya es un `<a>`, y anidar anclas es HTML inválido — el navegador
+cierra la externa y el resto de la tarjeta deja de ser clicable. Los SVG de marca van inline
+(Lucide no trae logos): para un creador, la red ES el dato, y cuatro iconos genéricos
+iguales no distinguen TikTok de YouTube.
+
+**El JSON-LD de la ficha es `Person` con `sameAs`** apuntando a sus redes y sitio. `Person` y
+no `Organization` incluso para un medio local: equivocarse hacia `Person` es lo inocuo,
+`name`/`description`/`sameAs` significan lo mismo en ambos.
+
+⚠️ Sigue existiendo aparte el **blog destacado del municipio** (`city.blogUrl` /
+`bloggerName` / `bloggerAvatar`), que `layouts/landing.vue` pinta en el menú. No se tocó:
+es un solo blog por ciudad, no un directorio. Si algún día se unifica, el camino es marcar
+esa voz con `isFeatured` y quitar los cuatro campos de `city`.
+
 ## Reglas de Código Específicas del Proyecto
 
 ### Reactividad en Nuxt 3 / Vue 3 (JavaScript)

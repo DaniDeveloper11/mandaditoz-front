@@ -5,6 +5,8 @@
  *   - /[city]/[business-slug]        (todos los negocios publicados)
  *   - /[city]/eventos                (cartelera, una por ciudad activa)
  *   - /[city]/eventos/[slug]         (eventos y avisos publicados)
+ *   - /[city]/voces                  (directorio de creadores, una por ciudad activa)
+ *   - /[city]/voces/[slug]           (voces publicadas)
  *
  * Se consume desde nuxt.config.ts:
  *   sitemap: { sources: ['/api/__sitemap__/urls'] }
@@ -17,7 +19,7 @@ const FALLBACK_CITY_SLUG = 'jalisco'
 // Espejo de RESERVED_CITY_SUB_PATHS en app/utils/urls.js. Un negocio o categoría
 // con uno de estos slugs es inalcanzable —la ruta estática le gana al dispatcher
 // [city]/[slug].vue—, así que mandar su URL a Google apuntaría a la cartelera.
-const RESERVED_CITY_SUB_PATHS = new Set(['eventos'])
+const RESERVED_CITY_SUB_PATHS = new Set(['eventos', 'voces'])
 
 async function fetchAllPages(apiBase, endpoint, extraQuery = {}) {
   const out = []
@@ -96,6 +98,19 @@ export default defineEventHandler(async () => {
       }
     }
 
+    // Sección de voces del municipio. Va aunque esté vacía, por el mismo motivo
+    // que la cartelera: es una landing estable y la página responde 404 sola si
+    // el municipio no existe.
+    for (const c of cities) {
+      if (c?.slug) {
+        urls.push({
+          loc: `/${c.slug}/voces`,
+          changefreq: 'weekly',
+          priority: 0.7,
+        })
+      }
+    }
+
     // Fichas individuales de negocios.
     const businesses = await fetchAllPages(apiBase, '/businesses', {
       'filters[businessStatus][$eq]': 'published',
@@ -137,6 +152,28 @@ export default defineEventHandler(async () => {
         lastmod: p.updatedAt ?? undefined,
         changefreq: 'weekly',
         priority: 0.7,
+      })
+    }
+
+    // Fichas de voces. La API solo devuelve las publicadas (el controller de
+    // creator fuerza creatorStatus), así que no hay que filtrarlas. Una sola URL
+    // por voz —la canónica— aunque una voz regional se vea en varios municipios.
+    const creators = await fetchAllPages(apiBase, '/creators', {
+      'fields[0]': 'slug',
+      'fields[1]': 'updatedAt',
+      'fields[2]': 'visibleInAllCities',
+      'populate[city][fields][0]': 'slug',
+    })
+    for (const c of creators) {
+      if (!c?.slug) continue
+      const citySlug = c.visibleInAllCities
+        ? FALLBACK_CITY_SLUG
+        : (c.city?.slug || FALLBACK_CITY_SLUG)
+      urls.push({
+        loc: `/${citySlug}/voces/${c.slug}`,
+        lastmod: c.updatedAt ?? undefined,
+        changefreq: 'monthly',
+        priority: 0.6,
       })
     }
   } catch (err) {

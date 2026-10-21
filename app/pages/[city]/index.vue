@@ -202,6 +202,15 @@ useHead(() => ({
       fondo="bg-white border-t border-gray-100"
     />
 
+    <!-- Voces del municipio y la región. Igual que EventBand, no pinta nada
+         mientras no haya nadie publicado. -->
+    <CreatorBand
+      :city-slug="citySlug"
+      :titulo="`Voces de ${cityName} y la región`"
+      subtitulo="Influencers, fotógrafos, cronistas y medios locales que cuentan lo que pasa aquí"
+      fondo="bg-slate-50 border-t border-gray-100"
+    />
+
     <!-- Destacados -->
     <div v-if="destacados.length" class="bg-white px-6 md:px-12 py-10 border-t border-gray-100">
       <div class="max-w-6xl mx-auto">
