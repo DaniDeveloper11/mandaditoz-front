@@ -11,6 +11,7 @@ import {
 import Swal from 'sweetalert2'
 import { buildBusinessJsonLd, buildBreadcrumbJsonLd, serializeJsonLd } from '~/utils/seo'
 import { citySegmentFor, businessUrl } from '~/utils/urls'
+import { isFoodBusiness } from '~/utils/categorias'
 
 definePageMeta({ layout: 'landing' })
 
@@ -56,6 +57,7 @@ function handleWhatsappClick() {
 const activeTab = ref('informacion')
 
 const hasMenu = computed(() => !!negocio.value?.menuPdf?.url || (negocio.value?.menuImages ?? []).length > 0)
+const canOrder = computed(() => !!negocio.value && isFoodBusiness(negocio.value) && !!negocio.value.orderingEnabled)
 
 const tabs = computed(() => {
   const base = [
@@ -64,6 +66,7 @@ const tabs = computed(() => {
     { id: 'fotos',       label: 'Fotos' },
   ]
   if (hasMenu.value) base.splice(1, 0, { id: 'menu', label: 'Menú' })
+  if (canOrder.value) base.splice(1, 0, { id: 'ordenar', label: 'Ordenar' })
   return base
 })
 
@@ -1034,6 +1037,11 @@ async function onReviewSaved() {
               </div>
             </template>
 
+            <!-- Ordenar tab (menú interactivo) -->
+            <template v-if="activeTab === 'ordenar'">
+              <MenuInteractivo :business-doc-id="negocio.documentId" :negocio="negocio" />
+            </template>
+
             <!-- Reseñas tab -->
             <template v-if="activeTab === 'resenas'">
               <div class="bg-white rounded-2xl p-6 shadow-sm">
@@ -1537,6 +1545,9 @@ async function onReviewSaved() {
 
     <!-- Modal: QR del menú -->
     <BusinessQrModal :open="qrOpen" :negocio="negocio" @close="qrOpen = false" />
+
+    <!-- Carrito flotante + checkout (solo si el negocio acepta pedidos) -->
+    <MenuCartDrawer v-if="canOrder" :negocio="negocio" />
 
   </div>
 </template>

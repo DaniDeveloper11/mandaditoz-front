@@ -163,6 +163,7 @@ export function mapCategoria(item) {
     path: item.path,
     isActive: item.isActive ?? true,
     isFeatured: !!item.isFeatured,
+    menuEnabled: !!item.menuEnabled,
     businessCount: item.businessCount ?? 0,
     totalBusinessCount: item.totalBusinessCount ?? 0,
     parent: item.parent ? mapCategoria(item.parent) : null,
@@ -238,6 +239,21 @@ export function mapReview(item) {
   }
 }
 
+export function mapMenuItem(item) {
+  if (!item) return null
+  return {
+    id: item.id,
+    documentId: item.documentId,
+    name: item.name,
+    description: item.description,
+    price: Number(item.price ?? 0),
+    type: item.type,
+    isAvailable: item.isAvailable !== false,
+    order: item.order ?? 0,
+    image: item.image ? mapMedia(item.image) : null,
+  }
+}
+
 export function mapPhoto(item) {
   if (!item) return null
   const file = item.file ? mapMedia(item.file) : null
@@ -295,6 +311,9 @@ export function mapNegocio(item) {
     isVerified: !!item.isVerified,
     isFeatured: !!item.isFeatured,
     visibleInAllCities: !!item.visibleInAllCities,
+    orderingEnabled: !!item.orderingEnabled,
+    whatsappOrderNumber: item.whatsappOrderNumber ?? '',
+    menuItems: (item.menuItems ?? []).map(mapMenuItem).filter(Boolean),
     businessStatus: item.businessStatus,
     ownershipStatus: item.ownershipStatus ?? 'unclaimed',
     viewCount: item.viewCount ?? 0,

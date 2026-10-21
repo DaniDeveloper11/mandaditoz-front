@@ -73,3 +73,27 @@ const FALLBACK_CONFIG = {
 export function getCategoriaConfig(slug) {
   return CATEGORIA_CONFIG[slug] ?? FALLBACK_CONFIG
 }
+
+const FOOD_ROOT_SLUG = 'comida-y-bebidas'
+
+/**
+ * Un negocio puede ofrecer menú interactivo si su categoría (principal o secundaria)
+ * tiene `menuEnabled=true` en Strapi, o —para retrocompatibilidad— si pertenece a la
+ * raíz `comida-y-bebidas` o alguna de sus subcategorías.
+ *
+ * Marca cualquier categoría desde el admin de Strapi (Content Manager → Category →
+ * campo "menuEnabled") para permitir menús en negocios de esa categoría.
+ */
+export function canOfferMenu(negocio) {
+  if (!negocio) return false
+  const cats = [negocio.category, ...(negocio.secondaryCategories ?? [])].filter(Boolean)
+  for (const cat of cats) {
+    if (cat.menuEnabled === true) return true
+    if (cat.slug === FOOD_ROOT_SLUG) return true
+    if (typeof cat.path === 'string' && cat.path.startsWith(`${FOOD_ROOT_SLUG}/`)) return true
+  }
+  return false
+}
+
+// Alias retrocompatible — mismo comportamiento que canOfferMenu.
+export const isFoodBusiness = canOfferMenu

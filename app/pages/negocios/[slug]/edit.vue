@@ -4,11 +4,13 @@ import {
   Share2, Star, X, Pencil, ChevronDown, MapPin, Globe, Info, Plus, PlusCircle, Check,
   FileText, UploadCloud, Menu as MenuIcon,
   CreditCard, Banknote, ArrowLeftRight, Wallet, QrCode,
+  ShoppingCart,
 } from '@lucide/vue'
 import {
   Combobox, ComboboxInput, ComboboxButton, ComboboxOptions, ComboboxOption,
 } from '@headlessui/vue'
 import { businessUrl } from '~/utils/urls'
+import { isFoodBusiness } from '~/utils/categorias'
 
 definePageMeta({ layout: 'editor' })
 
@@ -42,16 +44,26 @@ const activeSection = ref('informacion')
 
 const qrOpen = ref(false)
 
-const sections = [
-  { id: 'informacion', label: 'Información básica', icon: LayoutList },
-  { id: 'contacto',    label: 'Contacto',            icon: Phone },
-  { id: 'horario',     label: 'Horario',             icon: Clock },
-  { id: 'fotos',       label: 'Fotos',               icon: ImageIcon },
-  { id: 'menu',        label: 'Menú',                icon: MenuIcon },
-  { id: 'pago',        label: 'Métodos de pago',     icon: Wallet },
-  { id: 'redes',       label: 'Redes sociales',      icon: Share2 },
-  { id: 'estado',      label: 'Estado y visibilidad', icon: Star },
-]
+const isFood = computed(() => isFoodBusiness(negocio.value))
+
+const sections = computed(() => {
+  const base = [
+    { id: 'informacion', label: 'Información básica', icon: LayoutList },
+    { id: 'contacto',    label: 'Contacto',            icon: Phone },
+    { id: 'horario',     label: 'Horario',             icon: Clock },
+    { id: 'fotos',       label: 'Fotos',               icon: ImageIcon },
+    { id: 'menu',        label: 'Menú',                icon: MenuIcon },
+  ]
+  if (isFood.value) {
+    base.push({ id: 'pedidos', label: 'Pedidos (Menú interactivo)', icon: ShoppingCart })
+  }
+  base.push(
+    { id: 'pago',        label: 'Métodos de pago',     icon: Wallet },
+    { id: 'redes',       label: 'Redes sociales',      icon: Share2 },
+    { id: 'estado',      label: 'Estado y visibilidad', icon: Star },
+  )
+  return base
+})
 
 const PAYMENT_METHODS = [
   { value: 'cash',     label: 'Efectivo',      description: 'Pagos en efectivo al recibir.',   icon: Banknote,        iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600' },
@@ -59,7 +71,7 @@ const PAYMENT_METHODS = [
   { value: 'card',     label: 'Tarjeta',       description: 'Débito o crédito con terminal.',  icon: CreditCard,      iconBg: 'bg-purple-50',  iconColor: 'text-purple-600' },
 ]
 
-const currentSection = computed(() => sections.find(s => s.id === activeSection.value))
+const currentSection = computed(() => sections.value.find(s => s.id === activeSection.value))
 
 const DAY_ORDER  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' }
@@ -133,6 +145,11 @@ const form = reactive({
     isPublished: true,
     isFeatured: false,
     visibleInAllCities: false,
+  },
+  // Pedidos (menú interactivo)
+  ordering: {
+    enabled: false,
+    whatsappNumber: '',
   },
 })
 
@@ -212,6 +229,9 @@ watch(negocio, (val) => {
   form.visibility.isPublished        = val.businessStatus !== 'draft'
   form.visibility.isFeatured         = val.isFeatured ?? false
   form.visibility.visibleInAllCities = val.visibleInAllCities ?? false
+
+  form.ordering.enabled        = val.orderingEnabled ?? false
+  form.ordering.whatsappNumber = stripCountryCode(val.whatsappOrderNumber ?? '')
 
   form.photos = (val.photos ?? []).map((p, i) => ({
     id: p.id ?? null,
@@ -596,6 +616,10 @@ function buildPayload() {
     isFeatured:         form.visibility.isFeatured,
     visibleInAllCities: form.visibility.visibleInAllCities,
     businessStatus:     form.visibility.isPublished ? 'published' : 'draft',
+    orderingEnabled:    !!form.ordering.enabled,
+    whatsappOrderNumber: form.ordering.whatsappNumber
+      ? `+52${form.ordering.whatsappNumber.replace(/\D/g, '')}`
+      : null,
     logo: {
       file: form.logo.file,
       remove: form.logo.removed && !form.logo.file,
@@ -1349,6 +1373,91 @@ const stats = computed(() => [
 
             <p v-if="menuError" class="text-red-600 text-xs mt-3">{{ menuError }}</p>
 
+          </template>
+
+          <!-- ══ Pedidos (Menú interactivo) ══ -->
+          <template v-else-if="activeSection === 'pedidos'">
+            <div v-if="!isFood" class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              <Info class="w-4 h-4 shrink-0 mt-0.5" />
+              <span>Esta sección solo está disponible para negocios de la categoría "Comida y bebidas".</span>
+            </div>
+
+            <div v-else class="space-y-6">
+              <!-- Toggle habilitar pedidos -->
+              <div class="flex items-start justify-between gap-4 p-4 sm:p-5 rounded-2xl border border-gray-200">
+                <div class="min-w-0">
+                  <p class="font-semibold text-brand-text text-sm mb-1">Habilitar pedidos por WhatsApp</p>
+                  <p class="text-brand-azulgris text-xs leading-relaxed">
+                    Cuando está activo, tu perfil muestra un botón "Ordenar" con tu menú interactivo. El cliente arma su pedido y te lo envía por WhatsApp.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  @click="form.ordering.enabled = !form.ordering.enabled"
+                  :class="[
+                    'shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    form.ordering.enabled ? 'bg-brand-primary' : 'bg-gray-300',
+                  ]"
+                  :aria-pressed="form.ordering.enabled"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-5 w-5 transform rounded-full bg-white transition-transform',
+                      form.ordering.enabled ? 'translate-x-5' : 'translate-x-1',
+                    ]"
+                  />
+                </button>
+              </div>
+
+              <!-- WhatsApp para pedidos -->
+              <div>
+                <label class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-1.5">
+                  WhatsApp para pedidos (opcional)
+                </label>
+                <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-brand-primary/30 focus-within:border-brand-primary transition">
+                  <span class="px-4 py-2.5 text-sm text-gray-400 bg-gray-50 border-r border-gray-200 shrink-0 select-none">+52</span>
+                  <input
+                    v-model="form.ordering.whatsappNumber"
+                    type="tel"
+                    placeholder="Solo si es distinto al principal"
+                    class="flex-1 px-4 py-2.5 text-sm text-brand-text placeholder:text-gray-300 focus:outline-none bg-transparent"
+                  />
+                </div>
+                <p class="text-xs text-brand-azulgris mt-1.5">
+                  Si dejas vacío, se usa el número principal / con WhatsApp que ya tienes en la sección "Contacto".
+                </p>
+              </div>
+
+              <!-- Link a dashboard de pedidos -->
+              <NuxtLink
+                :to="`/mis-negocios/${slug}/pedidos`"
+                class="flex items-center justify-between gap-3 p-4 rounded-2xl border border-brand-border bg-white hover:bg-gray-50 transition-colors"
+              >
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
+                    <ShoppingCart class="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p class="font-semibold text-sm text-brand-text">Ver pedidos recibidos</p>
+                    <p class="text-xs text-brand-azulgris">Historial, estado y datos del cliente</p>
+                  </div>
+                </div>
+                <ChevronDown class="w-4 h-4 text-brand-azulgris -rotate-90" />
+              </NuxtLink>
+
+              <!-- CRUD de items -->
+              <div>
+                <p class="block text-[10px] font-bold tracking-widest uppercase text-gray-400 mb-2">Menú del negocio</p>
+                <MenuItemsEditor :business-document-id="negocio.documentId" />
+              </div>
+
+              <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
+                <Info class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <p class="text-blue-700 text-xs leading-relaxed">
+                  Los cambios en items del menú se guardan al instante. El toggle y el número de WhatsApp se guardan al presionar "Guardar" en la parte superior.
+                </p>
+              </div>
+            </div>
           </template>
 
           <!-- ══ Métodos de pago ══ -->
