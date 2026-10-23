@@ -27,7 +27,7 @@ const { data: pageData } = await useAsyncData(
               'filters[slug][$eq]': citySlug.value,
               'pagination[pageSize]': 1,
             },
-          }).catch(() => null)
+          }).catch(() => undefined)
         : Promise.resolve(null),
       $fetch(`${apiBase}/categories`, {
         query: {
@@ -39,7 +39,7 @@ const { data: pageData } = await useAsyncData(
           sort: 'order:asc,name:asc',
           'pagination[pageSize]': 100,
         },
-      }).catch(() => ({ data: [] })),
+      }).catch(() => undefined),
       $fetch(`${apiBase}/businesses`, {
         query: {
           'filters[businessStatus][$eq]': 'published',
@@ -57,6 +57,9 @@ const { data: pageData } = await useAsyncData(
       }).catch(() => ({ data: [] })),
     ])
     return {
+      // `undefined` = Strapi no respondió. Se distingue de "no existe" para no
+      // convertir una caída del backend en 404s (ver el 503 más abajo).
+      apiCaida: cityRes === undefined || catsRes === undefined,
       city: cityRes?.data?.[0] ?? null,
       categorias: catsRes?.data ?? [],
       destacados: featRes?.data ?? [],
@@ -68,6 +71,16 @@ const { data: pageData } = await useAsyncData(
 // 200: para Google un soft-404 es una página válida y sin contenido, y este
 // patrón se traga CUALQUIER ruta de un solo segmento (/paginainventada).
 // `jalisco` es el slug reservado de los negocios sin ciudad, no un municipio.
+//
+// Antes va el 503: si Strapi está caído, `city` también sale vacío y la página
+// respondía 404 con noindex — Google desindexaba los municipios durante la caída.
+if (pageData.value?.apiCaida) {
+  throw createError({
+    statusCode: 503,
+    statusMessage: 'Servicio no disponible',
+    fatal: true,
+  })
+}
 if (citySlug.value !== FALLBACK_CITY_SLUG && !pageData.value?.city) {
   throw createError({
     statusCode: 404,

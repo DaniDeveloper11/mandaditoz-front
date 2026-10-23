@@ -31,14 +31,14 @@ const { data: dispatchData } = await useAsyncData(
           'filters[isActive][$eq]': true,
           'pagination[pageSize]': 1,
         },
-      }).catch(() => null),
+      }).catch(() => undefined),
       citySlug.value !== FALLBACK_CITY_SLUG
         ? $fetch(`${apiBase}/cities`, {
             query: {
               'filters[slug][$eq]': citySlug.value,
               'pagination[pageSize]': 1,
             },
-          }).catch(() => null)
+          }).catch(() => undefined)
         : Promise.resolve(null),
       // Solo para saber si el negocio existe y poder devolver 404 desde el
       // servidor. BusinessDetailPage vuelve a pedirlo con todo el populate;
@@ -55,6 +55,8 @@ const { data: dispatchData } = await useAsyncData(
       }).catch(() => undefined),
     ])
     return {
+      // Cualquiera de las tres sin respuesta = Strapi caído: 503, no 404.
+      apiCaida: catRes === undefined || cityRes === undefined || bizRes === undefined,
       category: catRes?.data?.[0] ?? null,
       city: cityRes?.data?.[0] ?? null,
       businessExists: bizRes === undefined ? undefined : !!bizRes?.data?.[0],
@@ -73,6 +75,14 @@ const isCategoryPage = computed(() => !!category.value)
 //
 // Si la consulta de negocio falló (`undefined`), NO se hace 404: una caída de
 // Strapi convertiría el catálogo entero en páginas inexistentes para Google.
+// Tampoco se pinta la ficha: con el backend caído se vería vacía con status 200.
+if (dispatchData.value?.apiCaida) {
+  throw createError({
+    statusCode: 503,
+    statusMessage: 'Servicio no disponible',
+    fatal: true,
+  })
+}
 if (
   !isCategoryPage.value &&
   (dispatchData.value?.businessExists === false ||

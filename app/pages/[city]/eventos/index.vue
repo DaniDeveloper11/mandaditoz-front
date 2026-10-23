@@ -29,16 +29,18 @@ const { data: meta } = await useAsyncData(
               'filters[slug][$eq]': citySlug.value,
               'pagination[pageSize]': 1,
             },
-          }).catch(() => null)
+          }).catch(() => undefined)
         : Promise.resolve(null),
       $fetch(`${apiBase}/city-posts`, {
         query: queryEventos({ citySlug: citySlug.value, pasados: false, soloConteo: true }),
-      }).catch(() => null),
+      }).catch(() => undefined),
       $fetch(`${apiBase}/city-posts`, {
         query: queryEventos({ citySlug: citySlug.value, pasados: true, soloConteo: true }),
-      }).catch(() => null),
+      }).catch(() => undefined),
     ])
     return {
+      // `undefined` = Strapi no respondió: 503, no 404. Ver [city]/index.vue.
+      apiCaida: cityRes === undefined || vigentesRes === undefined || pasadosRes === undefined,
       city: cityRes?.data?.[0] ?? null,
       totalVigentes: vigentesRes?.meta?.pagination?.total ?? 0,
       totalPasados: pasadosRes?.meta?.pagination?.total ?? 0,
@@ -49,6 +51,13 @@ const { data: meta } = await useAsyncData(
 // Un municipio inexistente tiene que dar 404, no una cartelera vacía con 200:
 // para Google un soft-404 es una página válida y sin contenido, y este patrón se
 // traga cualquier /loquesea/eventos. Mismo criterio que [city]/index.vue.
+if (meta.value?.apiCaida) {
+  throw createError({
+    statusCode: 503,
+    statusMessage: 'Servicio no disponible',
+    fatal: true,
+  })
+}
 if (citySlug.value !== FALLBACK_CITY_SLUG && !meta.value?.city) {
   throw createError({
     statusCode: 404,

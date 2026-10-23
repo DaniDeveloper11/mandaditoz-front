@@ -48,7 +48,7 @@ const { data: raw } = await useAsyncData(
           'populate[businesses][populate][city][fields][1]': 'slug',
           'pagination[pageSize]': 1,
         },
-      }).catch(() => null),
+      }).catch(() => undefined),
       citySlug.value !== FALLBACK_CITY_SLUG
         ? $fetch(`${apiBase}/cities`, {
             query: {
@@ -57,10 +57,12 @@ const { data: raw } = await useAsyncData(
               'fields[1]': 'slug',
               'pagination[pageSize]': 1,
             },
-          }).catch(() => null)
+          }).catch(() => undefined)
         : Promise.resolve(null),
     ])
     return {
+      // `undefined` = Strapi no respondió: 503, no 404. Ver [city]/index.vue.
+      apiCaida: postRes === undefined || cityRes === undefined,
       post: postRes?.data?.[0] ?? null,
       urlCity: cityRes?.data?.[0] ?? null,
     }
@@ -81,6 +83,14 @@ const cityCoincide = computed(() => {
   if (citySlug.value === FALLBACK_CITY_SLUG) return false
   return ev.city?.slug === citySlug.value
 })
+
+if (raw.value?.apiCaida) {
+  throw createError({
+    statusCode: 503,
+    statusMessage: 'Servicio no disponible',
+    fatal: true,
+  })
+}
 
 if (!evento.value || !cityCoincide.value) {
   throw createError({
