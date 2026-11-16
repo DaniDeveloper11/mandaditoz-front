@@ -9,7 +9,7 @@ import {
   Popover, PopoverButton, PopoverPanel,
 } from '@headlessui/vue'
 import Swal from 'sweetalert2'
-import { buildBusinessJsonLd, buildBreadcrumbJsonLd, serializeJsonLd } from '~/utils/seo'
+import { buildBusinessJsonLd, buildBreadcrumbJsonLd, serializeJsonLd, ogImageDe } from '~/utils/seo'
 import { citySegmentFor, businessUrl } from '~/utils/urls'
 import { momentoLocal } from '~/utils/horario'
 
@@ -360,12 +360,15 @@ function recortar(texto, max) {
   return `${corte.slice(0, corte.lastIndexOf(' ')).replace(/[.,;:]$/, '')}…`
 }
 
-const seoImage = computed(() =>
-  negocio.value?.coverPhoto?.url
-    ?? negocio.value?.logo?.url
-    ?? negocio.value?.photos?.[0]?.url
-    ?? `${siteUrl}/og-default.jpg`
-)
+// null = sin foto propia: se queda la imagen por defecto de app.vue.
+const seoImageData = computed(() => {
+  const n = negocio.value
+  if (!n) return null
+  return ogImageDe(n.coverPhoto)
+    ?? ogImageDe(n.photos?.[0])
+    ?? ogImageDe(n.logo, { cuadrada: true })
+})
+const seoImage = computed(() => seoImageData.value?.url ?? `${siteUrl}/og-default.jpg`)
 
 // Canonical siempre apunta a la URL correcta del negocio (usando el helper),
 // independientemente del segmento de ciudad que aparezca en route.path. Esto
@@ -379,10 +382,16 @@ useSeoMeta({
   title: () => seoTitle.value,
   description: () => seoDescription.value,
 
-  ogType: 'business.business',
+  // 'website' y no 'business.business': ese tipo exige business:contact_data:*
+  // y el depurador de Facebook lo marca como error si faltan.
+  ogType: 'website',
   ogTitle: () => seoTitle.value,
   ogDescription: () => seoDescription.value,
   ogImage: () => seoImage.value,
+  ogImageWidth: () => (seoImageData.value ? seoImageData.value.width : 1200),
+  ogImageHeight: () => (seoImageData.value ? seoImageData.value.height : 630),
+  ogImageType: () => (seoImageData.value ? null : 'image/jpeg'),
+  ogImageAlt: () => (negocio.value ? nombreSeo.value : null),
   ogUrl: () => seoUrl.value,
 
   twitterCard: 'summary_large_image',

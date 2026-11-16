@@ -69,25 +69,25 @@ export default defineNuxtConfig({
           content: 'Encuentra negocios y servicios locales de tu municipio en Jalisco. Gratis para todos.',
         },
 
-        // Open Graph (Facebook, WhatsApp, LinkedIn, Telegram)
+        // Open Graph (Facebook, WhatsApp, LinkedIn, Telegram).
+        // og:url y og:image dependen de la ruta: van en app.vue.
         { property: 'og:site_name', content: 'Mandaditoz' },
         { property: 'og:type', content: 'website' },
         { property: 'og:title', content: 'Mandaditoz — Directorio de negocios locales' },
         { property: 'og:description', content: 'Encuentra negocios y servicios locales de tu municipio en Jalisco. Gratis para todos.' },
-        { property: 'og:image', content: 'https://mandaditoz.com/og-default.jpg' },
-        { property: 'og:image:width', content: '1200' },
-        { property: 'og:image:height', content: '630' },
-        { property: 'og:image:alt', content: 'Mandaditoz — Directorio de negocios locales' },
         { property: 'og:locale', content: 'es_MX' },
-        { property: 'og:url', content: 'https://mandaditoz.com' },
 
-        // Twitter / X
+        // Twitter / X: sin title/description/image fijos. X usa los og:* cuando
+        // faltan, y unos fijos aquí se quedaban con el texto del home en las
+        // páginas que solo definen og:title (municipio, categoría, eventos).
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'Mandaditoz — Directorio de negocios locales' },
-        { name: 'twitter:description', content: 'Encuentra negocios y servicios locales de tu municipio en Jalisco.' },
-        { name: 'twitter:image', content: 'https://mandaditoz.com/og-default.jpg' },
       ],
       link: [
+        // Favicon: SVG para navegadores modernos (cambia con modo oscuro), .ico de respaldo
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' },
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

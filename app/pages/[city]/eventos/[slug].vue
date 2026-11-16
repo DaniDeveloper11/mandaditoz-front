@@ -5,7 +5,7 @@ import {
 } from '@lucide/vue'
 import { mapCityPost } from '~/utils/strapi'
 import { FALLBACK_CITY_SLUG, businessUrl, eventUrl } from '~/utils/urls'
-import { buildBreadcrumbJsonLd, buildEventJsonLd, serializeJsonLd } from '~/utils/seo'
+import { buildBreadcrumbJsonLd, buildEventJsonLd, serializeJsonLd, ogImageDe } from '~/utils/seo'
 import { getKindConfig, getEventCategoryLabel, vigenciaTexto } from '~/utils/eventos'
 import { formatoHora, esPasado } from '~/utils/fechas'
 
@@ -156,10 +156,12 @@ const seoDescription = computed(() => {
     || `${ev.title} en ${cityName.value}, Jalisco. ${fecha.value}.`
 })
 
-const ogImage = computed(() => {
+// null = sin imagen propia: se queda la imagen por defecto de app.vue.
+const ogImageData = computed(() => {
   const ev = evento.value
-  return ev.seo?.ogImage?.url || ev.coverImage?.url || `${siteUrl}/og-default.jpg`
+  return ogImageDe(ev.seo?.ogImage) ?? ogImageDe(ev.coverImage)
 })
+const ogImage = computed(() => ogImageData.value?.url ?? `${siteUrl}/og-default.jpg`)
 
 useSeoMeta({
   title: () => seoTitle.value,
@@ -169,6 +171,10 @@ useSeoMeta({
   ogDescription: () => seoDescription.value,
   ogUrl: () => pageUrl.value,
   ogImage: () => ogImage.value,
+  ogImageWidth: () => (ogImageData.value ? ogImageData.value.width : 1200),
+  ogImageHeight: () => (ogImageData.value ? ogImageData.value.height : 630),
+  ogImageType: () => (ogImageData.value ? null : 'image/jpeg'),
+  ogImageAlt: () => evento.value?.title ?? null,
   twitterCard: 'summary_large_image',
 })
 

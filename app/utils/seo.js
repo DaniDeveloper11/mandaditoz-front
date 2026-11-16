@@ -354,3 +354,28 @@ export function buildBreadcrumbJsonLd(items) {
 export function serializeJsonLd(obj) {
   return JSON.stringify(obj).replace(/</g, '\\u003c')
 }
+
+// Imágenes de vista previa (og:image) para WhatsApp y Facebook.
+// WhatsApp deja de mostrar la miniatura con imágenes pesadas (las de Blogger
+// llegan como PNG de 600–800 KB), así que se piden recortadas y en JPEG.
+const GOOGLE_IMG = /^https:\/\/[^/]*googleusercontent\.com\//
+
+/**
+ * Devuelve { url, width, height } para og:image a partir de un media mapeado.
+ * - Blogger/Google: el servidor redimensiona con el sufijo `=w…-h…-c-rj`
+ *   (recorte exacto + JPEG). `cuadrada` es para logos, que no aguantan 1200×630.
+ * - Strapi: el formato `large`/`medium` en vez del original, que puede pesar MB.
+ * width/height van en null cuando no se conocen: mejor sin dimensiones que con
+ * las de otra imagen, porque Facebook las usa para pintar la tarjeta.
+ */
+export function ogImageDe(media, { cuadrada = false } = {}) {
+  if (!media?.url) return null
+  const ultimoSegmento = media.url.split('/').pop()
+  if (GOOGLE_IMG.test(media.url) && !ultimoSegmento.includes('.')) {
+    const [width, height] = cuadrada ? [630, 630] : [1200, 630]
+    return { url: `${media.url.replace(/=[^/]*$/, '')}=w${width}-h${height}-c-rj`, width, height }
+  }
+  const formato = media.formats?.large ?? media.formats?.medium
+  if (formato?.url) return { url: formato.url, width: formato.width ?? null, height: formato.height ?? null }
+  return { url: media.url, width: media.width ?? null, height: media.height ?? null }
+}
