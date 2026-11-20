@@ -8,6 +8,12 @@ export default defineNuxtConfig({
   nitro: isMobile
     ? { preset: 'static', prerender: { crawlLinks: false, routes: ['/'] } }
     : undefined,
+  // Solo afecta a `npm run dev`: deja abrir el servidor local por un túnel de
+  // ngrok (para probar en un iPhone real). El punto inicial acepta cualquier subdominio.
+  vite: {
+    server: { allowedHosts: ['.ngrok-free.app'] },
+  },
+
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',
@@ -81,6 +87,12 @@ export default defineNuxtConfig({
         // faltan, y unos fijos aquí se quedaban con el texto del home en las
         // páginas que solo definen og:title (municipio, categoría, eventos).
         { name: 'twitter:card', content: 'summary_large_image' },
+
+        // iOS "Agregar a inicio" (ver /instalar): nombre bajo el ícono y abrir sin barra de Safari.
+        { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        { name: 'apple-mobile-web-app-title', content: 'Mandaditoz' },
+        { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+        { name: 'theme-color', content: '#1D5A8A' },
       ],
       link: [
         // Favicon: SVG para navegadores modernos (cambia con modo oscuro), .ico de respaldo

@@ -85,6 +85,20 @@
         <a href="/how-to-work" class="text-sm/6 font-semibold text-gray-900 whitespace-nowrap">¿Cómo funciona?</a>
       </PopoverGroup>
       <div class="hidden lg:flex lg:flex-initial lg:shrink-0 lg:justify-end lg:items-center lg:gap-x-3 xl:gap-x-4">
+        <!-- En lg solo el ícono: el navbar ya va justo de ancho -->
+        <a
+          v-if="!appInstalada"
+          href="/instalar"
+          title="Instalar la app"
+          class="relative inline-flex items-center gap-1.5 rounded-full border border-gray-200 p-1.5 xl:pl-2.5 xl:pr-3 text-sm/6 font-semibold text-gray-900 whitespace-nowrap hover:border-brand-primary hover:text-brand-primary transition"
+        >
+          <Smartphone class="size-4" aria-hidden="true" />
+          <span class="sr-only xl:not-sr-only">Instalar app</span>
+          <span class="absolute -top-0.5 -right-0.5 flex size-2.5">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+            <span class="relative inline-flex size-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+          </span>
+        </a>
         <template v-if="isLoggedIn">
           <a href="/mis-negocios" class="text-sm/6 font-semibold text-gray-900 whitespace-nowrap hover:text-brand-primary transition">
             Mis negocios
@@ -182,6 +196,16 @@
                 />
                 <BookOpen v-else class="size-5 text-gray-400" aria-hidden="true" />
                 {{ cityStore.activeCity.bloggerName ? `Blog de ${cityStore.activeCity.bloggerName}` : 'Blog oficial' }}
+              </a>
+              <a v-if="!appInstalada" href="/instalar" @click="mobileMenuOpen = false" class="-mx-3 flex items-center gap-3 rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
+                <span class="relative">
+                  <Smartphone class="size-5 text-gray-400" aria-hidden="true" />
+                  <span class="absolute -top-1 -right-1 flex size-2.5">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75"></span>
+                    <span class="relative inline-flex size-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
+                  </span>
+                </span>
+                Instalar la app
               </a>
             </div>
 
@@ -304,7 +328,7 @@ import {
   Disclosure, DisclosureButton, DisclosurePanel,
   Popover, PopoverButton, PopoverGroup, PopoverPanel,
 } from '@headlessui/vue'
-import { Menu, X, ChevronDown, Search, LayoutGrid, Store, Info, Mail, Shield, FileText, BookOpen, CalendarDays } from '@lucide/vue'
+import { Menu, X, ChevronDown, Search, LayoutGrid, Store, Info, Mail, Shield, FileText, BookOpen, CalendarDays, Smartphone } from '@lucide/vue'
 import { getCategoriaConfig, getLucideIcon } from '~/utils/categorias'
 import { eventsUrl } from '~/utils/urls'
 
@@ -323,8 +347,13 @@ const logoLight = '/logo-cielo-horizontal.svg'
 const logoDark = '/logo-cielo-horizontal-dark.svg'
 const mobileMenuOpen = ref(false)
 const showWelcome = ref(false)
+// "Instalar la app" sobra si ya se abrió desde el ícono (PWA) o dentro de la app Android
+const appInstalada = ref(false)
 
 onMounted(async () => {
+  appInstalada.value = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true
+    || window.Capacitor?.isNativePlatform?.() === true
   await cityStore.fetchCities()
   if (!cityStore.isOnboarded) showWelcome.value = true
 })

@@ -10,7 +10,7 @@ export const FALLBACK_CITY_SLUG = 'jalisco'
  * validación en /[city]/[slug].vue devolvería 404 y no rompería la ruta estática.
  */
 export const RESERVED_TOP_LEVEL_PATHS = new Set([
-  'about', 'categorias', 'contacto', 'cuenta', 'how-to-work',
+  'about', 'categorias', 'contacto', 'cuenta', 'how-to-work', 'instalar',
   'list', 'login', 'mis-negocios', 'negocios', 'privacidad',
   'reclamar', 'reset-password', 'terminos', FALLBACK_CITY_SLUG,
 ])
