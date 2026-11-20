@@ -8,10 +8,9 @@ import {
 } from '@lucide/vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
-definePageMeta({ layout: 'publicar' })
+definePageMeta({ layout: 'publicar', middleware: 'auth' })
 
 const router = useRouter()
-const { isLoggedIn } = useAuthStore()
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
 const { createBusiness, loading, error, clearError } = useNegocioCreate()
 const { refreshUser } = useAuth()
@@ -19,7 +18,6 @@ const { publishedCount, publishedLimit, canPublishMore } = useMisNegocios()
 const cityStore = useCityStore()
 
 onMounted(() => {
-  if (!isLoggedIn) router.replace('/login?redirect=/negocios/nuevo')
   cityStore.fetchCities()
 })
 
@@ -29,6 +27,22 @@ watch(canPublishMore, (v) => {
 
 const DAY_ORDER  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const DAY_LABELS = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' }
+
+// "HH:mm" + horas, topado a 23:59 (mismo criterio que addSlot en /edit).
+function sumarHoras(hhmm, horas) {
+  const [h, m] = String(hhmm ?? '00:00').split(':').map(Number)
+  const total = Math.min((h || 0) * 60 + (m || 0) + horas * 60, 23 * 60 + 59)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+// Horario partido: el segundo turno arranca una hora después del cierre del
+// primero. Al activarlo, si el primero llegaba hasta la noche, se recorta a
+// las 14:00 para que no se encimen.
+function agregarTurno(row) {
+  if (row.closeTime > '15:00') row.closeTime = '14:00'
+  const openTime = sumarHoras(row.closeTime, 3)
+  row.extra = { openTime, closeTime: sumarHoras(openTime, 4) }
+}
 const ESTADOS_MX = [
   'Aguascalientes','Baja California','Baja California Sur','Campeche','Chiapas',
   'Chihuahua','Ciudad de México','Coahuila','Colima','Durango','Guanajuato',
@@ -75,12 +89,16 @@ const form = reactive({
   facebook: '',
   instagram: '',
 
+  // `extra`: segundo turno opcional del día (horario partido, p. ej. 9–14 y
+  // 17–21). Se guarda como una segunda fila de business-hour con sortOrder 1,
+  // igual que las franjas que agrega /edit.
   hours: DAY_ORDER.map(day => ({
     dayOfWeek: day,
     openTime: '09:00',
     closeTime: '19:00',
     isClosed: day === 'sun',
     is24Hours: false,
+    extra: null,
   })),
 
   paymentMethods: [],
@@ -261,7 +279,7 @@ const QUICK_CATEGORIES = [
     id: 'otros',
     slug: null,
     label: 'Otros',
-    description: 'Elege la categoría que mas te guste en el siguiente paso.',
+    description: 'Elige la categoría que más te guste en el siguiente paso.',
     icon: LayoutGrid,
     iconBg: 'bg-slate-100',
     iconColor: 'text-slate-500',
@@ -432,13 +450,26 @@ function buildPayload() {
     businessStatus: form.isPublished ? 'published' : 'draft',
     // Un día de 24 h se guarda con las horas en 00:00 para no dejar el rango
     // viejo contradiciendo a la bandera.
-    hours: form.hours.map(h => ({
-      dayOfWeek: h.dayOfWeek,
-      openTime:  h.is24Hours ? '00:00' : h.openTime,
-      closeTime: h.is24Hours ? '00:00' : h.closeTime,
-      isClosed:  h.isClosed,
-      is24Hours: h.is24Hours,
-    })),
+    hours: form.hours.flatMap(h => [
+      {
+        dayOfWeek: h.dayOfWeek,
+        openTime:  h.is24Hours ? '00:00' : h.openTime,
+        closeTime: h.is24Hours ? '00:00' : h.closeTime,
+        isClosed:  h.isClosed,
+        is24Hours: h.is24Hours,
+        sortOrder: 0,
+      },
+      ...(h.extra && !h.isClosed && !h.is24Hours
+        ? [{
+            dayOfWeek: h.dayOfWeek,
+            openTime:  h.extra.openTime,
+            closeTime: h.extra.closeTime,
+            isClosed:  false,
+            is24Hours: false,
+            sortOrder: 1,
+          }]
+        : []),
+    ]),
   }
 }
 
@@ -961,6 +992,20 @@ async function handleSubmit() {
                   <span class="text-gray-400 text-sm select-none">–</span>
                   <input v-model="row.closeTime" type="time" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
                 </div>
+                <div v-if="!row.is24Hours && row.extra" class="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
+                  <input v-model="row.extra.openTime" type="time" :aria-label="`${DAY_LABELS[row.dayOfWeek]}: apertura del segundo turno`" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                  <span class="text-gray-400 text-sm select-none">–</span>
+                  <input v-model="row.extra.closeTime" type="time" :aria-label="`${DAY_LABELS[row.dayOfWeek]}: cierre del segundo turno`" class="w-full min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+                  <button type="button" @click="row.extra = null" class="text-gray-400 hover:text-red-500" aria-label="Quitar segundo turno"><X class="w-4 h-4" /></button>
+                </div>
+                <button
+                  v-if="!row.is24Hours && !row.extra"
+                  type="button"
+                  @click="agregarTurno(row)"
+                  class="block text-xs font-semibold text-brand-primary hover:underline"
+                >
+                  + Agregar segundo turno
+                </button>
                 <label class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 cursor-pointer select-none">
                   <input
                     v-model="row.is24Hours"
@@ -984,12 +1029,21 @@ async function handleSubmit() {
               <span class="text-[10px] font-bold tracking-widest uppercase text-gray-400 text-right">Abierto</span>
             </div>
 
+            <template v-for="row in form.hours" :key="`d-${row.dayOfWeek}`">
             <div
-              v-for="row in form.hours"
-              :key="`d-${row.dayOfWeek}`"
               class="grid grid-cols-[110px_1fr_20px_1fr_56px_64px] gap-3 items-center py-3 border-b border-gray-50 last:border-0"
             >
-              <span class="font-semibold text-sm text-brand-text">{{ DAY_LABELS[row.dayOfWeek] }}</span>
+              <div>
+                <span class="font-semibold text-sm text-brand-text block">{{ DAY_LABELS[row.dayOfWeek] }}</span>
+                <button
+                  v-if="!row.isClosed && !row.is24Hours && !row.extra"
+                  type="button"
+                  @click="agregarTurno(row)"
+                  class="text-[11px] font-semibold text-brand-primary hover:underline"
+                >
+                  + Segundo turno
+                </button>
+              </div>
               <input v-model="row.openTime" type="time" :disabled="row.isClosed || row.is24Hours" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50" />
               <span class="text-gray-400 text-center text-sm select-none">–</span>
               <input v-model="row.closeTime" type="time" :disabled="row.isClosed || row.is24Hours" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition disabled:opacity-40 disabled:bg-gray-50" />
@@ -1020,6 +1074,20 @@ async function handleSubmit() {
                 </button>
               </div>
             </div>
+            <div
+              v-if="row.extra && !row.isClosed && !row.is24Hours"
+              class="grid grid-cols-[110px_1fr_20px_1fr_56px_64px] gap-3 items-center pb-3 border-b border-gray-50"
+            >
+              <span class="text-xs text-brand-azulgris pl-1">Segundo turno</span>
+              <input v-model="row.extra.openTime" type="time" :aria-label="`${DAY_LABELS[row.dayOfWeek]}: apertura del segundo turno`" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+              <span class="text-gray-400 text-center text-sm select-none">–</span>
+              <input v-model="row.extra.closeTime" type="time" :aria-label="`${DAY_LABELS[row.dayOfWeek]}: cierre del segundo turno`" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-brand-text focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition" />
+              <span />
+              <div class="flex justify-end">
+                <button type="button" @click="row.extra = null" class="text-gray-400 hover:text-red-500" aria-label="Quitar segundo turno"><X class="w-4 h-4" /></button>
+              </div>
+            </div>
+            </template>
           </div>
 
           <div class="mt-5 flex items-start gap-2.5 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
@@ -1128,6 +1196,9 @@ async function handleSubmit() {
               </div>
               <button
                 type="button"
+                role="switch"
+                :aria-checked="form.isPublished ? 'true' : 'false'"
+                aria-label="Publicar inmediatamente"
                 :disabled="!canPublishMore"
                 @click="canPublishMore && (form.isPublished = !form.isPublished)"
                 :class="[
@@ -1148,7 +1219,7 @@ async function handleSubmit() {
             <div class="flex items-start gap-2.5 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100">
               <Info class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
               <p class="text-blue-700 text-xs leading-relaxed">
-                Al crear el negocio te llevaremos a la pantalla de edición para completar fotos, redes y más detalles.
+                Al crear el negocio verás su estado, y desde ahí podrás editarlo para completar fotos, redes y más detalles.
               </p>
             </div>
           </div>

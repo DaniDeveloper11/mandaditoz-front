@@ -15,11 +15,13 @@ const editorMeta = useState('editorMeta', () => ({
 
 const lastUpdatedLabel = computed(() => {
   if (!editorMeta.value.lastUpdated) return null
+  // Con timeZone explícito (convención del proyecto: ver utils/fechas.js).
+  const TZ = 'America/Mexico_City'
   const date = new Date(editorMeta.value.lastUpdated)
-  const now = new Date()
-  const isToday = date.toDateString() === now.toDateString()
-  const time = date.toLocaleTimeString('es-MX', { hour: 'numeric', minute: '2-digit', hour12: true })
-  return `${isToday ? 'hoy' : date.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}, ${time}`
+  const dia = (d) => d.toLocaleDateString('en-CA', { timeZone: TZ })
+  const isToday = dia(date) === dia(new Date())
+  const time = date.toLocaleTimeString('es-MX', { timeZone: TZ, hour: 'numeric', minute: '2-digit', hour12: true })
+  return `${isToday ? 'hoy' : date.toLocaleDateString('es-MX', { timeZone: TZ, day: 'numeric', month: 'short' })}, ${time}`
 })
 
 function handlePreview() {
@@ -90,7 +92,7 @@ function handleSave() {
       <div class="hidden sm:flex items-center gap-2 text-sm text-brand-azulgris min-w-0">
         <Clock class="w-4 h-4 shrink-0" />
         <span v-if="lastUpdatedLabel" class="truncate">Última actualización: {{ lastUpdatedLabel }}</span>
-        <span v-else class="text-gray-400">Sin cambios guardados</span>
+        <span v-else class="text-gray-400">Aún no se ha guardado</span>
       </div>
 
       <div class="flex items-center gap-2 sm:gap-3 flex-1 sm:flex-initial justify-end">

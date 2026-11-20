@@ -9,6 +9,10 @@ const router = useRouter()
 const route = useRoute()
 const store = useSearchStore()
 const cityStore = useCityStore()
+const abiertoAhora = useAbiertoAhora()
+// El conteo con el CityPickerPopover va en un <div>, no en un <p>: Headless UI
+// mete elementos de bloque que el navegador saca del <p> al parsear el HTML
+// del servidor, y la hidratación salía con mismatches (igual en categorias.vue).
 // --- Sincronización URL ↔ store ------------------------------------------
 // Los query params sobre /list permiten compartir URLs. Al abrir la página
 // se aplican al store (y `ciudad` cambia la ciudad activa global); cuando
@@ -47,32 +51,38 @@ const cityStore = useCityStore()
 const { negocios, paginacion, pending } = useNegocios(computed(() => store.filtros))
 const { categorias } = useCategorias({ limit: 100, allDepths: true })
 
-watch(
-  () => ({
-    q: store.filtros.query,
-    categoria: store.filtros.categoria,
-    ciudad: cityStore.activeCitySlug,
-    orden: store.filtros.orden,
-    porPagina: store.filtros.porPagina,
-    pagina: store.filtros.pagina,
-    verificados: store.filtros.soloVerificados,
-    destacados: store.filtros.isFeatured,
-    abiertos: store.filtros.abiertosAhora,
-  }),
-  (v) => {
-    const query = {}
-    if (v.q) query.q = v.q
-    if (v.categoria) query.categoria = v.categoria
-    if (v.ciudad) query.ciudad = v.ciudad
-    if (v.orden && v.orden !== 'rating') query.orden = v.orden
-    if (v.porPagina && v.porPagina !== 12) query.porPagina = String(v.porPagina)
-    if (v.pagina && v.pagina > 1) query.pagina = String(v.pagina)
-    if (v.verificados) query.verificados = '1'
-    if (v.destacados) query.destacados = '1'
-    if (v.abiertos) query.abiertos = '1'
-    router.replace({ query })
-  },
-)
+const filtrosEnUrl = () => ({
+  q: store.filtros.query,
+  categoria: store.filtros.categoria,
+  ciudad: cityStore.activeCitySlug,
+  orden: store.filtros.orden,
+  porPagina: store.filtros.porPagina,
+  pagina: store.filtros.pagina,
+  verificados: store.filtros.soloVerificados,
+  destacados: store.filtros.isFeatured,
+  abiertos: store.filtros.abiertosAhora,
+})
+
+function sincronizarUrl(v) {
+  const query = {}
+  if (v.q) query.q = v.q
+  if (v.categoria) query.categoria = v.categoria
+  if (v.ciudad) query.ciudad = v.ciudad
+  if (v.orden && v.orden !== 'rating') query.orden = v.orden
+  if (v.porPagina && v.porPagina !== 12) query.porPagina = String(v.porPagina)
+  if (v.pagina && v.pagina > 1) query.pagina = String(v.pagina)
+  if (v.verificados) query.verificados = '1'
+  if (v.destacados) query.destacados = '1'
+  if (v.abiertos) query.abiertos = '1'
+  router.replace({ query })
+}
+
+watch(filtrosEnUrl, sincronizarUrl)
+// Al llegar desde la home o /categorias el store ya trae el filtro, pero la URL
+// es un `/list` pelón y el watch no se dispara: sin esto, recargar perdía la
+// búsqueda y el enlace no se podía compartir. En onMounted y no con
+// `immediate` para no hacer un router.replace durante el SSR.
+onMounted(() => sincronizarUrl(filtrosEnUrl()))
 
 const PRICE_OPTIONS = [
   { value: null, label: 'Cualquier precio' },
@@ -226,9 +236,9 @@ useSeoMeta({
             <template v-else-if="store.filtros.abiertosAhora">Abiertos ahorita</template>
             <template v-else>Directorio de negocios</template>
           </h1>
-          <p class="text-brand-azulgris text-sm mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+          <div class="text-brand-azulgris text-sm mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <template v-if="!pending">
-              <span>{{ totalResultados }} resultados ·</span>
+              <span>{{ totalResultados }} {{ totalResultados === 1 ? 'resultado' : 'resultados' }} ·</span>
               <CityPickerPopover>
                 <template #trigger="{ activeLabel }">
                   <button
@@ -243,7 +253,7 @@ useSeoMeta({
               </CityPickerPopover>
             </template>
             <template v-else>Buscando…</template>
-          </p>
+          </div>
         </div>
       </div>
 
@@ -459,11 +469,11 @@ useSeoMeta({
               </template>
             </div>
             <span
-              v-if="biz.isOpen !== null"
-              :class="['text-xs font-semibold flex items-center gap-1.5', biz.isOpen ? 'text-emerald-600' : 'text-red-500']"
+              v-if="typeof abiertoAhora(biz) === 'boolean'"
+              :class="['text-xs font-semibold flex items-center gap-1.5', abiertoAhora(biz) ? 'text-emerald-600' : 'text-red-500']"
             >
-              <span :class="['w-1.5 h-1.5 rounded-full', biz.isOpen ? 'bg-emerald-500' : 'bg-red-500']" />
-              {{ biz.isOpen ? 'Abierto' : 'Cerrado' }}
+              <span :class="['w-1.5 h-1.5 rounded-full', abiertoAhora(biz) ? 'bg-emerald-500' : 'bg-red-500']" />
+              {{ abiertoAhora(biz) ? 'Abierto' : 'Cerrado' }}
             </span>
           </div>
         </a>

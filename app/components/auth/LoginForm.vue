@@ -5,17 +5,21 @@
   <form class="space-y-5" @submit.prevent="handleSubmit">
     <div>
       <label for="email" class="block text-sm font-medium text-brand-text mb-1.5">
-        Correo electrónico
+        Correo o WhatsApp
       </label>
       <div class="relative">
         <Mail class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-brand-azulgris" />
+        <!-- type="text": el comensal entra también con su WhatsApp (es su
+             username) y un type="email" lo bloqueaba exigiendo una "@". -->
         <input
           id="email"
           v-model="form.email"
-          type="email"
-          autocomplete="email"
+          type="text"
+          inputmode="email"
+          autocomplete="username"
+          autocapitalize="none"
           required
-          placeholder="tu@correo.com"
+          placeholder="tu@correo.com o 10 dígitos"
           class="w-full pl-9 pr-3 py-2.5 rounded-lg border border-brand-border bg-white text-brand-text text-sm placeholder:text-brand-azulgris/60 focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary transition"
         />
       </div>
@@ -96,6 +100,19 @@ const route = useRoute()
 const showPassword = ref(false)
 const form = reactive({ email: '', password: '', remember: false })
 
+// El username del comensal es su WhatsApp en E.164 sin el "+" (52 + 10
+// dígitos, ver backend/src/utils/phone.js). La gente escribe los 10 dígitos,
+// con espacios o con +52: todo eso se lleva al mismo formato.
+function identificador(valor) {
+  const limpio = String(valor ?? '').trim()
+  if (limpio.includes('@')) return limpio.toLowerCase()
+  const digitos = limpio.replace(/\D/g, '')
+  if (digitos.length === 10) return `52${digitos}`
+  if (digitos.length === 12 && digitos.startsWith('52')) return digitos
+  if (digitos.length === 13 && digitos.startsWith('521')) return `52${digitos.slice(3)}`
+  return limpio
+}
+
 async function handleSubmit() {
   Swal.fire({
     title: 'Iniciando sesión…',
@@ -104,7 +121,7 @@ async function handleSubmit() {
   })
 
   try {
-    await login({ identifier: form.email, password: form.password })
+    await login({ identifier: identificador(form.email), password: form.password })
     Swal.close()
     // Se valida el destino: sin esto, /login?redirect=https://sitio.malo saca al
     // usuario del sitio desde un enlace que parece nuestro.

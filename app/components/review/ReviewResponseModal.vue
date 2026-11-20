@@ -101,7 +101,13 @@ async function submit() {
                     placeholder="Agradece el comentario o responde a cualquier duda del cliente."
                     class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20 text-sm resize-none"
                   />
-                  <p class="text-xs text-brand-azulgris mt-1 text-right">{{ message.length }}/500</p>
+                  <div class="flex justify-between gap-3 mt-1">
+                    <!-- Explica por qué el botón sigue deshabilitado. -->
+                    <p class="text-xs text-brand-azulgris">
+                      <template v-if="message.trim().length === 1">Escribe al menos 2 caracteres.</template>
+                    </p>
+                    <p class="text-xs text-brand-azulgris text-right">{{ message.length }}/500</p>
+                  </div>
                 </div>
 
                 <p v-if="errorMsg" class="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">

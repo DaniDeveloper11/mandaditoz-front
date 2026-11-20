@@ -81,11 +81,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { safeRedirectPath } from '~/utils/urls'
 
 definePageMeta({ layout: false })
 
 const route = useRoute()
+
+// Con sesión iniciada no hay nada que hacer aquí: se manda a donde iba (o a la
+// home) en vez de pintar "Bienvenido de vuelta" con el formulario.
+const authStore = useAuthStore()
+if (authStore.isLoggedIn) {
+  await navigateTo(safeRedirectPath(route.query.redirect) ?? '/', { replace: true })
+}
 
 // El registro se bifurca por intención:
 //   ?type=r                 → comensal (alta exprés, entra de inmediato)
@@ -97,6 +105,11 @@ function initialMode() {
 
 const mode = ref(initialMode())
 const isRegister = computed(() => mode.value.startsWith('register'))
+
+// Un navigateTo a esta misma página (p. ej. "Ir a iniciar sesión" tras el alta
+// de dueño) no vuelve a montar el componente: sin esto la URL cambiaba y se
+// seguía viendo el formulario anterior.
+watch(() => [route.query.type, route.query.intent], () => { mode.value = initialMode() })
 
 // La pestaña cubre los dos modos de alta: si ya estás en uno, no te saca de él.
 function goRegister() {

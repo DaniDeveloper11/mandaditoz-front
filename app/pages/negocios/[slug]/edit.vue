@@ -10,11 +10,14 @@ import {
 } from '@headlessui/vue'
 import { businessUrl } from '~/utils/urls'
 
-definePageMeta({ layout: 'editor' })
+// Sin `middleware: 'auth'` cualquiera, con o sin sesión, veía el editor
+// completo de cualquier negocio (el guardado sí lo bloqueaba el backend).
+definePageMeta({ layout: 'editor', middleware: 'auth' })
 
 const route = useRoute()
 const slug = computed(() => route.params.slug)
 const { negocio, pending, error, refresh: refreshNegocio, raw: rawNegocio } = useNegocio(slug, { includeDrafts: true })
+const esDueno = useEsDueno(slug)
 
 if (import.meta.dev) {
   watch(rawNegocio, (val) => {
@@ -244,6 +247,9 @@ watch(negocio, (val) => {
   editorMeta.value.slug        = slug.value
   editorMeta.value.publicUrl   = businessUrl(val)
   editorMeta.value.isPublished = true
+  // El pie decía "Sin cambios guardados" hasta guardar en esta sesión, aunque
+  // el negocio se hubiera editado ayer: se arranca con la fecha real.
+  editorMeta.value.lastUpdated = rawNegocio.value?.updatedAt ?? null
 }, { immediate: true })
 
 // ── Información básica helpers ──
@@ -354,14 +360,25 @@ function toggleDay24h(day) {
   slot.closeTime = '00:00'
 }
 
+// "HH:mm" + horas, topado a 23:59 para no dar la vuelta al día.
+function sumarHoras(hhmm, horas) {
+  const [h, m] = String(hhmm ?? '00:00').split(':').map(Number)
+  const total = Math.min((h || 0) * 60 + (m || 0) + horas * 60, 23 * 60 + 59)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 function addSlot(day) {
   const slots = hoursByDay.value[day]
   const lastClose = slots[slots.length - 1]?.closeTime ?? '14:00'
+  // La franja nueva empieza una hora después del cierre anterior y dura
+  // cuatro. Antes cerraba siempre a las 18:00, así que tras un turno que
+  // acababa a las 19:00 nacía "19:00–18:00": cerraba antes de abrir.
+  const openTime = sumarHoras(lastClose, 1)
   form.hours.push({
     documentId: null,
     dayOfWeek: day,
-    openTime: lastClose,
-    closeTime: '18:00',
+    openTime,
+    closeTime: sumarHoras(openTime, 4),
     isClosed: false,
     is24Hours: false,
     sortOrder: slots.length,
@@ -688,7 +705,9 @@ onMounted(() => {
   cityStore.fetchCities()
 })
 
-const businessDocumentId = computed(() => negocio.value?.documentId ?? null)
+// Las estadísticas solo se piden una vez confirmado el dueño (a otro el
+// backend le responde 403).
+const businessDocumentId = computed(() => (esDueno.value ? negocio.value?.documentId : null) ?? null)
 const { counts: statsCounts, pending: statsPending } = useBusinessStats(businessDocumentId, { range: '30d' })
 
 const stats = computed(() => [
@@ -754,12 +773,17 @@ function irASeccion(id) {
 <template>
   <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
 
-    <div v-if="pending" class="flex items-center justify-center min-h-60">
+    <div v-if="pending || esDueno === null" class="flex items-center justify-center min-h-60">
       <div class="w-8 h-8 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
     </div>
 
     <div v-else-if="error || !negocio" class="text-center py-20 text-brand-azulgris">
       Negocio no encontrado.
+    </div>
+
+    <div v-else-if="!esDueno" class="text-center py-20 text-brand-azulgris">
+      Solo el dueño de este negocio puede editarlo.
+      <NuxtLink to="/mis-negocios" class="block mt-3 font-semibold text-brand-primary">Ir a Mis negocios</NuxtLink>
     </div>
 
     <template v-else>

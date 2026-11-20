@@ -9,6 +9,17 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 
 definePageMeta({ layout: 'landing' })
 
+// Antes heredaba el título genérico de nuxt.config.
+const siteUrl = useRuntimeConfig().public.siteUrl
+useSeoMeta({
+  title: 'Cómo funciona Mandaditoz — Publica o encuentra negocios locales',
+  description: 'Da de alta tu negocio gratis en Mandaditoz o encuentra los negocios de tu municipio: horarios, contacto, ubicación y reseñas en un solo lugar.',
+  ogTitle: 'Cómo funciona Mandaditoz',
+  ogDescription: 'Publica tu negocio gratis o encuentra los negocios de tu municipio.',
+  ogUrl: `${siteUrl}/how-to-work`,
+})
+useHead({ link: [{ rel: 'canonical', href: `${siteUrl}/how-to-work` }] })
+
 const modo = ref('dueno')
 
 const pasosDueno = [

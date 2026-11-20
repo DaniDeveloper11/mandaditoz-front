@@ -33,9 +33,10 @@ const { data: pageData } = await useAsyncData(
         query: {
           'filters[isActive][$eq]': true,
           'filters[depth][$eq]': 0,
-          ...(citySlug.value !== FALLBACK_CITY_SLUG && {
-            'filters[businesses][city][slug][$eq]': citySlug.value,
-          }),
+          // Sin filtrar por `businesses.city`: los negocios cuelgan casi siempre
+          // de una subcategoría, así que ese filtro solo dejaba las raíces con
+          // negocios ligados directamente. Qué raíces tienen negocios en el
+          // municipio se decide abajo con `conteos`.
           sort: 'order:asc,name:asc',
           'pagination[pageSize]': 100,
         },
@@ -56,12 +57,48 @@ const { data: pageData } = await useAsyncData(
         },
       }).catch(() => ({ data: [] })),
     ])
+    // `businessCount` de la categoría es el total de TODOS los municipios
+    // (San Juanito decía "Mandaditos — 32 negocios" con 5 negocios). Aquí se
+    // cuentan los del municipio, por categoría raíz. Va en páginas de 100
+    // (el maxLimit de Strapi) y solo con los ids que hacen falta.
+    let conteos = null
+    if (citySlug.value !== FALLBACK_CITY_SLUG && catsRes !== undefined) {
+      conteos = {}
+      for (let page = 1, pageCount = 1; page <= pageCount && page <= 10; page++) {
+        const res = await $fetch(`${apiBase}/businesses`, {
+          query: {
+            'filters[city][slug][$eq]': citySlug.value,
+            'fields[0]': 'id',
+            'populate[category][fields][0]': 'id',
+            'populate[category][populate][parent][fields][0]': 'id',
+            'populate[category][populate][parent][populate][parent][fields][0]': 'id',
+            'pagination[pageSize]': 100,
+            'pagination[page]': page,
+          },
+        }).catch(() => null)
+        if (!res) { conteos = null; break }
+        pageCount = res.meta?.pagination?.pageCount ?? 1
+        for (const b of res.data ?? []) {
+          const c = b.category
+          const raiz = c?.parent?.parent?.id ?? c?.parent?.id ?? c?.id
+          if (raiz) conteos[raiz] = (conteos[raiz] ?? 0) + 1
+        }
+      }
+    }
     return {
       // `undefined` = Strapi no respondió. Se distingue de "no existe" para no
       // convertir una caída del backend en 404s (ver el 503 más abajo).
       apiCaida: cityRes === undefined || catsRes === undefined,
       city: cityRes?.data?.[0] ?? null,
-      categorias: catsRes?.data ?? [],
+      categorias: citySlug.value === FALLBACK_CITY_SLUG
+        ? (catsRes?.data ?? [])
+        : conteos
+          ? (catsRes?.data ?? [])
+              .filter(cat => conteos[cat.id])
+              .map(cat => ({ ...cat, businessCount: conteos[cat.id] }))
+          // Sin conteo (falló la consulta) se muestran sin número antes que
+          // con el total global.
+          : (catsRes?.data ?? []).map(cat => ({ ...cat, businessCount: null })),
       destacados: featRes?.data ?? [],
     }
   },

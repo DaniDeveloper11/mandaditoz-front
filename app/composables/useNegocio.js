@@ -3,8 +3,21 @@ import { mapNegocio } from '~/utils/strapi'
 export function useNegocio(slug, options = {}) {
   const { get } = useApi()
   const includeDrafts = options.includeDrafts ?? false
+  const { token, user } = useAuthStore()
 
-  const { data, pending, error, refresh } = get('/businesses', computed(() => ({
+  // Un borrador solo lo devuelve el backend a su dueño, así que con
+  // `includeDrafts` la petición tiene que ir con el JWT. useApi() va siempre
+  // como Public (por diseño) y por eso /estado y /edit decían "Negocio no
+  // encontrado" justo después de crear un borrador.
+  const fetchNegocio = (query) => includeDrafts && token
+    ? useFetch(`${useRuntimeConfig().public.apiBase}/businesses`, {
+        query,
+        key: computed(() => `negocio-propio|${toValue(slug)}|${user?.id ?? ''}`),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      })
+    : get('/businesses', query)
+
+  const { data, pending, error, refresh } = fetchNegocio(computed(() => ({
     'filters[slug][$eq]': toValue(slug),
     ...(!includeDrafts && { 'filters[businessStatus][$eq]': 'published' }),
     'populate[category]': true,

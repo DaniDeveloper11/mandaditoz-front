@@ -173,7 +173,7 @@ useSeoMeta({
   ogImage: () => ogImage.value,
   ogImageWidth: () => (ogImageData.value ? ogImageData.value.width : 1200),
   ogImageHeight: () => (ogImageData.value ? ogImageData.value.height : 630),
-  ogImageType: () => (ogImageData.value ? null : 'image/jpeg'),
+  ogImageType: () => (ogImageData.value ? ogImageData.value.type : 'image/jpeg'),
   ogImageAlt: () => evento.value?.title ?? null,
   twitterCard: 'summary_large_image',
 })

@@ -373,9 +373,11 @@ export function ogImageDe(media, { cuadrada = false } = {}) {
   const ultimoSegmento = media.url.split('/').pop()
   if (GOOGLE_IMG.test(media.url) && !ultimoSegmento.includes('.')) {
     const [width, height] = cuadrada ? [630, 630] : [1200, 630]
-    return { url: `${media.url.replace(/=[^/]*$/, '')}=w${width}-h${height}-c-rj`, width, height }
+    // `-rj` pide a Google la imagen en JPEG.
+    return { url: `${media.url.replace(/=[^/]*$/, '')}=w${width}-h${height}-c-rj`, width, height, type: 'image/jpeg' }
   }
+  // `type` sale del mime que guarda Strapi (og:image:type); null si no viene.
   const formato = media.formats?.large ?? media.formats?.medium
-  if (formato?.url) return { url: formato.url, width: formato.width ?? null, height: formato.height ?? null }
-  return { url: media.url, width: media.width ?? null, height: media.height ?? null }
+  if (formato?.url) return { url: formato.url, width: formato.width ?? null, height: formato.height ?? null, type: formato.mime ?? media.mime ?? null }
+  return { url: media.url, width: media.width ?? null, height: media.height ?? null, type: media.mime ?? null }
 }

@@ -13,9 +13,12 @@ import { buildBusinessJsonLd, buildBreadcrumbJsonLd, serializeJsonLd, ogImageDe 
 import { citySegmentFor, businessUrl } from '~/utils/urls'
 import { momentoLocal } from '~/utils/horario'
 
-definePageMeta({ layout: 'landing' })
+// El layout lo declaran las páginas que montan este componente
+// (pages/[city]/[slug].vue y pages/negocios/[slug]/index.vue):
+// definePageMeta dentro de un componente no hace nada y avisa en consola.
 
 const route = useRoute()
+const abiertoAhora = useAbiertoAhora()
 const router = useRouter()
 const slug = computed(() => route.params.slug)
 const citySegment = computed(() => String(route.params.city ?? '').toLowerCase())
@@ -390,7 +393,7 @@ useSeoMeta({
   ogImage: () => seoImage.value,
   ogImageWidth: () => (seoImageData.value ? seoImageData.value.width : 1200),
   ogImageHeight: () => (seoImageData.value ? seoImageData.value.height : 630),
-  ogImageType: () => (seoImageData.value ? null : 'image/jpeg'),
+  ogImageType: () => (seoImageData.value ? seoImageData.value.type : 'image/jpeg'),
   ogImageAlt: () => (negocio.value ? nombreSeo.value : null),
   ogUrl: () => seoUrl.value,
 
@@ -484,7 +487,8 @@ function handleClaim() {
     router.push(`/login?redirect=${route.fullPath}`)
     return
   }
-  claimForm.value = { nombre: user?.username ?? '', rol: 'owner', telefono: '', mensaje: '' }
+  // displayName y no username: el username del comensal es su teléfono.
+  claimForm.value = { nombre: user?.displayName ?? '', rol: 'owner', telefono: '', mensaje: '' }
   claimSent.value = false
   claimError.value = null
   showClaimModal.value = true
@@ -502,8 +506,10 @@ async function submitClaimForm() {
       notes: claimForm.value.mensaje,
     })
     claimSent.value = true
-  } catch {
-    claimError.value = 'Ocurrió un error al enviar la solicitud. Intenta de nuevo.'
+  } catch (e) {
+    // El backend explica los rechazos esperables ("ya tiene dueño", "ya
+    // enviaste una solicitud"); el genérico queda para fallos de red.
+    claimError.value = e?.data?.error?.message || 'Ocurrió un error al enviar la solicitud. Intenta de nuevo.'
   } finally {
     claimSending.value = false
   }
@@ -838,14 +844,14 @@ async function onReviewSaved() {
                     {{ priceLabel }}
                   </span>
                   <span
-                    v-if="negocio.isOpen !== null && negocio.isOpen !== undefined"
+                    v-if="typeof abiertoAhora(negocio) === 'boolean'"
                     :class="[
                       'inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full',
-                      negocio.isOpen ? 'bg-emerald-900/60 text-emerald-400' : 'bg-red-900/60 text-red-400',
+                      abiertoAhora(negocio) ? 'bg-emerald-900/60 text-emerald-400' : 'bg-red-900/60 text-red-400',
                     ]"
                   >
-                    <span :class="['w-1.5 h-1.5 rounded-full', negocio.isOpen ? 'bg-emerald-400' : 'bg-red-400']" />
-                    {{ negocio.isOpen ? 'Abierto ahora' : 'Cerrado' }}
+                    <span :class="['w-1.5 h-1.5 rounded-full', abiertoAhora(negocio) ? 'bg-emerald-400' : 'bg-red-400']" />
+                    {{ abiertoAhora(negocio) ? 'Abierto ahora' : 'Cerrado' }}
                   </span>
                 </div>
 
@@ -1355,7 +1361,7 @@ async function onReviewSaved() {
                       <div class="flex gap-0.5 justify-center mt-2">
                         <Star v-for="i in 5" :key="i" :class="['w-4 h-4', i <= Math.round(negocio.ratingAverage ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-300']" />
                       </div>
-                      <p class="text-brand-azulgris text-xs mt-1">{{ negocio.ratingCount ?? 0 }} reseñas</p>
+                      <p class="text-brand-azulgris text-xs mt-1">{{ negocio.ratingCount ?? 0 }} {{ negocio.ratingCount === 1 ? 'reseña' : 'reseñas' }}</p>
                     </div>
                   </div>
 
@@ -1615,7 +1621,9 @@ async function onReviewSaved() {
             </div>
 
             <!-- Claim card -->
-            <div v-if="!isOwner" class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+            <!-- Solo para negocios sin dueño: con uno reclamado o con un reclamo
+                 en revisión se le ofrecía a cualquiera reclamarlo otra vez. -->
+            <div v-if="!isOwner && negocio.ownershipStatus === 'unclaimed'" class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
               <p class="font-semibold text-brand-text text-sm mb-1">¿Es tu negocio?</p>
               <p class="text-brand-azulgris text-xs leading-relaxed mb-3">
                 Reclamarlo te permite actualizar los datos, responder reseñas y acceder a estadísticas.

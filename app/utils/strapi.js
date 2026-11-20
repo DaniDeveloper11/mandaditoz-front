@@ -6,23 +6,38 @@ function timeToMinutes(t) {
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0)
 }
 
-function todayDate() {
-  return new Date()
+// Hora de Jalisco, no la del dispositivo: alguien que abre la ficha desde
+// Estados Unidos (o el servidor en UTC) veía "Cerrado" en pleno horario.
+const JALISCO = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Mexico_City',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  weekday: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+
+function ahoraEnJalisco(date = new Date()) {
+  const p = {}
+  for (const part of JALISCO.formatToParts(date)) p[part.type] = part.value
+  return {
+    iso: `${p.year}-${p.month}-${p.day}`,
+    dayKey: DAY_KEYS.indexOf(p.weekday.toLowerCase()) >= 0 ? p.weekday.toLowerCase() : null,
+    minutes: Number(p.hour) * 60 + Number(p.minute),
+  }
 }
 
-function findTodayException(hourExceptions, date) {
+function findTodayException(hourExceptions, now) {
   if (!hourExceptions?.length) return null
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
-  const d = String(date.getDate()).padStart(2, '0')
-  const iso = `${y}-${m}-${d}`
-  return hourExceptions.find(e => e.date === iso) || null
+  return hourExceptions.find(e => e.date === now.iso) || null
 }
 
 function isCurrentTimeInRange(hour, now) {
   if (hour.is24Hours) return true
   if (hour.isClosed) return false
-  const cur = now.getHours() * 60 + now.getMinutes()
+  const cur = now.minutes
   const open = timeToMinutes(hour.openTime)
   const close = timeToMinutes(hour.closeTime)
   if (open == null || close == null) return false
@@ -40,14 +55,13 @@ function isCurrentTimeInRange(hour, now) {
  */
 export function computeIsOpen(hours, hourExceptions = []) {
   if (!hours?.length && !hourExceptions?.length) return null
-  const now = todayDate()
+  const now = ahoraEnJalisco()
 
   const exception = findTodayException(hourExceptions, now)
   if (exception) return isCurrentTimeInRange(exception, now)
 
   if (!hours?.length) return null
-  const todayKey = DAY_KEYS[now.getDay()]
-  const today = hours.filter(h => h.dayOfWeek === todayKey)
+  const today = hours.filter(h => h.dayOfWeek === now.dayKey)
   if (!today.length) return null
   if (today.every(h => h.isClosed)) return false
   return today.some(h => isCurrentTimeInRange(h, now))
@@ -453,7 +467,6 @@ export function mapNegocio(item) {
     ratingAverage: Number(item.ratingAverage ?? 0),
     ratingCount: item.ratingCount ?? 0,
     reviewCount: item.reviewCount ?? 0,
-    isOpen: import.meta.client ? computeIsOpen(hours, hourExceptions) : null,
     category: item.category ? mapCategoria(item.category) : null,
     secondaryCategories: (item.secondaryCategories ?? []).map(mapCategoria).filter(Boolean),
     tags: (item.tags ?? []).map(mapTag).filter(Boolean),

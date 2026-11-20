@@ -18,6 +18,12 @@ const GIS_SRC = 'https://accounts.google.com/gsi/client'
 
 let gisPromise = null
 
+// `google.accounts.id.initialize()` se llama una sola vez por pestaña (Google
+// avisa en consola si se repite, p. ej. al cambiar entre login y alta). Como
+// el callback queda fijo, despacha al botón montado más reciente.
+let gisInicializado = false
+let manejadorActual = null
+
 /** Carga el script de Google una sola vez por pestaña. */
 function cargarGis() {
   if (gisPromise) return gisPromise
@@ -97,18 +103,22 @@ export function useGoogleAuth() {
 
     const google = await cargarGis()
 
-    google.accounts.id.initialize({
-      client_id: clientId,
-      callback: (respuesta) => {
-        if (respuesta?.credential) onToken?.(respuesta.credential)
-        else onError?.(new Error('Google no devolvió un token de identidad.'))
-      },
-      // La cancelación en un clic ajeno confunde más de lo que ayuda: el usuario
-      // que toca fuera del diálogo cree que canceló y vuelve a darle al botón.
-      cancel_on_tap_outside: true,
-      ux_mode: 'popup',
-      context: 'signin',
-    })
+    manejadorActual = { onToken, onError }
+    if (!gisInicializado) {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: (respuesta) => {
+          if (respuesta?.credential) manejadorActual?.onToken?.(respuesta.credential)
+          else manejadorActual?.onError?.(new Error('Google no devolvió un token de identidad.'))
+        },
+        // La cancelación en un clic ajeno confunde más de lo que ayuda: el usuario
+        // que toca fuera del diálogo cree que canceló y vuelve a darle al botón.
+        cancel_on_tap_outside: true,
+        ux_mode: 'popup',
+        context: 'signin',
+      })
+      gisInicializado = true
+    }
 
     google.accounts.id.renderButton(contenedor, {
       type: 'standard',

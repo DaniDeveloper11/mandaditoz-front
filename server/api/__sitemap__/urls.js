@@ -97,8 +97,11 @@ export default defineEventHandler(async () => {
     }
 
     // Fichas individuales de negocios.
+    // archivedAt: un negocio archivado responde 404 y no debe ir a Google.
+    // (El backend ya lo excluye de find; el filtro explícito no depende de eso.)
     const businesses = await fetchAllPages(apiBase, '/businesses', {
       'filters[businessStatus][$eq]': 'published',
+      'filters[archivedAt][$null]': true,
       'fields[0]': 'slug',
       'fields[1]': 'updatedAt',
       'fields[2]': 'visibleInAllCities',

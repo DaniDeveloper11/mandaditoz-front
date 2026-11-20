@@ -3,6 +3,17 @@ import { ArrowDown, Store, Search, Star } from '@lucide/vue'
 
 definePageMeta({ layout: 'landing' })
 
+// Antes heredaba el título genérico de nuxt.config.
+const siteUrl = useRuntimeConfig().public.siteUrl
+useSeoMeta({
+  title: 'Qué es Mandaditoz — Directorio de negocios locales de Jalisco',
+  description: 'Mandaditoz es un directorio gratuito de negocios locales: horarios, teléfonos, WhatsApp, ubicación y reseñas de los negocios de tu municipio.',
+  ogTitle: 'Qué es Mandaditoz',
+  ogDescription: 'Directorio gratuito de negocios locales de Jalisco.',
+  ogUrl: `${siteUrl}/about`,
+})
+useHead({ link: [{ rel: 'canonical', href: `${siteUrl}/about` }] })
+
 const pasos = [
   {
     num: 1,

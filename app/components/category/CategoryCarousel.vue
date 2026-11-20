@@ -5,11 +5,14 @@ import { businessUrl } from '~/utils/urls'
 const props = defineProps({
   slug: { type: String, required: true },
   name: { type: String, required: true },
-  icon: { type: Object, required: true },
+  // Los íconos de @lucide/vue son componentes funcionales (Function), no Object.
+  icon: { type: [Object, Function], required: true },
   accentColor: { type: String, default: 'bg-brand-primary' },
   color: { type: String, default: null },
   count: { type: Number, default: 0 },
 })
+
+const abiertoAhora = useAbiertoAhora()
 
 const accentClass = computed(() => props.color ? '' : props.accentColor)
 const accentStyle = computed(() => props.color ? { backgroundColor: props.color } : {})
@@ -123,13 +126,13 @@ function scroll(dir) {
             <div class="min-w-0">
               <p class="font-semibold text-brand-text text-sm leading-tight truncate">{{ biz.name ?? 'Sin nombre' }}</p>
               <span
-                v-if="biz.isOpen !== null && biz.isOpen !== undefined"
-                :class="['text-xs font-semibold flex items-center gap-1 mt-0.5', biz.isOpen ? 'text-emerald-600' : 'text-red-500']"
+                v-if="typeof abiertoAhora(biz) === 'boolean'"
+                :class="['text-xs font-semibold flex items-center gap-1 mt-0.5', abiertoAhora(biz) ? 'text-emerald-600' : 'text-red-500']"
               >
-                <span :class="['w-1.5 h-1.5 rounded-full shrink-0', biz.isOpen ? 'bg-emerald-500' : 'bg-red-500']" />
-                {{ biz.isOpen ? 'Abierto' : 'Cerrado' }}
+                <span :class="['w-1.5 h-1.5 rounded-full shrink-0', abiertoAhora(biz) ? 'bg-emerald-500' : 'bg-red-500']" />
+                {{ abiertoAhora(biz) ? 'Abierto' : 'Cerrado' }}
               </span>
-              <span v-else class="text-xs text-brand-azulgris mt-0.5">Horario no disponible</span>
+              <span v-else-if="abiertoAhora(biz) === null" class="text-xs text-brand-azulgris mt-0.5">Horario no disponible</span>
             </div>
           </div>
 

@@ -25,7 +25,9 @@ function formatDate(iso) {
   if (!iso) return ''
   try {
     const d = new Date(iso)
-    return d.toLocaleDateString('es-MX', { year: 'numeric', month: 'short', day: 'numeric' })
+    // timeZone explícito: esto también corre en SSR (UTC) y una reseña de la
+    // noche salía con la fecha del día siguiente. Ver utils/fechas.js.
+    return d.toLocaleDateString('es-MX', { timeZone: 'America/Mexico_City', year: 'numeric', month: 'short', day: 'numeric' })
   } catch { return '' }
 }
 

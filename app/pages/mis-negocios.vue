@@ -8,17 +8,14 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { getCategoriaConfig } from '~/utils/categorias'
 import { businessUrl } from '~/utils/urls'
 
-definePageMeta({ layout: 'landing' })
+// middleware 'auth' y no un router.replace en onMounted: el servidor ya no
+// pinta la página un instante antes de mandar a /login.
+definePageMeta({ layout: 'landing', middleware: 'auth' })
 
-const router = useRouter()
-const { isLoggedIn, user, token } = useAuthStore()
+const { user, token } = useAuthStore()
 const cityStore = useCityStore()
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
-
-onMounted(() => {
-  if (!isLoggedIn) router.replace('/login?redirect=/mis-negocios')
-})
 
 const { negocios, publishedCount, publishedLimit, canPublishMore, pending, error, refresh } = useMisNegocios()
 

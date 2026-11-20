@@ -42,7 +42,7 @@
           />
         </div>
         <p class="mt-1 text-xs text-brand-text-soft">
-          A este número te va a escribir el negocio.
+          También puedes iniciar sesión con este número.
         </p>
       </div>
 

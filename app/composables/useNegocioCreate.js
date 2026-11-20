@@ -28,7 +28,7 @@ export function useNegocioCreate() {
   async function createHours(businessDocumentId, hours) {
     const headers = authHeaders()
     await Promise.all(
-      (hours ?? []).map(({ dayOfWeek, openTime, closeTime, isClosed, is24Hours }) =>
+      (hours ?? []).map(({ dayOfWeek, openTime, closeTime, isClosed, is24Hours, sortOrder }) =>
         $fetch(`${config.public.apiBase}/business-hours`, {
           method: 'POST',
           headers,
@@ -40,6 +40,7 @@ export function useNegocioCreate() {
               closeTime: toStrapiTime(closeTime),
               isClosed,
               is24Hours,
+              sortOrder: sortOrder ?? 0,
             },
           },
         })

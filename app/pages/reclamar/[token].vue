@@ -154,6 +154,12 @@ const { data, pending } = await useAsyncData(
 const estado = computed(() => data.value?.status ?? 'not_found')
 const negocio = computed(() => data.value?.business ?? {})
 
+// Un enlace que no existe responde 404 (sin dejar de pintar el mensaje
+// amable de abajo), no un 200 con página de error.
+if (import.meta.server && estado.value === 'not_found') {
+  setResponseStatus(useRequestEvent(), 404)
+}
+
 const mensajeInvalido = computed(() => ({
   expired: {
     titulo: 'Este enlace ya venció',

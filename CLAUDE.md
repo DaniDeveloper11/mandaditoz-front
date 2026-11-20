@@ -241,6 +241,25 @@ etiquetas escritas, o importar el componente y pasar la referencia.
 donde un evento regional haría que `/municipioinventado/eventos/[slug]` respondiera 200. Un
 soft-404 (200 con página vacía) es, para Google, una página válida y sin contenido.
 
+## Hidratación y páginas del dueño
+
+- **"Abierto/Cerrado" se pinta con `useAbiertoAhora()`**, nunca con un campo del
+  mapper: devuelve `undefined` en SSR y durante la hidratación y el valor real después
+  (`onNuxtReady`). El HTML lo cachea Cloudflare y calcularlo en el cliente desde el
+  primer render daba un hydration mismatch por tarjeta. `computeIsOpen` usa la hora
+  de Jalisco, no la del dispositivo.
+- **`<CityPickerPopover>` nunca dentro de un `<p>`**: Headless UI mete elementos de
+  bloque, el navegador los saca del párrafo al parsear el HTML del servidor y la
+  hidratación de toda la página falla. Usar `<div>`.
+- **Páginas del dueño** (`/mis-negocios`, `/negocios/nuevo`, `/negocios/[slug]/edit`,
+  `/estado`, `/menu`) llevan `middleware: 'auth'` (funciona en SSR: la sesión es
+  cookie). `/edit` y `/estado` además comprueban con `useEsDueno(slug)` (vía
+  `/businesses/mine`) antes de pintar nada.
+- **`useNegocio(slug, { includeDrafts: true })` manda el JWT**: un borrador solo lo
+  devuelve el backend a su dueño. Sin `includeDrafts` va como Public.
+- Login: el campo acepta correo o WhatsApp; `LoginForm` normaliza el teléfono al
+  username del comensal (`52` + 10 dígitos).
+
 ## Reglas de Código Específicas del Proyecto
 
 ### Reactividad en Nuxt 3 / Vue 3 (JavaScript)

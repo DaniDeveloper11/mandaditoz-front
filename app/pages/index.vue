@@ -10,6 +10,7 @@ const route = useRoute()
 const store = useSearchStore()
 const cityStore = useCityStore()
 const auth = useAuthStore()
+const abiertoAhora = useAbiertoAhora()
 
 // El home no tenía canonical propio y quedaba a merced del path exacto con
 // el que Google rastreara (con o sin barra final, con hash, etc.).
@@ -528,11 +529,11 @@ const { categorias: categoriaCatalog } = useCategorias({ limit: 30, allDepths: t
                       {{ biz.category.name }}
                     </span>
                     <span
-                      v-if="biz.isOpen !== null && biz.isOpen !== undefined"
-                      :class="['text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1', biz.isOpen ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600']"
+                      v-if="typeof abiertoAhora(biz) === 'boolean'"
+                      :class="['text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1', abiertoAhora(biz) ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600']"
                     >
-                      <span :class="['w-1.5 h-1.5 rounded-full', biz.isOpen ? 'bg-emerald-500' : 'bg-red-500']" />
-                      {{ biz.isOpen ? 'Abierto' : 'Cerrado' }}
+                      <span :class="['w-1.5 h-1.5 rounded-full', abiertoAhora(biz) ? 'bg-emerald-500' : 'bg-red-500']" />
+                      {{ abiertoAhora(biz) ? 'Abierto' : 'Cerrado' }}
                     </span>
                   </div>
                 </div>

@@ -32,6 +32,9 @@ const website = ref('')
 const isEditing = computed(() => !!props.existingReview)
 const isGuest = computed(() => !auth.isLoggedIn)
 
+// Tope del selector de fecha: hoy en Jalisco (el backend rechaza fechas futuras).
+const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date())
+
 watch(
   [() => props.open, () => props.existingReview],
   ([openNow], _prev) => {
@@ -302,6 +305,7 @@ async function submit() {
                   <input
                     v-model="visitDate"
                     type="date"
+                    :max="hoy"
                     class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20 text-sm"
                   />
                 </div>
@@ -359,7 +363,7 @@ async function submit() {
                   :disabled="!canSubmit"
                   class="px-5 py-2.5 rounded-xl bg-brand-primary text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                 >
-                  {{ submitting ? 'Guardando…' : (isEditing ? 'Guardar cambios' : 'Publicar reseña') }}
+                  {{ submitting ? 'Guardando…' : (isEditing ? 'Guardar cambios' : (isGuest ? 'Enviar reseña' : 'Publicar reseña')) }}
                 </button>
               </div>
             </DialogPanel>

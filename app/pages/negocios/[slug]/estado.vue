@@ -5,19 +5,17 @@ import {
 } from '@lucide/vue'
 import { businessUrl } from '~/utils/urls'
 
-definePageMeta({ layout: 'landing' })
+// middleware 'auth' en vez del router.replace en onMounted: así el servidor ya
+// no pinta la página un instante antes de mandar a /login.
+definePageMeta({ layout: 'landing', middleware: 'auth' })
 
 const route = useRoute()
-const router = useRouter()
-const auth = useAuthStore()
-const { isLoggedIn, user } = auth
 
 const slug = computed(() => route.params.slug)
 const { negocio, pending, error } = useNegocio(slug, { includeDrafts: true })
-
-onMounted(() => {
-  if (!isLoggedIn) router.replace(`/login?redirect=/negocios/${slug.value}/estado`)
-})
+// Un negocio publicado ajeno sí se carga (es público), pero esta pantalla es
+// del dueño: a cualquier otro se le muestra "no encontrado".
+const esDueno = useEsDueno(slug)
 
 const status = computed(() => negocio.value?.businessStatus ?? null)
 
@@ -78,21 +76,19 @@ const STATE_META = {
 
 const meta = computed(() => STATE_META[status.value] ?? null)
 
-const isOwner = computed(() =>
-  negocio.value?.owner?.id ? negocio.value.owner.id === user?.id : true
-)
+const isOwner = computed(() => esDueno.value === true)
 </script>
 
 <template>
   <div class="min-h-[60vh] bg-slate-100 py-10 px-4 md:px-8">
     <div class="max-w-2xl mx-auto">
 
-      <div v-if="pending" class="flex items-center justify-center py-24">
+      <div v-if="pending || esDueno === null" class="flex items-center justify-center py-24">
         <Loader2 class="w-6 h-6 text-brand-primary animate-spin" />
       </div>
 
       <div
-        v-else-if="error || !negocio"
+        v-else-if="error || !negocio || !esDueno"
         class="bg-white rounded-2xl shadow-sm p-8 text-center"
       >
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100 mb-4">

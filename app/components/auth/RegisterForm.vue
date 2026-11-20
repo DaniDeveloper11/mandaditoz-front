@@ -150,7 +150,7 @@
 
     <div class="mt-5 pt-5 border-t border-brand-border text-center">
       <p class="text-sm text-brand-text-soft">
-        ¿Solo quieres pedir en los negocios?
+        ¿No tienes negocio y solo quieres dejar reseñas?
       </p>
       <button
         class="mt-1 text-sm font-semibold text-brand-primary hover:text-brand-primary-dark transition"

@@ -117,7 +117,7 @@ const QUICK_CATEGORIES = [
     id: 'otros',
     slug: null,
     label: 'Otros',
-    description: 'Elege la categoría que mas te guste en el siguiente paso.',
+    description: 'Elige la categoría que más te guste en el siguiente paso.',
     icon: LayoutGrid,
     iconBg: 'bg-slate-100',
     iconColor: 'text-slate-500',

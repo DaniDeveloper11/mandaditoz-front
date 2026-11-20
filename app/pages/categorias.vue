@@ -4,7 +4,6 @@ import { getLucideIcon, getCategoriaConfig } from '~/utils/categorias'
 
 definePageMeta({ layout: 'landing' })
 
-const router = useRouter()
 const store = useSearchStore()
 const cityStore = useCityStore()
 
@@ -22,10 +21,14 @@ const categoriasFiltradas = computed(() => {
   )
 })
 
-function irACategoria(slug) {
-  store.verCategoria(slug)
-  router.push('/list')
-}
+// El encabezado que lleva el CityPickerPopover es un <div> y no un <p>: el
+// popover de Headless UI mete elementos de bloque, el navegador los saca de un
+// <p> al parsear el HTML del servidor y la hidratación salía con mismatches.
+
+// Enlace real (no un botón con router.push) para que los rastreadores sigan
+// la tarjeta; `?categoria=` lo lee list.vue al montarse. verCategoria limpia
+// además la búsqueda de texto que hubiera quedado en el store.
+const urlCategoria = (slug) => ({ path: '/list', query: { categoria: slug } })
 
 // --- SEO: título/descripción propios (antes heredaba el default de nuxt.config) ---
 const siteUrl = useRuntimeConfig().public.siteUrl
@@ -66,7 +69,7 @@ useHead({
       <div class="max-w-6xl mx-auto">
         <p class="text-brand-azulgris text-xs font-semibold tracking-widest uppercase mb-2">Directorio</p>
         <h1 class="font-display font-black text-4xl md:text-5xl text-white">Todas las categorías</h1>
-        <p class="text-brand-azulgris text-sm mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-2">
+        <div class="text-brand-azulgris text-sm mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-2">
           <span>Explora los {{ categorias.length }} rubros disponibles en</span>
           <CityPickerPopover>
             <template #trigger="{ activeLabel }">
@@ -80,7 +83,7 @@ useHead({
               </button>
             </template>
           </CityPickerPopover>
-        </p>
+        </div>
 
         <!-- Search -->
         <div class="mt-6 max-w-lg">
@@ -132,10 +135,11 @@ useHead({
           v-else
           class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
         >
-          <button
+          <NuxtLink
             v-for="cat in categoriasFiltradas"
             :key="cat.slug"
-            @click="irACategoria(cat.slug)"
+            :to="urlCategoria(cat.slug)"
+            @click="store.verCategoria(cat.slug)"
             class="group bg-white rounded-2xl p-5 flex flex-col text-left hover:shadow-lg hover:-translate-y-0.5 transition-all"
           >
             <div class="flex items-start justify-between mb-4">
@@ -170,7 +174,7 @@ useHead({
             <p class="text-brand-azulgris text-xs mt-3">
               {{ cat.totalBusinessCount ?? 0 }} {{ cat.totalBusinessCount === 1 ? 'negocio' : 'negocios' }}
             </p>
-          </button>
+          </NuxtLink>
         </div>
 
       </div>
